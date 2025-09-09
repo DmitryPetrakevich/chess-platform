@@ -2,21 +2,24 @@
   <div class="board-wrapper">
     <div class="board">
       <div v-for="(row, rIndex) in squares" :key="rIndex" class="rank-row">
-        <!-- Клетки доски -->
         <div
           v-for="cell in row"
           :key="cell.id"
           class="cell"
           :class="cell.color"
           @click="onSquareClick(cell.id)"
-        ></div>
-        <!-- Метка ряда справа -->
-        <div class="rank-label">{{ row[0].rank }}</div>
+        >
+        <img v-if="pieceImage(cell.id)" :src="pieceImage(cell.id)" class="piece" />
+
+        </div>
+        <div class="rank-label">
+        {{ row[0].rank }}
+        </div>
       </div>
 
       <div class="files-row">
         <div v-for="f in files" :key="f" class="file-label">{{ f }}</div>
-        <div class="rank-label"></div> <!-- Пустая ячейка для выравнивания -->
+        <div class="rank-label"></div> 
       </div>
     </div>
   </div>
@@ -52,6 +55,13 @@ setInitialPosition();
 
 console.log('initial pieces:', pieces.value);
 
+function pieceImage(squareId) {
+  const code = pieces.value[squareId] // например "wP" или "bK"
+  if (!code) return null;
+
+  return new URL(`../assets/chess-pieces/${code}.svg`, import.meta.url).href;
+}
+
 function onSquareClick(id) {
   console.log("square clicked:", id);
 }
@@ -84,7 +94,7 @@ function onSquareClick(id) {
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  padding-left: 6px; 
+  margin-left: 2px; 
 }
 
 .cell {
@@ -112,5 +122,12 @@ function onSquareClick(id) {
   width: var(--cell-size);
   text-align: center;
   font-weight: 600;
+}
+
+.piece {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none; /* чтобы фигура не мешала клику по клетке */
 }
 </style>
