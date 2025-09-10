@@ -6,7 +6,7 @@
           v-for="cell in row"
           :key="cell.id"
           class="cell"
-          :class="cell.color"
+          :class="[cell.color, { selected: selectedSquare === cell.id }]"
           @click="onSquareClick(cell.id)"
         >
         <img v-if="pieceImage(cell.id)" :src="pieceImage(cell.id)" class="piece" />
@@ -62,16 +62,35 @@ function pieceImage(squareId) {
   return new URL(`../assets/chess-pieces/${code}.svg`, import.meta.url).href;
 }
 
+const selectedSquare = ref(null) // хранит id выбранной клетки, например "e2"
+
 function onSquareClick(id) {
-  console.log("square clicked:", id);
+  if(!selectedSquare.value && pieces.value[id]) {
+    selectedSquare.value = id
+    console.log("Фигура выбрана", id)
+    return
+  }
+
+  if (selectedSquare.value && id === selectedSquare.value) {
+    selectedSquare.value = null;
+    console.log("Выбор отменён:", id);
+    return;
+  }
+
+  if(selectedSquare.value) {
+    const piece = pieces.value[selectedSquare.value] // например wN
+    pieces.value[id] = piece
+
+    delete pieces.value[selectedSquare.value];
+
+    console.log(`Фигура ${piece} перемещена из ${selectedSquare.value} в ${id}`);
+
+    selectedSquare.value = null;
+  }
 }
 </script>
 
 <style>
-:root {
-  --cell-size: clamp(40px, 8vw, 64px);
-}
-
 .board-wrapper {
   display: flex;
   justify-content: center;
@@ -89,17 +108,17 @@ function onSquareClick(id) {
 }
 
 .rank-label {
-  width: calc(var(--cell-size) * 0.6);
+  width: clamp(20px, 4vw, 32px); /* цифры тоже адаптивные */
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  margin-left: 2px; 
+  margin-left: 2px;
 }
 
 .cell {
-  width: var(--cell-size);
-  height: var(--cell-size);
+  width: clamp(40px, 8vw, 64px);   /* клетка адаптивная */
+  height: clamp(40px, 8vw, 64px);
   box-sizing: border-box;
   cursor: pointer;
 }
@@ -119,7 +138,7 @@ function onSquareClick(id) {
 }
 
 .file-label {
-  width: var(--cell-size);
+  width: clamp(40px, 8vw, 64px); /* ширина равна клетке */
   text-align: center;
   font-weight: 600;
 }
@@ -128,6 +147,7 @@ function onSquareClick(id) {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  pointer-events: none; /* чтобы фигура не мешала клику по клетке */
+  pointer-events: none; /* фигура не мешает клику */
 }
+
 </style>
