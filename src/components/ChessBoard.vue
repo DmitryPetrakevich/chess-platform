@@ -63,19 +63,27 @@ function pieceImage(squareId) {
 }
 
 const selectedSquare = ref(null) // хранит id выбранной клетки, например "e2"
+const currentTurn = ref("w");
 
 function onSquareClick(id) {
-  if(!selectedSquare.value && pieces.value[id]) {
-    selectedSquare.value = id
-    console.log("Фигура выбрана", id)
-    return
-  }
-
   if (selectedSquare.value && id === selectedSquare.value) {
     selectedSquare.value = null;
     console.log("Выбор отменён:", id);
     return;
   }
+
+  if(!selectedSquare.value && pieces.value[id]) {
+    const piece = pieces.value[id];
+
+    if(piece[0] !== currentTurn.value) {
+      console.log("Сейчас не ваш ход!")
+      return
+    }
+    
+    selectedSquare.value = id
+      console.log("Фигура выбрана", id)
+      return
+    }
 
   if(selectedSquare.value) {
     const piece = pieces.value[selectedSquare.value] // например wN
@@ -86,6 +94,8 @@ function onSquareClick(id) {
     console.log(`Фигура ${piece} перемещена из ${selectedSquare.value} в ${id}`);
 
     selectedSquare.value = null;
+
+    currentTurn.value = currentTurn.value === "w" ? "b" : "w";
   }
 }
 </script>
@@ -148,6 +158,10 @@ function onSquareClick(id) {
   height: 100%;
   object-fit: contain;
   pointer-events: none; /* фигура не мешает клику */
+}
+
+.cell.selected {
+  border: 3px solid red;
 }
 
 </style>
