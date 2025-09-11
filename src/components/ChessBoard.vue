@@ -87,6 +87,13 @@ function onSquareClick(id) {
 
   if(selectedSquare.value) {
     const piece = pieces.value[selectedSquare.value] // например wN
+
+    if (piece[1] === "P" && !isValidPawnMove(selectedSquare.value, id, piece)) {
+      console.log("Недопустимый ход пешкой!");
+      selectedSquare.value = null;
+      return;
+    }
+
     pieces.value[id] = piece
 
     delete pieces.value[selectedSquare.value];
@@ -98,6 +105,62 @@ function onSquareClick(id) {
     currentTurn.value = currentTurn.value === "w" ? "b" : "w";
   }
 }
+
+// Парсит клетку вида "e2" -> { fileIndex: 4, rank: 2 }
+function parseSquare(sq) {
+  const file = sq[0];
+  const rank = Number(sq[1]);
+  const fileIndex = files.indexOf(file); // uses files = ['a',...]
+  return { fileIndex, rank };
+}
+
+// Возвращает код фигуры на клетке 
+function getPieceAt(square) {
+  return pieces.value[square] ?? null;
+}
+
+// true, если два кода фигур принадлежат разным цветам (например 'wP' vs 'bN')
+function isOpponent(codeA, codeB) {
+  if (!codeA || !codeB) return false;
+  return codeA[0] !== codeB[0];
+}
+
+// Проверка, можно ли пешке сходить с from -> to
+function isValidPawnMove(from, to, piece) {
+  const { fileIndex: fFile, rank: fRank } = parseSquare(from);
+  const { fileIndex: tFile, rank: tRank } = parseSquare(to);
+
+  const dir = piece[0] === "w" ? 1 : -1; // белые идут вверх (rank +1), чёрные вниз (rank -1)
+  const startRank = piece[0] === "w" ? 2 : 7;
+
+  // Пешка может пойти вперёд на 1 клетку, если пусто
+  if (fFile === tFile && tRank === fRank + dir && !getPieceAt(to)) {
+    return true;
+  }
+
+  // Пешка может пойти вперёд на 2 клетки, если она на стартовой позиции и обе клетки пустые
+  if (
+    fFile === tFile &&
+    fRank === startRank &&
+    tRank === fRank + 2 * dir &&
+    !getPieceAt(to) &&
+    !getPieceAt(`${files[fFile]}${fRank + dir}`) // промежуточная клетка
+  ) {
+    return true;
+  }
+
+  // Пешка может бить по диагонали, если там фигура противника
+  if (
+    Math.abs(tFile - fFile) === 1 &&
+    tRank === fRank + dir &&
+    isOpponent(piece, getPieceAt(to))
+  ) {
+    return true;
+  }
+
+  return false; // все остальные случаи запрещены
+}
+
 </script>
 
 <style>
