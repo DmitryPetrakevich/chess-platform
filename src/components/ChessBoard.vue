@@ -41,7 +41,13 @@ const squares = computed(() =>
 );
 
 const pieces = ref({});
-
+/**
+ * Устанавливает фигуры в начальную шахматную позицию.
+ * Заполняет объект pieces.value кодами фигур:
+ * - w = белые, b = чёрные
+ * - P = пешка, R = ладья, N = конь, B = слон, Q = ферзь, K = король
+ * Пример: "wP" = белая пешка, "bK" = чёрный король.
+ */
 function setInitialPosition() {
   pieces.value = {
     a8: 'bR', b8: 'bN', c8: 'bB', d8: 'bQ', e8: 'bK', f8: 'bB', g8: 'bN', h8: 'bR',
@@ -55,6 +61,11 @@ setInitialPosition();
 
 console.log('initial pieces:', pieces.value);
 
+/**
+ * Возвращает путь к картинке фигуры на указанной клетке.
+ * @param {string} squareId - id клетки, например "e2".
+ * @returns {string|null} путь к svg-файлу или null, если фигуры нет.
+ */
 function pieceImage(squareId) {
   const code = pieces.value[squareId] // например "wP" или "bK"
   if (!code) return null;
@@ -62,9 +73,17 @@ function pieceImage(squareId) {
   return new URL(`../assets/chess-pieces/${code}.svg`, import.meta.url).href;
 }
 
-const selectedSquare = ref(null) // хранит id выбранной клетки, например "e2"
+const selectedSquare = ref(null) //  например "e2"
 const currentTurn = ref("w");
 
+/**
+ * Обрабатывает клик по клетке шахматной доски.
+ * - Если фигура только выбирается → сохраняет её клетку.
+ * - Если фигура уже выбрана → пытается сделать ход.
+ * - Проверяет корректность хода через isValidMove().
+ * - Переключает ход между белыми и чёрными.
+ * @param {string} id - id клетки, по которой кликнули (например "e2").
+ */
 function onSquareClick(id) {
   if (selectedSquare.value && id === selectedSquare.value) {
     selectedSquare.value = null;
@@ -88,11 +107,11 @@ function onSquareClick(id) {
   if(selectedSquare.value) {
     const piece = pieces.value[selectedSquare.value] // например wN
 
-    if (piece[1] === "P" && !isValidPawnMove(selectedSquare.value, id, piece)) {
-      console.log("Недопустимый ход пешкой!");
-      selectedSquare.value = null;
-      return;
-    }
+  if (!isValidMove(selectedSquare.value, id, piece)) {
+    console.log("Недопустимый ход!");
+    selectedSquare.value = null;
+    return;
+}
 
     pieces.value[id] = piece
 
@@ -106,26 +125,46 @@ function onSquareClick(id) {
   }
 }
 
-// Парсит клетку вида "e2" -> { fileIndex: 4, rank: 2 }
+/**
+ * Преобразует id клетки в числовые индексы.
+ * Пример: "e2" → { fileIndex: 4, rank: 2 }
+ * @param {string} sq - клетка в виде строки (например "e2").
+ * @returns {{fileIndex: number, rank: number}}
+ */
 function parseSquare(sq) {
   const file = sq[0];
   const rank = Number(sq[1]);
-  const fileIndex = files.indexOf(file); // uses files = ['a',...]
+  const fileIndex = files.indexOf(file); 
   return { fileIndex, rank };
 }
 
-// Возвращает код фигуры на клетке 
+/**
+ * Возвращает фигуру, стоящую на указанной клетке.
+ * @param {string} square - клетка, например "e2".
+ * @returns {string|null} код фигуры ("wP", "bK" и т.п.) или null, если пусто.
+ */
 function getPieceAt(square) {
   return pieces.value[square] ?? null;
 }
 
-// true, если два кода фигур принадлежат разным цветам (например 'wP' vs 'bN')
+/**
+ * Проверяет, принадлежат ли две фигуры разным игрокам.
+ * @param {string|null} codeA - код первой фигуры ("wP" и т.п.) или null.
+ * @param {string|null} codeB - код второй фигуры ("bN" и т.п.) или null.
+ * @returns {boolean} true, если это фигуры разных цветов.
+ */
 function isOpponent(codeA, codeB) {
   if (!codeA || !codeB) return false;
   return codeA[0] !== codeB[0];
 }
 
-// Проверка, можно ли пешке сходить с from -> to
+/**
+ * Проверяет, может ли пешка сделать ход с from → to.
+ * @param {string} from - клетка, откуда двигается (например, "e2").
+ * @param {string} to - клетка назначения (например, "e4").
+ * @param {string} piece - код фигуры (например, "wP").
+ * @returns {boolean} true, если ход допустим.
+ */
 function isValidPawnMove(from, to, piece) {
   const { fileIndex: fFile, rank: fRank } = parseSquare(from);
   const { fileIndex: tFile, rank: tRank } = parseSquare(to);
@@ -133,12 +172,11 @@ function isValidPawnMove(from, to, piece) {
   const dir = piece[0] === "w" ? 1 : -1; // белые идут вверх (rank +1), чёрные вниз (rank -1)
   const startRank = piece[0] === "w" ? 2 : 7;
 
-  // Пешка может пойти вперёд на 1 клетку, если пусто
   if (fFile === tFile && tRank === fRank + dir && !getPieceAt(to)) {
     return true;
   }
 
-  // Пешка может пойти вперёд на 2 клетки, если она на стартовой позиции и обе клетки пустые
+  // Пешка идет на 2 поля
   if (
     fFile === tFile &&
     fRank === startRank &&
@@ -149,7 +187,7 @@ function isValidPawnMove(from, to, piece) {
     return true;
   }
 
-  // Пешка может бить по диагонали, если там фигура противника
+  // взятие по диагонали
   if (
     Math.abs(tFile - fFile) === 1 &&
     tRank === fRank + dir &&
@@ -158,9 +196,93 @@ function isValidPawnMove(from, to, piece) {
     return true;
   }
 
-  return false; // все остальные случаи запрещены
+  return false; 
 }
 
+/**
+ * Проверяет, может ли ладья сделать ход с from → to.
+ * @param {string} from - начальная клетка (например, "a1").
+ * @param {string} to - конечная клетка (например, "a8").
+ * @param {string} piece - код фигуры (например, "wR").
+ * @returns {boolean} true, если ход допустим.
+ */
+function isValidRookMove(from, to, piece) {
+  const { fileIndex: fFile, rank: fRank } = parseSquare(from);
+  const { fileIndex: tFile, rank: tRank } = parseSquare(to);
+
+  // 1. Ладья должна двигаться строго по прямой линии
+  if (fFile !== tFile && fRank !== tRank) {
+    return false;
+  }
+
+  // 2. Проверяем путь между from и to
+  if (fFile === tFile) {
+    // вертикальное движение (по rank)
+    const step = tRank > fRank ? 1 : -1;
+    for (let r = fRank + step; r !== tRank; r += step) {
+      if (getPieceAt(`${files[fFile]}${r}`)) {
+        return false; // на пути стоит фигура
+      }
+    }
+  } else {
+    // горизонтальное движение (по file)
+    const step = tFile > fFile ? 1 : -1;
+    for (let f = fFile + step; f !== tFile; f += step) {
+      if (getPieceAt(`${files[f]}${fRank}`)) {
+        return false; // на пути стоит фигура
+      }
+    }
+  }
+
+  // 3. Если дошли сюда → путь чистый, ход разрешён
+  return true;
+}
+
+
+
+
+
+/**
+ * Центральный валидатор ходов для любых фигур.
+ * - Запрещает ходить на ту же клетку.
+ * - Запрещает рубить свои фигуры.
+ * - Делегирует проверку в специализированные функции:
+ *   - пешки → isValidPawnMove()
+ *   - ладьи → isValidRookMove() (ещё не реализована)
+ *   - остальные фигуры будут добавлены позже.
+ * @param {string} from - начальная клетка (например "e2").
+ * @param {string} to - клетка назначения (например "e4").
+ * @param {string} piece - код фигуры (например "wP").
+ * @returns {boolean} true, если ход допустим.
+ */
+function isValidMove(from, to, piece) {
+  // Нельзя ходить на ту же самую клетку
+  if (from === to) {
+    return false;
+  }
+
+  const targetPiece = getPieceAt(to);
+
+  // Нельзя рубить свои фигуры
+  if (targetPiece && targetPiece[0] === piece[0]) {
+    return false;
+  }
+
+  // Определяем тип фигуры 
+  const type = piece[1];
+
+  if (type === "P") {
+    return isValidPawnMove(from, to, piece);
+  }
+
+  if (type === "R") {
+  
+    return isValidRookMove(from, to, piece);
+  }
+
+  // TODO: добавим позже для других фигур
+  return true;
+}
 </script>
 
 <style>
