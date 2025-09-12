@@ -290,6 +290,24 @@ function isValidKingMove(from, to, piece) {
 }
 
 /**
+ * Проверяет, может ли конь сделать ход с from → to.
+ * @param {string} from - начальная клетка (например, "g1").
+ * @param {string} to - конечная клетка (например, "e2").
+ * @param {string} piece - код фигуры (например, "wN").
+ * @returns {boolean} true, если ход допустим.
+ */
+function isValidKnightMove(from, to, piece) {
+  const {fileIndex: fFile, rank: fRank} = parseSquare(from);
+  const {fileIndex: tFile, rank: tRank} = parseSquare(to);
+
+  const fileDiff = Math.abs(tFile - fFile);
+  const rankDiff = Math.abs(tRank - fRank)
+
+  // "Г"-образное движение: (2,1) или (1,2)
+  return (fileDiff === 2 && rankDiff === 1) || (fileDiff === 1 && rankDiff === 2);
+}
+
+/**
  * Проверяет, может ли ферзь сделать ход с from → to.
  * Ферзь ходит как ладья и как слон.
  *
@@ -360,7 +378,10 @@ function isValidMove(from, to, piece) {
     return isValidKingMove(from, to, piece)
   }
 
-  // TODO: добавим позже для других фигур
+  if(type === "N") {
+    return isValidKnightMove(from, to, piece)
+  }
+
   return true;
 }
 </script>
