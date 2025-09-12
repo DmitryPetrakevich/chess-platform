@@ -210,12 +210,12 @@ function isValidRookMove(from, to, piece) {
   const { fileIndex: fFile, rank: fRank } = parseSquare(from);
   const { fileIndex: tFile, rank: tRank } = parseSquare(to);
 
-  // 1. Ладья должна двигаться строго по прямой линии
+  // Ладья должна двигаться строго по прямой линии
   if (fFile !== tFile && fRank !== tRank) {
     return false;
   }
 
-  // 2. Проверяем путь между from и to
+  // Проверяем путь между from и to
   if (fFile === tFile) {
     // вертикальное движение (по rank)
     const step = tRank > fRank ? 1 : -1;
@@ -234,13 +234,44 @@ function isValidRookMove(from, to, piece) {
     }
   }
 
-  // 3. Если дошли сюда → путь чистый, ход разрешён
+  // Если дошли сюда → путь чистый, ход разрешён
   return true;
 }
 
+/**
+ * Проверяет, может ли слон сделать ход с from → to.
+ * Слон ходит только по диагонали и не может перепрыгивать через фигуры.
+ *
+ * @param {string} from - начальная клетка (например, "c1").
+ * @param {string} to - конечная клетка (например, "h6").
+ * @param {string} piece - код фигуры (например, "wB").
+ * @returns {boolean} true, если ход допустим.
+ */
+function isValidBishopMove(from, to, piece) {
+  const {fileIndex: fFile, rank: fRank} = parseSquare(from);
+  const {fileIndex: tFile, rank: tRank} = parseSquare(to);
 
+  if(Math.abs(tFile - fFile) !== Math.abs(tRank - fRank)) {
+    return false;
+  }
+  
+  const stepFile = tFile > fFile ? 1 : -1
+  const stepRank = tRank > fRank ? 1 : -1;
 
+  let f = fFile + stepFile;
+  let r = fRank + stepRank;
 
+  while(f !== tFile && r !== tRank) {
+    if(getPieceAt(`${files[f]}${r}`)) {
+      return false;
+    }
+
+    f += stepFile;
+    r += stepRank;
+  }
+
+  return true;
+}
 
 /**
  * Центральный валидатор ходов для любых фигур.
@@ -278,6 +309,10 @@ function isValidMove(from, to, piece) {
   if (type === "R") {
   
     return isValidRookMove(from, to, piece);
+  }
+
+  if(type === "B") {
+    return isValidBishopMove(from, to, piece)
   }
 
   // TODO: добавим позже для других фигур
