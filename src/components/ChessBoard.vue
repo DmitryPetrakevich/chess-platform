@@ -274,6 +274,43 @@ function isValidBishopMove(from, to, piece) {
 }
 
 /**
+ * Проверяет, может ли король сделать ход с from → to.
+ * @param {string} from - начальная клетка (например, "e1").
+ * @param {string} to - конечная клетка (например, "e2").
+ * @returns {boolean} true, если ход допустим.
+ */
+function isValidKingMove(from, to, piece) {
+  const {fileIndex: fFile, rank: fRank} = parseSquare(from)
+  const {fileIndex: tFile, rank: tRank} = parseSquare(to);
+
+  const fileDiff = Math.abs(tFile - fFile);
+  const rankDiff = Math.abs(tRank - fRank);
+
+  return (fileDiff <= 1 && rankDiff <= 1) && !(fileDiff === 0 && rankDiff === 0);
+}
+
+/**
+ * Проверяет, может ли ферзь сделать ход с from → to.
+ * Ферзь ходит как ладья и как слон.
+ *
+ * @param {string} from - начальная клетка (например, "d1").
+ * @param {string} to - конечная клетка (например, "h5").
+ * @param {string} piece - код фигуры (например, "wQ").
+ * @returns {boolean} true, если ход допустим.
+ */
+function isValidQueenMove(from, to, piece) {
+  if(isValidRookMove(from, to, piece)) {
+    return true;
+  }
+
+  if(isValidBishopMove(from, to, piece)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Центральный валидатор ходов для любых фигур.
  * - Запрещает ходить на ту же клетку.
  * - Запрещает рубить свои фигуры.
@@ -313,6 +350,14 @@ function isValidMove(from, to, piece) {
 
   if(type === "B") {
     return isValidBishopMove(from, to, piece)
+  }
+
+  if(type === "Q") {
+    return isValidQueenMove(from, to, piece)
+  }
+
+  if(type === "K") {
+    return isValidKingMove(from, to, piece)
   }
 
   // TODO: добавим позже для других фигур
