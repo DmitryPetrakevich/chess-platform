@@ -114,6 +114,71 @@ function onSquareClick(id) {
   if(selectedSquare.value) {
     const piece = pieces.value[selectedSquare.value] // например wN
 
+    if (selectedSquare.value) {
+    const piece = pieces.value[selectedSquare.value]; // например "wK"
+    const from = selectedSquare.value;
+    const to = id;
+    const targetPiece = pieces.value[to] ?? null;
+
+    if (isCastlingMove(from, to, piece)) {
+      // Перемещаем короля
+      pieces.value[to] = piece;
+      delete pieces.value[from];
+
+      // Определяем какая ладья и куда ставить
+      if (piece[0] === "w") {
+        if (to === "g1") { // короткая
+          pieces.value["f1"] = "wR";
+          delete pieces.value["h1"];
+        } else if (to === "c1") { // длинная
+          pieces.value["d1"] = "wR";
+          delete pieces.value["a1"];
+        }
+      } else {
+        if (to === "g8") { // короткая чёрных
+          pieces.value["f8"] = "bR";
+          delete pieces.value["h8"];
+        } else if (to === "c8") { // длинная чёрных
+          pieces.value["d8"] = "bR";
+          delete pieces.value["a8"];
+        }
+      }
+
+      // Отзываем права на рокировку для этого цвета
+      revokeCastlingRightsForMove(piece, from);
+
+      // Если на to была какая-то фигура (маловероятно для корректной рокировки), 
+      // и если это была ладья — обновим права (на всякий случай)
+      // if (targetPiece && targetPiece[1] === "R") revokeCastlingRightsForSquare(to);
+
+      selectedSquare.value = null;
+      currentTurn.value = currentTurn.value === "w" ? "b" : "w";
+      return;
+    }
+
+    // 2) обычная проверка
+    if (!isValidMove(from, to, piece)) {
+      console.log("Недопустимый ход!");
+      selectedSquare.value = null;
+      return;
+    }
+
+    // 3) если на to есть фигура — это захват; если это ладья — отзываем её права
+    if (targetPiece && targetPiece[1] === "R") {
+      revokeCastlingRightsForSquare(to);
+    }
+
+    // 4) делаем ход
+    pieces.value[to] = piece;
+    delete pieces.value[from];
+
+    // 5) если ходил король или ладья — отзываем права
+    revokeCastlingRightsForMove(piece, from);
+
+    selectedSquare.value = null;
+    currentTurn.value = currentTurn.value === "w" ? "b" : "w";
+}
+
   if (!isValidMove(selectedSquare.value, id, piece)) {
     console.log("Недопустимый ход!");
     selectedSquare.value = null;
@@ -377,6 +442,68 @@ function revokeCastlingRightsForSquare(square) {
   if (square === "a1") castlingRights.value.whiteQueenSide = false;
   if (square === "h8") castlingRights.value.blackKingSide = false;
   if (square === "a8") castlingRights.value.blackQueenSide = false;
+}
+
+function isCastlingMove(from, to, piece) {
+  // должен быть король
+  if (!piece || piece[1] !== "K") return false;
+
+  const { fileIndex: fFile, rank: fRank } = parseSquare(from);
+  const { fileIndex: tFile, rank: tRank } = parseSquare(to);
+
+  // рокировка — только по той же горизонтали и ровно на 2 клетки
+  if (fRank !== tRank || Math.abs(tFile - fFile) !== 2) return false;
+
+  const color = piece[0];
+
+  // белые
+  if (color === "w") {
+    if (from !== "e1") return false;
+
+    // короткая
+    if (to === "g1") {
+      if (!castlingRights.value.whiteKingSide) return false;
+      // Ладья должна быть на h1
+      if (getPieceAt("h1") !== "wR") return false;
+      // между e1 и h1 должно быть пусто: f1 и g1
+      if (getPieceAt("f1") || getPieceAt("g1")) return false;
+      return true;
+    }
+
+    // длинная
+    if (to === "c1") {
+      if (!castlingRights.value.whiteQueenSide) return false;
+      if (getPieceAt("a1") !== "wR") return false;
+      // между e1 и a1: d1,c1,b1 должны быть пусты
+      if (getPieceAt("d1") || getPieceAt("c1") || getPieceAt("b1")) return false;
+      return true;
+    }
+
+    return false;
+  }
+
+  // чёрные
+  if (color === "b") {
+    if (from !== "e8") return false;
+
+    if (to === "g8") {
+      if (!castlingRights.value.blackKingSide) return false;
+      if (getPieceAt("h8") !== "bR") return false;
+      if (getPieceAt("f8") || getPieceAt("g8")) return false;
+      return true;
+    }
+
+    if (to === "c8") {
+      if (!castlingRights.value.blackQueenSide) return false;
+      if (getPieceAt("a8") !== "bR") return false;
+      if (getPieceAt("d8") || getPieceAt("c8") || getPieceAt("b8")) return false;
+      return true;
+    }
+
+    return false;
+  }
+
+  return false;
 }
 
 
