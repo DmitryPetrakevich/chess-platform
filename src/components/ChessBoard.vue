@@ -31,6 +31,13 @@ import { computed, ref } from "vue";
 const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
 
+const castlingRights = ref({
+  whiteKingSide: true,
+  whiteQueenSide: true,
+  blackKingSide: true,
+  blackQueenSide: true,
+});
+
 const squares = computed(() =>
   ranks.map((rank, rIdx) =>
     files.map((file, fIdx) => {
@@ -206,7 +213,7 @@ function isValidPawnMove(from, to, piece) {
  * @param {string} piece - код фигуры (например, "wR").
  * @returns {boolean} true, если ход допустим.
  */
-function isValidRookMove(from, to, piece) {
+function isValidRookMove(from, to) {
   const { fileIndex: fFile, rank: fRank } = parseSquare(from);
   const { fileIndex: tFile, rank: tRank } = parseSquare(to);
 
@@ -247,7 +254,7 @@ function isValidRookMove(from, to, piece) {
  * @param {string} piece - код фигуры (например, "wB").
  * @returns {boolean} true, если ход допустим.
  */
-function isValidBishopMove(from, to, piece) {
+function isValidBishopMove(from, to) {
   const {fileIndex: fFile, rank: fRank} = parseSquare(from);
   const {fileIndex: tFile, rank: tRank} = parseSquare(to);
 
@@ -279,7 +286,7 @@ function isValidBishopMove(from, to, piece) {
  * @param {string} to - конечная клетка (например, "e2").
  * @returns {boolean} true, если ход допустим.
  */
-function isValidKingMove(from, to, piece) {
+function isValidKingMove(from, to) {
   const {fileIndex: fFile, rank: fRank} = parseSquare(from)
   const {fileIndex: tFile, rank: tRank} = parseSquare(to);
 
@@ -296,7 +303,7 @@ function isValidKingMove(from, to, piece) {
  * @param {string} piece - код фигуры (например, "wN").
  * @returns {boolean} true, если ход допустим.
  */
-function isValidKnightMove(from, to, piece) {
+function isValidKnightMove(from, to) {
   const {fileIndex: fFile, rank: fRank} = parseSquare(from);
   const {fileIndex: tFile, rank: tRank} = parseSquare(to);
 
@@ -316,17 +323,62 @@ function isValidKnightMove(from, to, piece) {
  * @param {string} piece - код фигуры (например, "wQ").
  * @returns {boolean} true, если ход допустим.
  */
-function isValidQueenMove(from, to, piece) {
-  if(isValidRookMove(from, to, piece)) {
+function isValidQueenMove(from, to) {
+  if(isValidRookMove(from, to)) {
     return true;
   }
 
-  if(isValidBishopMove(from, to, piece)) {
+  if(isValidBishopMove(from, to)) {
     return true;
   }
 
   return false;
 }
+/**
+  * Отзывает права на рокировку в зависимости от того, кто и откуда ходил.
+ * Вызывать после выполнения хода (или в момент, когда известно, что фигура ходила).
+ * @param {string} piece - код фигуры, например "wK", "bR"
+ * @param {string}from - клетка, с которой сделан ход, например "e1"
+ */
+function revokeCastlingRightsForMove(piece, from) {
+  if(!piece) return;
+  const color = piece[0];
+  const type = piece[1];
+
+  if(type === "K") {
+    if(color === "w") {
+      castlingRights.value.whiteKingSide = false;
+      castlingRights.value.whiteQueenSide = false;
+    } else {
+      castlingRights.value.blackKingSide = false;
+      castlingRights.value.blackQueenSide = false;
+    }
+    return;
+  }
+
+  if(type === "R") {
+    if(color === "w") {
+      if(from === "h1") castlingRights.value.whiteKingSide = false;
+      if(from === "a1") castlingRights.value.whiteQueenSide = false;
+    } else {
+      if(from === "h8") castlingRights.value.blackKingSide = false;
+      if(from === "a8") castlingRights.value.blackQueenSide = false;
+    }
+  }
+}
+
+/**
+ * Отзывает право на рокировку, если была убита ладья на стартовой клетке.
+ * Вызывать при обработке захвата: если targetPiece[1] === "R" и targetSquare === одна из начальных позиций — снимаем соответствующее право.
+ * @param {string} square - клетка, где стояла (или была захвачена) ладья, например "h1"
+ */
+function revokeCastlingRightsForSquare(square) {
+  if (square === "h1") castlingRights.value.whiteKingSide = false;
+  if (square === "a1") castlingRights.value.whiteQueenSide = false;
+  if (square === "h8") castlingRights.value.blackKingSide = false;
+  if (square === "a8") castlingRights.value.blackQueenSide = false;
+}
+
 
 /**
  * Центральный валидатор ходов для любых фигур.
