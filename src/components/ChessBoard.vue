@@ -147,32 +147,28 @@ function onSquareClick(id) {
       // Отзываем права на рокировку для этого цвета
       revokeCastlingRightsForMove(piece, from);
 
-      // Если на to была какая-то фигура (маловероятно для корректной рокировки), 
-      // и если это была ладья — обновим права (на всякий случай)
-      // if (targetPiece && targetPiece[1] === "R") revokeCastlingRightsForSquare(to);
-
       selectedSquare.value = null;
       currentTurn.value = currentTurn.value === "w" ? "b" : "w";
       return;
     }
 
-    // 2) обычная проверка
+    // обычная проверка
     if (!isValidMove(from, to, piece)) {
       console.log("Недопустимый ход!");
       selectedSquare.value = null;
       return;
     }
 
-    // 3) если на to есть фигура — это захват; если это ладья — отзываем её права
+    // если на to есть фигура — это захват; если это ладья — отзываем её права
     if (targetPiece && targetPiece[1] === "R") {
       revokeCastlingRightsForSquare(to);
     }
 
-    // 4) делаем ход
+    // делаем ход
     pieces.value[to] = piece;
     delete pieces.value[from];
 
-    // 5) если ходил король или ладья — отзываем права
+    // если ходил король или ладья — отзываем права
     revokeCastlingRightsForMove(piece, from);
 
     selectedSquare.value = null;
@@ -444,8 +440,114 @@ function revokeCastlingRightsForSquare(square) {
   if (square === "a8") castlingRights.value.blackQueenSide = false;
 }
 
+/**
+ * Возвращает true, если клетка `square` (например "e1") атакуется
+ * хотя бы одной фигурой цвета `byColor` ("w" или "b").
+ */
+function isSquareAttacked(square, byColor) {
+  const { fileIndex: tFile, rank: tRank } = parseSquare(square);
+
+  // пешка
+  if (byColor === "w") {
+    if (tFile - 1 >= 0) {
+      const sq = `${files[tFile - 1]}${tRank - 1}`;
+      if (getPieceAt(sq) === "wP") return true;
+    }
+    if (tFile + 1 <= 7) {
+      const sq = `${files[tFile + 1]}${tRank - 1}`;
+      if (getPieceAt(sq) === "wP") return true;
+    }
+  } else {
+    // byColor === "b"
+    if (tFile - 1 >= 0) {
+      const sq = `${files[tFile - 1]}${tRank + 1}`;
+      if (getPieceAt(sq) === "bP") return true;
+    }
+    if (tFile + 1 <= 7) {
+      const sq = `${files[tFile + 1]}${tRank + 1}`;
+      if (getPieceAt(sq) === "bP") return true;
+    }
+  }
+
+  // Конь 
+  const knightMoves = [
+    [1, 2], [2, 1], [-1, 2], [-2, 1],
+    [1, -2], [2, -1], [-1, -2], [-2, -1]
+  ];
+  for (const [df, dr] of knightMoves) {
+    const f = tFile + df;
+    const r = tRank + dr;
+    if (f < 0 || f > 7 || r < 1 || r > 8) continue;
+    const sq = `${files[f]}${r}`;
+    const p = getPieceAt(sq);
+    if (p === `${byColor}N`) return true;
+  }
+
+  // ладья/слон/ферзь 
+  // направления для ладьи и слона
+  const rookDirs = [[1,0],[-1,0],[0,1],[0,-1]];
+  const bishopDirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
+
+/**
+ * Возвращает true, если в хотя бы одном направлении найдётся первая встречная
+ * фигура нужного цвета и нужного типа
+ * @param dirs - массив направлений (например, rookDirs или bishopDirs)
+ * @param attackers - массив букв, обозначающих типы фигур, которые атакуют 
+ * по этим направлениям (например ["R","Q"] для ладьи/ферзя)
+ */
+  const checkSliding = (dirs, attackers) => {
+    for (const [df, dr] of dirs) {
+      let f = tFile + df;
+      let r = tRank + dr;
+      while (f >= 0 && f <= 7 && r >= 1 && r <= 8) {
+        const sq = `${files[f]}${r}`;
+        const p = getPieceAt(sq);
+        if (p) {
+          // p существует — первая фигура на пути
+          if (p[0] === byColor && attackers.includes(p[1])) {
+            return true;
+          }
+          // если встретили любую фигуру — путь дальше закрыт
+          break;
+        }
+        // продвижение вдоль направления
+        f += df;
+        r += dr;
+      }
+    }
+    return false;
+  };
+
+  // ладья или ферзь по ортогоналям
+  if (checkSliding(rookDirs, ["R", "Q"])) return true;
+  // слон или ферзь по диагоналям
+  if (checkSliding(bishopDirs, ["B", "Q"])) return true;
+
+  // Король (соседние клетки) 
+  for (let df = -1; df <= 1; df++) {
+    for (let dr = -1; dr <= 1; dr++) {
+      if (df === 0 && dr === 0) continue;
+      const f = tFile + df;
+      const r = tRank + dr;
+      if (f < 0 || f > 7 || r < 1 || r > 8) continue;
+      const sq = `${files[f]}${r}`;
+      const p = getPieceAt(sq);
+      if (p === `${byColor}K`) return true;
+    }
+  }
+
+  // Ничего не нашлось 
+  return false;
+}
+
+/**
+ * Проверяет, является ли ход короля рокировкой, и разрешена ли она в текущей позиции.
+ * @param {string} from - начальная клетка (например "e1" или "e8")
+ * @param {string} to - конечная клетка (например "g1", "c1", "g8", "c8")
+ * @param {string} piece - строка фигуры вида "wK" или "bK"
+ * @returns {boolean} true, если ход является корректной рокировкой
+ */
 function isCastlingMove(from, to, piece) {
-  // должен быть король
   if (!piece || piece[1] !== "K") return false;
 
   const { fileIndex: fFile, rank: fRank } = parseSquare(from);
@@ -455,6 +557,7 @@ function isCastlingMove(from, to, piece) {
   if (fRank !== tRank || Math.abs(tFile - fFile) !== 2) return false;
 
   const color = piece[0];
+  const opponent = color === "w" ? "b" : "w";
 
   // белые
   if (color === "w") {
@@ -463,10 +566,13 @@ function isCastlingMove(from, to, piece) {
     // короткая
     if (to === "g1") {
       if (!castlingRights.value.whiteKingSide) return false;
-      // Ладья должна быть на h1
       if (getPieceAt("h1") !== "wR") return false;
-      // между e1 и h1 должно быть пусто: f1 и g1
       if (getPieceAt("f1") || getPieceAt("g1")) return false;
+
+      if(isSquareAttacked("e1", opponent)) return false;
+      if(isSquareAttacked("f1", opponent)) return false;
+      if(isSquareAttacked("g1", opponent)) return false;
+
       return true;
     }
 
@@ -474,8 +580,12 @@ function isCastlingMove(from, to, piece) {
     if (to === "c1") {
       if (!castlingRights.value.whiteQueenSide) return false;
       if (getPieceAt("a1") !== "wR") return false;
-      // между e1 и a1: d1,c1,b1 должны быть пусты
       if (getPieceAt("d1") || getPieceAt("c1") || getPieceAt("b1")) return false;
+
+      if (isSquareAttacked("e1", opponent)) return false;
+      if (isSquareAttacked("d1", opponent)) return false;
+      if (isSquareAttacked("c1", opponent)) return false;
+
       return true;
     }
 
@@ -490,6 +600,11 @@ function isCastlingMove(from, to, piece) {
       if (!castlingRights.value.blackKingSide) return false;
       if (getPieceAt("h8") !== "bR") return false;
       if (getPieceAt("f8") || getPieceAt("g8")) return false;
+
+      if (isSquareAttacked("e8", opponent)) return false;
+      if (isSquareAttacked("f8", opponent)) return false;
+      if (isSquareAttacked("g8", opponent)) return false;
+
       return true;
     }
 
@@ -497,15 +612,17 @@ function isCastlingMove(from, to, piece) {
       if (!castlingRights.value.blackQueenSide) return false;
       if (getPieceAt("a8") !== "bR") return false;
       if (getPieceAt("d8") || getPieceAt("c8") || getPieceAt("b8")) return false;
+
+      if (isSquareAttacked("e8", opponent)) return false;
+      if (isSquareAttacked("d8", opponent)) return false;
+      if (isSquareAttacked("c8", opponent)) return false;
+
       return true;
     }
-
     return false;
   }
-
   return false;
 }
-
 
 /**
  * Центральный валидатор ходов для любых фигур.
