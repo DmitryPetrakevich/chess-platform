@@ -62,6 +62,10 @@ function setInitialPosition() {
     a2: 'wP', b2: 'wP', c2: 'wP', d2: 'wP', e2: 'wP', f2: 'wP', g2: 'wP', h2: 'wP',
     a1: 'wR', b1: 'wN', c1: 'wB', d1: 'wQ', e1: 'wK', f1: 'wB', g1: 'wN', h1: 'wR'
   };
+
+  // pieces.value = {
+  //   a1: "wK", a2: "wP", a8: "bK"
+  // };
 }
 
 setInitialPosition();
@@ -228,30 +232,13 @@ function isValidPawnMove(from, to, piece) {
   return false; 
 }
 
-/**
- * Проверяет, находится ли король указанного цвета под шахом.
- * @param {string} kingColor - цвет короля ("w" или "b").
- * @returns {boolean} true, если король атакован.
- */
-function isKingInCheck(kingColor) {
-  const opponent = kingColor === "w" ? "b" : "w";
-  let kingSquare = null;
-
-  // Находим клетку, где стоит король 
-  for (const square in pieces.value) {
-    const piece = pieces.value[square]; // например "wK" 
-    if (piece && piece[0] === kingColor && piece[1] === "K") {
-      kingSquare = parseSquare(square); 
-      break;
-    }
-  }
-
-  if (!kingSquare) {
-    throw new Error(`Король цвета ${kingColor} не найден на доске!`);
-  }
-
-  return isSquareAttacked(kingSquare, opponent);
+function isKingInCheck(color, board = pieces.value) {
+  const opponent = color === "w" ? "b" : "w";
+  let kingSquare = Object.keys(board).find(sq => board[sq] === `${color}K`);
+  if (!kingSquare) throw new Error(`Король цвета ${color} не найден!`);
+  return isSquareAttacked(kingSquare, opponent, board);
 }
+
 
 /**
  * Проверяет, есть ли хотя бы один допустимый ход для игрока,
@@ -260,7 +247,7 @@ function isKingInCheck(kingColor) {
  * @param {object} board - текущая доска { square: piece }
  * @returns {boolean} true, если есть хотя бы один допустимый ход
  */
-function hasAnyValidMoves(color, board) {
+function hasAnyValidMoves(color, board = pieces.value) {
   for (const from in board) {
     const piece = board[from];
     if (!piece || piece[0] !== color) continue;
@@ -288,13 +275,9 @@ function hasAnyValidMoves(color, board) {
         tempBoard[to] = piece;
         delete tempBoard[from];
 
-        // находим короля после хода
-        const kingSquare = Object.keys(tempBoard).find(sq => tempBoard[sq] === `${color}K`);
-        if (!kingSquare) continue; // на всякий случай
-
         // проверяем, не под шахом ли король
-        if (!isSquareAttackedOnBoard(kingSquare, color === "w" ? "b" : "w", tempBoard)) {
-          return true; // ход безопасен
+        if (!isKingInCheck(color, tempBoard)) {
+          return true; // хотя бы один ход есть
         }
       }
     }
@@ -303,6 +286,7 @@ function hasAnyValidMoves(color, board) {
   return false; // ходов нет
 }
 
+
 /**
  * Проверяет, находится ли игрок в состоянии мата или пата.
  * @param {string} color - цвет игрока ("w" или "b")
@@ -310,16 +294,11 @@ function hasAnyValidMoves(color, board) {
  */
 function checkMateOrStalemate(color) {
   const inCheck = isKingInCheck(color);         
-  const hasMoves = hasAnyValidMoves(color, pieces.value); // используем текущую доску
+  const hasMoves = hasAnyValidMoves(color);
 
-  if (!hasMoves && inCheck) {
-    return "checkmate";   // мат
-  }
-  if (!hasMoves && !inCheck) {
-    return "stalemate";   // пат
-  }
-
-  return null;      
+  if (!hasMoves && inCheck) return "checkmate";
+  if (!hasMoves && !inCheck) return "stalemate";
+  return null;
 }
 
 /**
@@ -339,7 +318,7 @@ function checkGameState(color) {
     return true;
   }
 
-  return false; // игра продолжается
+  return false;
 }
 
 /**
@@ -515,36 +494,20 @@ function revokeCastlingRightsForSquare(square) {
   if (square === "a8") castlingRights.value.blackQueenSide = false;
 }
 
-/**
- * Возвращает true, если клетка `square` (например "e1") атакуется
- * хотя бы одной фигурой цвета `byColor` ("w" или "b").
- */
-function isSquareAttacked(square, byColor) {
+
+function isSquareAttacked(square, byColor, board = pieces.value) {
   const { fileIndex: tFile, rank: tRank } = parseSquare(square);
 
-  // пешка
+  // Пешка
   if (byColor === "w") {
-    if (tFile - 1 >= 0) {
-      const sq = `${files[tFile - 1]}${tRank - 1}`;
-      if (getPieceAt(sq) === "wP") return true;
-    }
-    if (tFile + 1 <= 7) {
-      const sq = `${files[tFile + 1]}${tRank - 1}`;
-      if (getPieceAt(sq) === "wP") return true;
-    }
+    if (tFile - 1 >= 0 && board[`${files[tFile - 1]}${tRank - 1}`] === "wP") return true;
+    if (tFile + 1 <= 7 && board[`${files[tFile + 1]}${tRank - 1}`] === "wP") return true;
   } else {
-    // byColor === "b"
-    if (tFile - 1 >= 0) {
-      const sq = `${files[tFile - 1]}${tRank + 1}`;
-      if (getPieceAt(sq) === "bP") return true;
-    }
-    if (tFile + 1 <= 7) {
-      const sq = `${files[tFile + 1]}${tRank + 1}`;
-      if (getPieceAt(sq) === "bP") return true;
-    }
+    if (tFile - 1 >= 0 && board[`${files[tFile - 1]}${tRank + 1}`] === "bP") return true;
+    if (tFile + 1 <= 7 && board[`${files[tFile + 1]}${tRank + 1}`] === "bP") return true;
   }
 
-  // Конь 
+  // Конь
   const knightMoves = [
     [1, 2], [2, 1], [-1, 2], [-2, 1],
     [1, -2], [2, -1], [-1, -2], [-2, -1]
@@ -553,39 +516,24 @@ function isSquareAttacked(square, byColor) {
     const f = tFile + df;
     const r = tRank + dr;
     if (f < 0 || f > 7 || r < 1 || r > 8) continue;
-    const sq = `${files[f]}${r}`;
-    const p = getPieceAt(sq);
-    if (p === `${byColor}N`) return true;
+    if (board[`${files[f]}${r}`] === `${byColor}N`) return true;
   }
 
-  // ладья/слон/ферзь 
-  // направления для ладьи и слона
+  // Ладья/слон/ферзь
   const rookDirs = [[1,0],[-1,0],[0,1],[0,-1]];
   const bishopDirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
 
-/**
- * Возвращает true, если в хотя бы одном направлении найдётся первая встречная
- * фигура нужного цвета и нужного типа
- * @param dirs - массив направлений (например, rookDirs или bishopDirs)
- * @param attackers - массив букв, обозначающих типы фигур, которые атакуют 
- * по этим направлениям (например ["R","Q"] для ладьи/ферзя)
- */
   const checkSliding = (dirs, attackers) => {
     for (const [df, dr] of dirs) {
       let f = tFile + df;
       let r = tRank + dr;
       while (f >= 0 && f <= 7 && r >= 1 && r <= 8) {
         const sq = `${files[f]}${r}`;
-        const p = getPieceAt(sq);
+        const p = board[sq];
         if (p) {
-          // p существует — первая фигура на пути
-          if (p[0] === byColor && attackers.includes(p[1])) {
-            return true;
-          }
-          // если встретили любую фигуру — путь дальше закрыт
+          if (p[0] === byColor && attackers.includes(p[1])) return true;
           break;
         }
-        // продвижение вдоль направления
         f += df;
         r += dr;
       }
@@ -593,27 +541,25 @@ function isSquareAttacked(square, byColor) {
     return false;
   };
 
-  // ладья или ферзь по ортогоналям
-  if (checkSliding(rookDirs, ["R", "Q"])) return true;
-  // слон или ферзь по диагоналям
-  if (checkSliding(bishopDirs, ["B", "Q"])) return true;
+  if (checkSliding(rookDirs, ["R","Q"])) return true;
+  if (checkSliding(bishopDirs, ["B","Q"])) return true;
 
-  // Король (соседние клетки) 
+  // Король
   for (let df = -1; df <= 1; df++) {
     for (let dr = -1; dr <= 1; dr++) {
       if (df === 0 && dr === 0) continue;
       const f = tFile + df;
       const r = tRank + dr;
       if (f < 0 || f > 7 || r < 1 || r > 8) continue;
-      const sq = `${files[f]}${r}`;
-      const p = getPieceAt(sq);
-      if (p === `${byColor}K`) return true;
+      if (board[`${files[f]}${r}`] === `${byColor}K`) return true;
     }
   }
 
-  // Ничего не нашлось 
   return false;
 }
+
+
+
 
 /**
  * Проверяет, является ли ход короля рокировкой, и разрешена ли она в текущей позиции.
@@ -698,85 +644,6 @@ function isCastlingMove(from, to, piece) {
   return false;
 }
 
-
-function isSquareAttackedOnBoard(square, byColor, board) {
-  const { fileIndex: tFile, rank: tRank } = parseSquare(square);
-
-  // Пешка
-  if (byColor === "w") {
-    if (tFile - 1 >= 0) {
-      const sq = `${files[tFile - 1]}${tRank - 1}`;
-      if (board[sq] === "wP") return true;
-    }
-    if (tFile + 1 <= 7) {
-      const sq = `${files[tFile + 1]}${tRank - 1}`;
-      if (board[sq] === "wP") return true;
-    }
-  } else {
-    if (tFile - 1 >= 0) {
-      const sq = `${files[tFile - 1]}${tRank + 1}`;
-      if (board[sq] === "bP") return true;
-    }
-    if (tFile + 1 <= 7) {
-      const sq = `${files[tFile + 1]}${tRank + 1}`;
-      if (board[sq] === "bP") return true;
-    }
-  }
-
-  // Конь
-  const knightMoves = [
-    [1, 2], [2, 1], [-1, 2], [-2, 1],
-    [1, -2], [2, -1], [-1, -2], [-2, -1]
-  ];
-  for (const [df, dr] of knightMoves) {
-    const f = tFile + df;
-    const r = tRank + dr;
-    if (f < 0 || f > 7 || r < 1 || r > 8) continue;
-    const sq = `${files[f]}${r}`;
-    if (board[sq] === `${byColor}N`) return true;
-  }
-
-  // Ладья/слон/ферзь
-  const rookDirs = [[1,0],[-1,0],[0,1],[0,-1]];
-  const bishopDirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
-
-  const checkSliding = (dirs, attackers) => {
-    for (const [df, dr] of dirs) {
-      let f = tFile + df;
-      let r = tRank + dr;
-      while (f >= 0 && f <= 7 && r >= 1 && r <= 8) {
-        const sq = `${files[f]}${r}`;
-        const p = board[sq];
-        if (p) {
-          if (p[0] === byColor && attackers.includes(p[1])) return true;
-          break;
-        }
-        f += df;
-        r += dr;
-      }
-    }
-    return false;
-  };
-
-  if (checkSliding(rookDirs, ["R","Q"])) return true;
-  if (checkSliding(bishopDirs, ["B","Q"])) return true;
-
-  // Король
-  for (let df = -1; df <= 1; df++) {
-    for (let dr = -1; dr <= 1; dr++) {
-      if (df === 0 && dr === 0) continue;
-      const f = tFile + df;
-      const r = tRank + dr;
-      if (f < 0 || f > 7 || r < 1 || r > 8) continue;
-      const sq = `${files[f]}${r}`;
-      if (board[sq] === `${byColor}K`) return true;
-    }
-  }
-
-  return false;
-}
-
-
 /**
  * Проверяет, может ли фигура сделать ход с from → to формально.
  * - Не проверяет шах.
@@ -812,11 +679,11 @@ function isValidMove(from, to, piece) {
 
   if (piece[1] !== "K") {
     const kingSquare = Object.keys(tempBoard).find(sq => tempBoard[sq] === `${piece[0]}K`);
-    if (isSquareAttackedOnBoard(kingSquare, piece[0] === "w" ? "b" : "w", tempBoard)) {
+    if (isSquareAttacked(kingSquare, piece[0] === "w" ? "b" : "w", tempBoard)) {
       return false; // король под шахом после этого хода
     }
   } else {
-    if (isSquareAttackedOnBoard(to, piece[0] === "w" ? "b" : "w", tempBoard)) {
+    if (isSquareAttacked(to, piece[0] === "w" ? "b" : "w", tempBoard)) {
       return false;
     }
   }
