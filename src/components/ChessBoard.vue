@@ -155,6 +155,20 @@ function onSquareClick(id) {
   pieces.value[to] = movingPiece;
   delete pieces.value[from];
 
+if (movingPiece[1] === "P") {
+  const toRank = parseSquare(to).rank;
+
+  // Для белых пешек достижение 8-й линии
+  if (movingPiece[0] === "w" && toRank === 8) {
+    pieces.value[to] = "wQ"; 
+  }
+
+  // Для чёрных пешек достижение 1-й линии
+  if (movingPiece[0] === "b" && toRank === 1) {
+    pieces.value[to] = "bQ"; 
+  }
+}
+
   revokeCastlingRightsForMove(movingPiece, from);
 
   selectedSquare.value = null;
