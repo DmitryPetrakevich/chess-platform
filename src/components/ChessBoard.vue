@@ -2,24 +2,19 @@
   <div class="board-wrapper">
     <div class="board">
       <div v-for="(row, rIndex) in squares" :key="rIndex" class="rank-row">
-        <div
-          v-for="cell in row"
-          :key="cell.id"
-          class="cell"
-          :class="[cell.color, { selected: selectedSquare === cell.id }]"
-          @click="onSquareClick(cell.id)"
-        >
-        <img v-if="pieceImage(cell.id)" :src="pieceImage(cell.id)" class="piece" />
+        <div v-for="cell in row" :key="cell.id" class="cell"
+          :class="[cell.color, { selected: selectedSquare === cell.id }]" @click="onSquareClick(cell.id)">
+          <img v-if="pieceImage(cell.id)" :src="pieceImage(cell.id)" class="piece" />
 
         </div>
         <div class="rank-label">
-        {{ row[0].rank }}
+          {{ row[0].rank }}
         </div>
       </div>
 
       <div class="files-row">
         <div v-for="f in files" :key="f" class="file-label">{{ f }}</div>
-        <div class="rank-label"></div> 
+        <div class="rank-label"></div>
       </div>
     </div>
   </div>
@@ -30,6 +25,10 @@ import { computed, ref } from "vue";
 
 const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
+
+const selectedSquare = ref(null) //  например "e2"
+const currentTurn = ref("w");
+const enPassantSquare = ref(null); // "d6", "e3" или null
 
 const castlingRights = ref({
   whiteKingSide: true,
@@ -84,9 +83,6 @@ function pieceImage(squareId) {
   return new URL(`../assets/chess-pieces/${code}.svg`, import.meta.url).href;
 }
 
-const selectedSquare = ref(null) //  например "e2"
-const currentTurn = ref("w");
-
 /**
  * Обрабатывает клик по клетке шахматной доски.
  * - Если фигура только выбирается → сохраняет её клетку.
@@ -96,67 +92,77 @@ const currentTurn = ref("w");
  * @param {string} id - id клетки, по которой кликнули (например "e2").
  */
 function onSquareClick(id) {
-  const piece = pieces.value[selectedSquare.value ?? id];
+  const clickedPiece = pieces.value[id];
 
-  // Снятие выделения
-  if (selectedSquare.value === id) {
-    selectedSquare.value = null;
-    return;
-  }
-
-  // Выбор фигуры
-  if (!selectedSquare.value && piece && piece[0] === currentTurn.value) {
+  if (clickedPiece && clickedPiece[0] === currentTurn.value) {
     selectedSquare.value = id;
     return;
   }
 
-  // Попытка хода
-  if (selectedSquare.value) {
-    const from = selectedSquare.value;
-    const to = id;
-    const movingPiece = pieces.value[from];
-    const targetPiece = pieces.value[to] ?? null;
+  if (!selectedSquare.value) return;
 
-    if (!isValidMove(from, to, movingPiece)) {
-      console.log("Недопустимый ход!");
-      selectedSquare.value = null;
-      return;
-    }
+  const from = selectedSquare.value;
+  const to = id;
+  const movingPiece = pieces.value[from];
+  const targetPiece = pieces.value[to] ?? null;
 
-    // Рокировка
-    if (isCastlingMove(from, to, movingPiece)) {
-      pieces.value[to] = movingPiece;
-      delete pieces.value[from];
+  if (!isValidMove(from, to, movingPiece)) {
+    console.log("Недопустимый ход!");
+    selectedSquare.value = null;
+    return;
+  }
 
-      // Перемещение ладьи
-      if (to === "g1") { pieces.value["f1"] = "wR"; delete pieces.value["h1"]; }
-      if (to === "c1") { pieces.value["d1"] = "wR"; delete pieces.value["a1"]; }
-      if (to === "g8") { pieces.value["f8"] = "bR"; delete pieces.value["h8"]; }
-      if (to === "c8") { pieces.value["d8"] = "bR"; delete pieces.value["a8"]; }
+  const dir = movingPiece[0] === "w" ? 1 : -1;
 
-      revokeCastlingRightsForMove(movingPiece, from);
-      selectedSquare.value = null;
-      currentTurn.value = currentTurn.value === "w" ? "b" : "w";
-      checkGameState(currentTurn.value);
-      return;
-    }
-
-    // Захват или обычный ход
-    if (targetPiece && targetPiece[1] === "R") {
-      revokeCastlingRightsForSquare(to);
-    }
-
+  // Рокировка
+  if (isCastlingMove(from, to, movingPiece)) {
     pieces.value[to] = movingPiece;
     delete pieces.value[from];
 
-    revokeCastlingRightsForMove(movingPiece, from);
+    if (to === "g1") { pieces.value["f1"] = "wR"; delete pieces.value["h1"]; }
+    if (to === "c1") { pieces.value["d1"] = "wR"; delete pieces.value["a1"]; }
+    if (to === "g8") { pieces.value["f8"] = "bR"; delete pieces.value["h8"]; }
+    if (to === "c8") { pieces.value["d8"] = "bR"; delete pieces.value["a8"]; }
 
+    revokeCastlingRightsForMove(movingPiece, from);
     selectedSquare.value = null;
     currentTurn.value = currentTurn.value === "w" ? "b" : "w";
-
     checkGameState(currentTurn.value);
+    return;
   }
+
+  //  взятия на проходе
+  if (movingPiece[1] === "P") {
+    // проверяем, было ли это взятие на проходе
+    if (to === enPassantSquare.value && !targetPiece) {
+      const capturedPawnSquare = `${files[parseSquare(to).fileIndex]}${parseSquare(to).rank - dir}`;
+      delete pieces.value[capturedPawnSquare];
+    }
+
+    // если пешка двигается на 2 клетки, устанавливаем en passant
+    if (Math.abs(parseSquare(to).rank - parseSquare(from).rank) === 2) {
+      enPassantSquare.value = `${files[parseSquare(from).fileIndex]}${parseSquare(from).rank + dir}`;
+    } else {
+      enPassantSquare.value = null;
+    }
+  } else {
+    enPassantSquare.value = null; // любое другое движение сбрасывает en passant
+  }
+
+  // Захват или обычный ход
+  if (targetPiece && targetPiece[1] === "R") revokeCastlingRightsForSquare(to);
+
+  pieces.value[to] = movingPiece;
+  delete pieces.value[from];
+
+  revokeCastlingRightsForMove(movingPiece, from);
+
+  selectedSquare.value = null;
+  currentTurn.value = currentTurn.value === "w" ? "b" : "w";
+
+  checkGameState(currentTurn.value);
 }
+
 
 /**
  * Преобразует id клетки в числовые индексы.
@@ -167,7 +173,7 @@ function onSquareClick(id) {
 function parseSquare(sq) {
   const file = sq[0];
   const rank = Number(sq[1]);
-  const fileIndex = files.indexOf(file); 
+  const fileIndex = files.indexOf(file);
   return { fileIndex, rank };
 }
 
@@ -221,24 +227,28 @@ function isValidPawnMove(from, to, piece) {
   }
 
   // взятие по диагонали
-  if (
-    Math.abs(tFile - fFile) === 1 &&
-    tRank === fRank + dir &&
-    isOpponent(piece, getPieceAt(to))
-  ) {
+  if (Math.abs(tFile - fFile) === 1 && tRank === fRank + dir && isOpponent(piece, getPieceAt(to))) {
     return true;
   }
+  if (to === enPassantSquare.value) return true;
 
-  return false; 
+  return false;
 }
 
+/**
+ * Проверяет, находится ли король указанного цвета `color` под шахом.
+ * 
+ * @param {"w"|"b"} color - Цвет короля, которого проверяем: "w" или "b".
+ * @param {Object<string,string>} [board=pieces.value] - Объект с расстановкой фигур.
+ * @returns {boolean} true, если король цвета `color` атакуется хотя бы одной фигурой противника.
+ * @throws {Error} Если король не найден на доске.
+ */
 function isKingInCheck(color, board = pieces.value) {
   const opponent = color === "w" ? "b" : "w";
   let kingSquare = Object.keys(board).find(sq => board[sq] === `${color}K`);
   if (!kingSquare) throw new Error(`Король цвета ${color} не найден!`);
   return isSquareAttacked(kingSquare, opponent, board);
 }
-
 
 /**
  * Проверяет, есть ли хотя бы один допустимый ход для игрока,
@@ -282,10 +292,8 @@ function hasAnyValidMoves(color, board = pieces.value) {
       }
     }
   }
-
   return false; // ходов нет
 }
-
 
 /**
  * Проверяет, находится ли игрок в состоянии мата или пата.
@@ -293,7 +301,7 @@ function hasAnyValidMoves(color, board = pieces.value) {
  * @returns {"checkmate"|"stalemate"|null}
  */
 function checkMateOrStalemate(color) {
-  const inCheck = isKingInCheck(color);         
+  const inCheck = isKingInCheck(color);
   const hasMoves = hasAnyValidMoves(color);
 
   if (!hasMoves && inCheck) return "checkmate";
@@ -370,21 +378,21 @@ function isValidRookMove(from, to) {
  * @returns {boolean} true, если ход допустим.
  */
 function isValidBishopMove(from, to) {
-  const {fileIndex: fFile, rank: fRank} = parseSquare(from);
-  const {fileIndex: tFile, rank: tRank} = parseSquare(to);
+  const { fileIndex: fFile, rank: fRank } = parseSquare(from);
+  const { fileIndex: tFile, rank: tRank } = parseSquare(to);
 
-  if(Math.abs(tFile - fFile) !== Math.abs(tRank - fRank)) {
+  if (Math.abs(tFile - fFile) !== Math.abs(tRank - fRank)) {
     return false;
   }
-  
+
   const stepFile = tFile > fFile ? 1 : -1
   const stepRank = tRank > fRank ? 1 : -1;
 
   let f = fFile + stepFile;
   let r = fRank + stepRank;
 
-  while(f !== tFile && r !== tRank) {
-    if(getPieceAt(`${files[f]}${r}`)) {
+  while (f !== tFile && r !== tRank) {
+    if (getPieceAt(`${files[f]}${r}`)) {
       return false;
     }
 
@@ -402,8 +410,8 @@ function isValidBishopMove(from, to) {
  * @returns {boolean} true, если ход допустим.
  */
 function isValidKingMove(from, to) {
-  const {fileIndex: fFile, rank: fRank} = parseSquare(from)
-  const {fileIndex: tFile, rank: tRank} = parseSquare(to);
+  const { fileIndex: fFile, rank: fRank } = parseSquare(from)
+  const { fileIndex: tFile, rank: tRank } = parseSquare(to);
 
   const fileDiff = Math.abs(tFile - fFile);
   const rankDiff = Math.abs(tRank - fRank);
@@ -419,8 +427,8 @@ function isValidKingMove(from, to) {
  * @returns {boolean} true, если ход допустим.
  */
 function isValidKnightMove(from, to) {
-  const {fileIndex: fFile, rank: fRank} = parseSquare(from);
-  const {fileIndex: tFile, rank: tRank} = parseSquare(to);
+  const { fileIndex: fFile, rank: fRank } = parseSquare(from);
+  const { fileIndex: tFile, rank: tRank } = parseSquare(to);
 
   const fileDiff = Math.abs(tFile - fFile);
   const rankDiff = Math.abs(tRank - fRank)
@@ -439,11 +447,11 @@ function isValidKnightMove(from, to) {
  * @returns {boolean} true, если ход допустим.
  */
 function isValidQueenMove(from, to) {
-  if(isValidRookMove(from, to)) {
+  if (isValidRookMove(from, to)) {
     return true;
   }
 
-  if(isValidBishopMove(from, to)) {
+  if (isValidBishopMove(from, to)) {
     return true;
   }
 
@@ -456,12 +464,12 @@ function isValidQueenMove(from, to) {
  * @param {string}from - клетка, с которой сделан ход, например "e1"
  */
 function revokeCastlingRightsForMove(piece, from) {
-  if(!piece) return;
+  if (!piece) return;
   const color = piece[0];
   const type = piece[1];
 
-  if(type === "K") {
-    if(color === "w") {
+  if (type === "K") {
+    if (color === "w") {
       castlingRights.value.whiteKingSide = false;
       castlingRights.value.whiteQueenSide = false;
     } else {
@@ -471,13 +479,13 @@ function revokeCastlingRightsForMove(piece, from) {
     return;
   }
 
-  if(type === "R") {
-    if(color === "w") {
-      if(from === "h1") castlingRights.value.whiteKingSide = false;
-      if(from === "a1") castlingRights.value.whiteQueenSide = false;
+  if (type === "R") {
+    if (color === "w") {
+      if (from === "h1") castlingRights.value.whiteKingSide = false;
+      if (from === "a1") castlingRights.value.whiteQueenSide = false;
     } else {
-      if(from === "h8") castlingRights.value.blackKingSide = false;
-      if(from === "a8") castlingRights.value.blackQueenSide = false;
+      if (from === "h8") castlingRights.value.blackKingSide = false;
+      if (from === "a8") castlingRights.value.blackQueenSide = false;
     }
   }
 }
@@ -493,7 +501,6 @@ function revokeCastlingRightsForSquare(square) {
   if (square === "h8") castlingRights.value.blackKingSide = false;
   if (square === "a8") castlingRights.value.blackQueenSide = false;
 }
-
 
 function isSquareAttacked(square, byColor, board = pieces.value) {
   const { fileIndex: tFile, rank: tRank } = parseSquare(square);
@@ -520,8 +527,8 @@ function isSquareAttacked(square, byColor, board = pieces.value) {
   }
 
   // Ладья/слон/ферзь
-  const rookDirs = [[1,0],[-1,0],[0,1],[0,-1]];
-  const bishopDirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
+  const rookDirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  const bishopDirs = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
 
   const checkSliding = (dirs, attackers) => {
     for (const [df, dr] of dirs) {
@@ -541,8 +548,8 @@ function isSquareAttacked(square, byColor, board = pieces.value) {
     return false;
   };
 
-  if (checkSliding(rookDirs, ["R","Q"])) return true;
-  if (checkSliding(bishopDirs, ["B","Q"])) return true;
+  if (checkSliding(rookDirs, ["R", "Q"])) return true;
+  if (checkSliding(bishopDirs, ["B", "Q"])) return true;
 
   // Король
   for (let df = -1; df <= 1; df++) {
@@ -557,9 +564,6 @@ function isSquareAttacked(square, byColor, board = pieces.value) {
 
   return false;
 }
-
-
-
 
 /**
  * Проверяет, является ли ход короля рокировкой, и разрешена ли она в текущей позиции.
@@ -590,9 +594,9 @@ function isCastlingMove(from, to, piece) {
       if (getPieceAt("h1") !== "wR") return false;
       if (getPieceAt("f1") || getPieceAt("g1")) return false;
 
-      if(isSquareAttacked("e1", opponent)) return false;
-      if(isSquareAttacked("f1", opponent)) return false;
-      if(isSquareAttacked("g1", opponent)) return false;
+      if (isSquareAttacked("e1", opponent)) return false;
+      if (isSquareAttacked("f1", opponent)) return false;
+      if (isSquareAttacked("g1", opponent)) return false;
 
       return true;
     }
@@ -656,12 +660,12 @@ function isCastlingMove(from, to, piece) {
 function isValidMove(from, to, piece) {
   if (!piece) return false;
 
-  if (from === to) return false; 
+  if (from === to) return false;
   const targetPiece = getPieceAt(to);
-  if (targetPiece && targetPiece[0] === piece[0]) return false; 
+  if (targetPiece && targetPiece[0] === piece[0]) return false;
 
   let valid = false;
-  switch(piece[1]) {
+  switch (piece[1]) {
     case "P": valid = isValidPawnMove(from, to, piece); break;
     case "R": valid = isValidRookMove(from, to, piece); break;
     case "B": valid = isValidBishopMove(from, to, piece); break;
@@ -710,7 +714,8 @@ function isValidMove(from, to, piece) {
 }
 
 .rank-label {
-  width: clamp(20px, 4vw, 32px); /* цифры тоже адаптивные */
+  width: clamp(20px, 4vw, 32px);
+  /* цифры тоже адаптивные */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -719,7 +724,8 @@ function isValidMove(from, to, piece) {
 }
 
 .cell {
-  width: clamp(40px, 8vw, 64px);   /* клетка адаптивная */
+  width: clamp(40px, 8vw, 64px);
+  /* клетка адаптивная */
   height: clamp(40px, 8vw, 64px);
   box-sizing: border-box;
   cursor: pointer;
@@ -740,7 +746,8 @@ function isValidMove(from, to, piece) {
 }
 
 .file-label {
-  width: clamp(40px, 8vw, 64px); /* ширина равна клетке */
+  width: clamp(40px, 8vw, 64px);
+  /* ширина равна клетке */
   text-align: center;
   font-weight: 600;
 }
@@ -749,11 +756,11 @@ function isValidMove(from, to, piece) {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  pointer-events: none; /* фигура не мешает клику */
+  pointer-events: none;
+  /* фигура не мешает клику */
 }
 
 .cell.selected {
   border: 3px solid red;
 }
-
 </style>
