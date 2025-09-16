@@ -92,104 +92,65 @@ const currentTurn = ref("w");
  * @param {string} id - id клетки, по которой кликнули (например "e2").
  */
 function onSquareClick(id) {
-  if (selectedSquare.value && id === selectedSquare.value) {
+  const piece = pieces.value[selectedSquare.value ?? id];
+
+  // Снятие выделения
+  if (selectedSquare.value === id) {
     selectedSquare.value = null;
-    console.log("Выбор отменён:", id);
     return;
   }
 
-  if(!selectedSquare.value && pieces.value[id]) {
-    const piece = pieces.value[id];
+  // Выбор фигуры
+  if (!selectedSquare.value && piece && piece[0] === currentTurn.value) {
+    selectedSquare.value = id;
+    return;
+  }
 
-    if(piece[0] !== currentTurn.value) {
-      console.log("Сейчас не ваш ход!")
-      return
-    }
-    
-    selectedSquare.value = id
-      console.log("Фигура выбрана", id)
-      return
-    }
-
-  if(selectedSquare.value) {
-    const piece = pieces.value[selectedSquare.value] // например wN
-
-    if (selectedSquare.value) {
-    const piece = pieces.value[selectedSquare.value]; // например "wK"
+  // Попытка хода
+  if (selectedSquare.value) {
     const from = selectedSquare.value;
     const to = id;
+    const movingPiece = pieces.value[from];
     const targetPiece = pieces.value[to] ?? null;
 
-    if (isCastlingMove(from, to, piece)) {
-      // Перемещаем короля
-      pieces.value[to] = piece;
-      delete pieces.value[from];
-
-      // Определяем какая ладья и куда ставить
-      if (piece[0] === "w") {
-        if (to === "g1") { // короткая
-          pieces.value["f1"] = "wR";
-          delete pieces.value["h1"];
-        } else if (to === "c1") { // длинная
-          pieces.value["d1"] = "wR";
-          delete pieces.value["a1"];
-        }
-      } else {
-        if (to === "g8") { // короткая чёрных
-          pieces.value["f8"] = "bR";
-          delete pieces.value["h8"];
-        } else if (to === "c8") { // длинная чёрных
-          pieces.value["d8"] = "bR";
-          delete pieces.value["a8"];
-        }
-      }
-
-      // Отзываем права на рокировку для этого цвета
-      revokeCastlingRightsForMove(piece, from);
-
-      selectedSquare.value = null;
-      currentTurn.value = currentTurn.value === "w" ? "b" : "w";
-      return;
-    }
-
-    // обычная проверка
-    if (!isValidMove(from, to, piece)) {
+    if (!isValidMove(from, to, movingPiece)) {
       console.log("Недопустимый ход!");
       selectedSquare.value = null;
       return;
     }
 
-    // если на to есть фигура — это захват; если это ладья — отзываем её права
+    // Рокировка
+    if (isCastlingMove(from, to, movingPiece)) {
+      pieces.value[to] = movingPiece;
+      delete pieces.value[from];
+
+      // Перемещение ладьи
+      if (to === "g1") { pieces.value["f1"] = "wR"; delete pieces.value["h1"]; }
+      if (to === "c1") { pieces.value["d1"] = "wR"; delete pieces.value["a1"]; }
+      if (to === "g8") { pieces.value["f8"] = "bR"; delete pieces.value["h8"]; }
+      if (to === "c8") { pieces.value["d8"] = "bR"; delete pieces.value["a8"]; }
+
+      revokeCastlingRightsForMove(movingPiece, from);
+      selectedSquare.value = null;
+      currentTurn.value = currentTurn.value === "w" ? "b" : "w";
+      checkGameState(currentTurn.value);
+      return;
+    }
+
+    // Захват или обычный ход
     if (targetPiece && targetPiece[1] === "R") {
       revokeCastlingRightsForSquare(to);
     }
 
-    // делаем ход
-    pieces.value[to] = piece;
+    pieces.value[to] = movingPiece;
     delete pieces.value[from];
 
-    // если ходил король или ладья — отзываем права
-    revokeCastlingRightsForMove(piece, from);
+    revokeCastlingRightsForMove(movingPiece, from);
 
     selectedSquare.value = null;
     currentTurn.value = currentTurn.value === "w" ? "b" : "w";
-}
 
-  if (!isValidMove(selectedSquare.value, id, piece)) {
-    console.log("Недопустимый ход!");
-    selectedSquare.value = null;
-    return;
-}
-
-    pieces.value[id] = piece
-
-    delete pieces.value[selectedSquare.value];
-
-    console.log(`Фигура ${piece} перемещена из ${selectedSquare.value} в ${id}`);
-
-    selectedSquare.value = null;
-
-    currentTurn.value = currentTurn.value === "w" ? "b" : "w";
+    checkGameState(currentTurn.value);
   }
 }
 
@@ -268,6 +229,120 @@ function isValidPawnMove(from, to, piece) {
 }
 
 /**
+ * Проверяет, находится ли король указанного цвета под шахом.
+ * @param {string} kingColor - цвет короля ("w" или "b").
+ * @returns {boolean} true, если король атакован.
+ */
+function isKingInCheck(kingColor) {
+  const opponent = kingColor === "w" ? "b" : "w";
+  let kingSquare = null;
+
+  // Находим клетку, где стоит король 
+  for (const square in pieces.value) {
+    const piece = pieces.value[square]; // например "wK" 
+    if (piece && piece[0] === kingColor && piece[1] === "K") {
+      kingSquare = parseSquare(square); 
+      break;
+    }
+  }
+
+  if (!kingSquare) {
+    throw new Error(`Король цвета ${kingColor} не найден на доске!`);
+  }
+
+  return isSquareAttacked(kingSquare, opponent);
+}
+
+/**
+ * Проверяет, есть ли хотя бы один допустимый ход для игрока,
+ * учитывая шахи на временной доске.
+ * @param {string} color - цвет игрока ("w" или "b")
+ * @param {object} board - текущая доска { square: piece }
+ * @returns {boolean} true, если есть хотя бы один допустимый ход
+ */
+function hasAnyValidMoves(color, board) {
+  for (const from in board) {
+    const piece = board[from];
+    if (!piece || piece[0] !== color) continue;
+
+    for (const file of files) {
+      for (const rank of ranks) {
+        const to = `${file}${rank}`;
+        const targetPiece = board[to];
+        if (targetPiece && targetPiece[0] === color) continue;
+
+        // проверяем движение по правилам фигуры
+        let valid = false;
+        switch (piece[1]) {
+          case "P": valid = isValidPawnMove(from, to, piece); break;
+          case "R": valid = isValidRookMove(from, to, piece); break;
+          case "B": valid = isValidBishopMove(from, to, piece); break;
+          case "Q": valid = isValidQueenMove(from, to, piece); break;
+          case "N": valid = isValidKnightMove(from, to, piece); break;
+          case "K": valid = isValidKingMove(from, to, piece) || isCastlingMove(from, to, piece); break;
+        }
+        if (!valid) continue;
+
+        // делаем временный ход на копии доски
+        const tempBoard = { ...board };
+        tempBoard[to] = piece;
+        delete tempBoard[from];
+
+        // находим короля после хода
+        const kingSquare = Object.keys(tempBoard).find(sq => tempBoard[sq] === `${color}K`);
+        if (!kingSquare) continue; // на всякий случай
+
+        // проверяем, не под шахом ли король
+        if (!isSquareAttackedOnBoard(kingSquare, color === "w" ? "b" : "w", tempBoard)) {
+          return true; // ход безопасен
+        }
+      }
+    }
+  }
+
+  return false; // ходов нет
+}
+
+/**
+ * Проверяет, находится ли игрок в состоянии мата или пата.
+ * @param {string} color - цвет игрока ("w" или "b")
+ * @returns {"checkmate"|"stalemate"|null}
+ */
+function checkMateOrStalemate(color) {
+  const inCheck = isKingInCheck(color);         
+  const hasMoves = hasAnyValidMoves(color, pieces.value); // используем текущую доску
+
+  if (!hasMoves && inCheck) {
+    return "checkmate";   // мат
+  }
+  if (!hasMoves && !inCheck) {
+    return "stalemate";   // пат
+  }
+
+  return null;      
+}
+
+/**
+ * Проверяет состояние игры после хода.
+ * @param {string} color - цвет, который должен ходить следующим ("w" или "b").
+ */
+function checkGameState(color) {
+  const state = checkMateOrStalemate(color);
+
+  if (state === "checkmate") {
+    console.log(`Мат! Победил игрок ${color === "w" ? "черными" : "белыми"}.`);
+    return true;
+  }
+
+  if (state === "stalemate") {
+    console.log("Пат! Ничья.");
+    return true;
+  }
+
+  return false; // игра продолжается
+}
+
+/**
  * Проверяет, может ли ладья сделать ход с from → to.
  * @param {string} from - начальная клетка (например, "a1").
  * @param {string} to - конечная клетка (например, "a8").
@@ -285,7 +360,7 @@ function isValidRookMove(from, to) {
 
   // Проверяем путь между from и to
   if (fFile === tFile) {
-    // вертикальное движение (по rank)
+    // вертикальное движение 
     const step = tRank > fRank ? 1 : -1;
     for (let r = fRank + step; r !== tRank; r += step) {
       if (getPieceAt(`${files[fFile]}${r}`)) {
@@ -293,7 +368,7 @@ function isValidRookMove(from, to) {
       }
     }
   } else {
-    // горизонтальное движение (по file)
+    // горизонтальное движение 
     const step = tFile > fFile ? 1 : -1;
     for (let f = fFile + step; f !== tFile; f += step) {
       if (getPieceAt(`${files[f]}${fRank}`)) {
@@ -302,7 +377,7 @@ function isValidRookMove(from, to) {
     }
   }
 
-  // Если дошли сюда → путь чистый, ход разрешён
+  // путь чистый
   return true;
 }
 
@@ -588,7 +663,6 @@ function isCastlingMove(from, to, piece) {
 
       return true;
     }
-
     return false;
   }
 
@@ -624,61 +698,130 @@ function isCastlingMove(from, to, piece) {
   return false;
 }
 
+
+function isSquareAttackedOnBoard(square, byColor, board) {
+  const { fileIndex: tFile, rank: tRank } = parseSquare(square);
+
+  // Пешка
+  if (byColor === "w") {
+    if (tFile - 1 >= 0) {
+      const sq = `${files[tFile - 1]}${tRank - 1}`;
+      if (board[sq] === "wP") return true;
+    }
+    if (tFile + 1 <= 7) {
+      const sq = `${files[tFile + 1]}${tRank - 1}`;
+      if (board[sq] === "wP") return true;
+    }
+  } else {
+    if (tFile - 1 >= 0) {
+      const sq = `${files[tFile - 1]}${tRank + 1}`;
+      if (board[sq] === "bP") return true;
+    }
+    if (tFile + 1 <= 7) {
+      const sq = `${files[tFile + 1]}${tRank + 1}`;
+      if (board[sq] === "bP") return true;
+    }
+  }
+
+  // Конь
+  const knightMoves = [
+    [1, 2], [2, 1], [-1, 2], [-2, 1],
+    [1, -2], [2, -1], [-1, -2], [-2, -1]
+  ];
+  for (const [df, dr] of knightMoves) {
+    const f = tFile + df;
+    const r = tRank + dr;
+    if (f < 0 || f > 7 || r < 1 || r > 8) continue;
+    const sq = `${files[f]}${r}`;
+    if (board[sq] === `${byColor}N`) return true;
+  }
+
+  // Ладья/слон/ферзь
+  const rookDirs = [[1,0],[-1,0],[0,1],[0,-1]];
+  const bishopDirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
+
+  const checkSliding = (dirs, attackers) => {
+    for (const [df, dr] of dirs) {
+      let f = tFile + df;
+      let r = tRank + dr;
+      while (f >= 0 && f <= 7 && r >= 1 && r <= 8) {
+        const sq = `${files[f]}${r}`;
+        const p = board[sq];
+        if (p) {
+          if (p[0] === byColor && attackers.includes(p[1])) return true;
+          break;
+        }
+        f += df;
+        r += dr;
+      }
+    }
+    return false;
+  };
+
+  if (checkSliding(rookDirs, ["R","Q"])) return true;
+  if (checkSliding(bishopDirs, ["B","Q"])) return true;
+
+  // Король
+  for (let df = -1; df <= 1; df++) {
+    for (let dr = -1; dr <= 1; dr++) {
+      if (df === 0 && dr === 0) continue;
+      const f = tFile + df;
+      const r = tRank + dr;
+      if (f < 0 || f > 7 || r < 1 || r > 8) continue;
+      const sq = `${files[f]}${r}`;
+      if (board[sq] === `${byColor}K`) return true;
+    }
+  }
+
+  return false;
+}
+
+
 /**
- * Центральный валидатор ходов для любых фигур.
- * - Запрещает ходить на ту же клетку.
- * - Запрещает рубить свои фигуры.
- * - Делегирует проверку в специализированные функции:
- *   - пешки → isValidPawnMove()
- *   - ладьи → isValidRookMove() (ещё не реализована)
- *   - остальные фигуры будут добавлены позже.
- * @param {string} from - начальная клетка (например "e2").
- * @param {string} to - клетка назначения (например "e4").
- * @param {string} piece - код фигуры (например "wP").
- * @returns {boolean} true, если ход допустим.
+ * Проверяет, может ли фигура сделать ход с from → to формально.
+ * - Не проверяет шах.
+ * - Не проверяет пат/мат.
+ * @param {string} from - начальная клетка, например "e2"
+ * @param {string} to - конечная клетка, например "e4"
+ * @param {string} piece - код фигуры, например "wP"
+ * @returns {boolean} true, если формально ход допустим
  */
 function isValidMove(from, to, piece) {
-  // Нельзя ходить на ту же самую клетку
-  if (from === to) {
-    return false;
-  }
+  if (!piece) return false;
 
+  if (from === to) return false; 
   const targetPiece = getPieceAt(to);
+  if (targetPiece && targetPiece[0] === piece[0]) return false; 
 
-  // Нельзя рубить свои фигуры
-  if (targetPiece && targetPiece[0] === piece[0]) {
-    return false;
+  let valid = false;
+  switch(piece[1]) {
+    case "P": valid = isValidPawnMove(from, to, piece); break;
+    case "R": valid = isValidRookMove(from, to, piece); break;
+    case "B": valid = isValidBishopMove(from, to, piece); break;
+    case "Q": valid = isValidQueenMove(from, to, piece); break;
+    case "N": valid = isValidKnightMove(from, to, piece); break;
+    case "K": valid = isValidKingMove(from, to, piece) || isCastlingMove(from, to, piece); break;
   }
 
-  // Определяем тип фигуры 
-  const type = piece[1];
+  if (!valid) return false;
 
-  if (type === "P") {
-    return isValidPawnMove(from, to, piece);
+  // король не должен оставаться под шахом
+  const tempBoard = { ...pieces.value };
+  tempBoard[to] = piece;
+  delete tempBoard[from];
+
+  if (piece[1] !== "K") {
+    const kingSquare = Object.keys(tempBoard).find(sq => tempBoard[sq] === `${piece[0]}K`);
+    if (isSquareAttackedOnBoard(kingSquare, piece[0] === "w" ? "b" : "w", tempBoard)) {
+      return false; // король под шахом после этого хода
+    }
+  } else {
+    if (isSquareAttackedOnBoard(to, piece[0] === "w" ? "b" : "w", tempBoard)) {
+      return false;
+    }
   }
 
-  if (type === "R") {
-  
-    return isValidRookMove(from, to, piece);
-  }
-
-  if(type === "B") {
-    return isValidBishopMove(from, to, piece)
-  }
-
-  if(type === "Q") {
-    return isValidQueenMove(from, to, piece)
-  }
-
-  if(type === "K") {
-    return isValidKingMove(from, to, piece)
-  }
-
-  if(type === "N") {
-    return isValidKnightMove(from, to, piece)
-  }
-
-  return true;
+  return true; // ход разрешён
 }
 </script>
 
