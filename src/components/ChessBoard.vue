@@ -155,19 +155,19 @@ function onSquareClick(id) {
   pieces.value[to] = movingPiece;
   delete pieces.value[from];
 
-if (movingPiece[1] === "P") {
-  const toRank = parseSquare(to).rank;
+  if (movingPiece[1] === "P") {
+    const toRank = parseSquare(to).rank;
 
-  // Для белых пешек достижение 8-й линии
-  if (movingPiece[0] === "w" && toRank === 8) {
-    pieces.value[to] = "wQ"; 
-  }
+    // Для белых пешек достижение 8-й линии
+    if (movingPiece[0] === "w" && toRank === 8) {
+      pieces.value[to] = "wQ";
+    }
 
-  // Для чёрных пешек достижение 1-й линии
-  if (movingPiece[0] === "b" && toRank === 1) {
-    pieces.value[to] = "bQ"; 
+    // Для чёрных пешек достижение 1-й линии
+    if (movingPiece[0] === "b" && toRank === 1) {
+      pieces.value[to] = "bQ";
+    }
   }
-}
 
   revokeCastlingRightsForMove(movingPiece, from);
 
@@ -176,7 +176,6 @@ if (movingPiece[1] === "P") {
 
   checkGameState(currentTurn.value);
 }
-
 
 /**
  * Преобразует id клетки в числовые индексы.
@@ -714,7 +713,8 @@ function isValidMove(from, to, piece) {
 .board-wrapper {
   display: flex;
   justify-content: center;
-  padding: 16px;
+  /* align-items: center; */
+  min-height: 100vh;
 }
 
 .board {
@@ -738,9 +738,10 @@ function isValidMove(from, to, piece) {
 }
 
 .cell {
-  width: clamp(40px, 8vw, 64px);
-  /* клетка адаптивная */
-  height: clamp(40px, 8vw, 64px);
+  /* width: clamp(50px, 10vw, 80px);  
+  height: clamp(50px, 10vw, 80px);  */
+  width: clamp(35px, 7vw, 60px);
+  height: clamp(35px, 7vw, 60px);
   box-sizing: border-box;
   cursor: pointer;
 }
