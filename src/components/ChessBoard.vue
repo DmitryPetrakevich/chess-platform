@@ -3,9 +3,11 @@
     <div class="board">
       <div v-for="(row, rIndex) in squares" :key="rIndex" class="rank-row">
         <div v-for="cell in row" :key="cell.id" class="cell"
-          :class="[cell.color, { selected: selectedSquare === cell.id }]" @click="onSquareClick(cell.id)">
+          :class="[cell.color, 
+          { selected: selectedSquare === cell.id },
+          { highlighted: highlightedSquares.has(cell.id) }]" 
+          @click="onSquareClick(cell.id)">
           <img v-if="pieceImage(cell.id)" :src="pieceImage(cell.id)" class="piece" />
-
         </div>
         <div class="rank-label">
           {{ row[0].rank }}
@@ -28,7 +30,8 @@ const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
 
 const selectedSquare = ref(null) //  например "e2"
 const currentTurn = ref("w");
-const enPassantSquare = ref(null); // "d6", "e3" или null
+const enPassantTarget = ref(null); // Клетка, на которую можно бить на проходе (например "d6")
+const highlightedSquares = ref(new Set()); // Добавить после других ref
 
 const castlingRights = ref({
   whiteKingSide: true,
@@ -94,8 +97,13 @@ function pieceImage(squareId) {
 function onSquareClick(id) {
   const clickedPiece = pieces.value[id];
 
+  // Сбрасываем подсветку при любом клике
+  highlightedSquares.value.clear();
+
   if (clickedPiece && clickedPiece[0] === currentTurn.value) {
     selectedSquare.value = id;
+    // Подсвечиваем доступные ходы для выбранной фигуры
+    highlightedSquares.value = getAvailableMoves(id);
     return;
   }
 
@@ -131,22 +139,20 @@ function onSquareClick(id) {
     return;
   }
 
-  //  взятия на проходе
   if (movingPiece[1] === "P") {
-    // проверяем, было ли это взятие на проходе
-    if (to === enPassantSquare.value && !targetPiece) {
+    if (to === enPassantTarget.value && !targetPiece) {
       const capturedPawnSquare = `${files[parseSquare(to).fileIndex]}${parseSquare(to).rank - dir}`;
       delete pieces.value[capturedPawnSquare];
     }
 
-    // если пешка двигается на 2 клетки, устанавливаем en passant
     if (Math.abs(parseSquare(to).rank - parseSquare(from).rank) === 2) {
-      enPassantSquare.value = `${files[parseSquare(from).fileIndex]}${parseSquare(from).rank + dir}`;
+      const enPassantRank = parseSquare(from).rank + dir; // промежуточная клетка
+      enPassantTarget.value = `${files[parseSquare(from).fileIndex]}${enPassantRank}`;
     } else {
-      enPassantSquare.value = null;
+      enPassantTarget.value = null;
     }
   } else {
-    enPassantSquare.value = null; // любое другое движение сбрасывает en passant
+    enPassantTarget.value = null; // любое другое движение сбрасывает en passant
   }
 
   // Захват или обычный ход
@@ -175,6 +181,25 @@ function onSquareClick(id) {
   currentTurn.value = currentTurn.value === "w" ? "b" : "w";
 
   checkGameState(currentTurn.value);
+  highlightedSquares.value.clear();
+}
+
+
+function getAvailableMoves(squareId) {
+  const moves = new Set();
+  const piece = pieces.value[squareId];
+  if (!piece || piece[0] !== currentTurn.value) return moves;
+
+  for (const file of files) {
+    for (const rank of ranks) {
+      const targetSquare = `${file}${rank}`;
+      if (isValidMove(squareId, targetSquare, piece)) {
+        moves.add(targetSquare);
+      }
+    }
+  }
+
+  return moves;
 }
 
 /**
@@ -243,7 +268,12 @@ function isValidPawnMove(from, to, piece) {
   if (Math.abs(tFile - fFile) === 1 && tRank === fRank + dir && isOpponent(piece, getPieceAt(to))) {
     return true;
   }
-  if (to === enPassantSquare.value) return true;
+
+  if (Math.abs(tFile - fFile) === 1 && 
+      tRank === fRank + dir && 
+      to === enPassantTarget.value) {
+    return true;
+  }
 
   return false;
 }
@@ -777,5 +807,27 @@ function isValidMove(from, to, piece) {
 
 .cell.selected {
   border: 3px solid red;
+}
+
+.cell.highlighted {
+  background: none !important;
+  box-shadow: none !important;
+  position: relative; 
+}
+.cell.highlighted::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30%;          
+  height: 30%;
+  background: rgba(128, 128, 128, 0.6); 
+  border-radius: 50%;  
+  transform: translate(-50%, -50%); 
+  pointer-events: none; 
+}
+
+.cell.dark.highlighted::after {
+  background: rgba(100, 100, 100, 0.6);
 }
 </style>

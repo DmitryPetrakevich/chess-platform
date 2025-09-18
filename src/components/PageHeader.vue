@@ -2,7 +2,9 @@
     <header class="page-header">
         <div class="page-header__container">
             <div class="page-header__logo">
-                <span class="page-header__logo-text">ЛОГОТИП</span>
+                <span class="page-header__logo-img">
+                TUSUR Chess
+                </span>
             </div>
             
             <nav class="page-header__btns">
@@ -56,7 +58,7 @@
 }
 
 .page-header__btn {
-    padding: 14px 28px;
+    padding: 10px 20px;
     border: none;
     border-radius: 8px;
     font-weight: 600;
