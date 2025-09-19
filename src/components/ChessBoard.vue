@@ -2,11 +2,18 @@
   <div class="board-wrapper">
     <div class="board">
       <div v-for="(row, rIndex) in squares" :key="rIndex" class="rank-row">
-        <div v-for="cell in row" :key="cell.id" class="cell"
-          :class="[cell.color, 
-          { selected: selectedSquare === cell.id },
-          { highlighted: highlightedSquares.has(cell.id) }]" 
-          @click="onSquareClick(cell.id)">
+        <div 
+          v-for="cell in row" 
+          :key="cell.id" 
+          class="cell"
+          :class="[
+            cell.color, 
+            { selected: selectedSquare === cell.id },
+            { highlighted: highlightedSquares.has(cell.id) },
+            { 'last-move': lastMove.from === cell.id || lastMove.to === cell.id }
+          ]"
+          @click="onSquareClick(cell.id)"
+        >
           <img v-if="pieceImage(cell.id)" :src="pieceImage(cell.id)" class="piece" />
         </div>
         <div class="rank-label">
@@ -22,6 +29,7 @@
   </div>
 </template>
 
+
 <script setup>
 import { computed, ref } from "vue";
 
@@ -31,7 +39,9 @@ const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
 const selectedSquare = ref(null) //  например "e2"
 const currentTurn = ref("w");
 const enPassantTarget = ref(null); // Клетка, на которую можно бить на проходе (например "d6")
-const highlightedSquares = ref(new Set()); // Добавить после других ref
+const highlightedSquares = ref(new Set()); 
+
+const lastMove = ref({ from: null, to: null });
 
 const castlingRights = ref({
   whiteKingSide: true,
@@ -133,6 +143,9 @@ function onSquareClick(id) {
     if (to === "c8") { pieces.value["d8"] = "bR"; delete pieces.value["a8"]; }
 
     revokeCastlingRightsForMove(movingPiece, from);
+
+    lastMove.value = { from, to };
+
     selectedSquare.value = null;
     currentTurn.value = currentTurn.value === "w" ? "b" : "w";
     checkGameState(currentTurn.value);
@@ -177,6 +190,8 @@ function onSquareClick(id) {
 
   revokeCastlingRightsForMove(movingPiece, from);
 
+  lastMove.value = { from, to };
+
   selectedSquare.value = null;
   currentTurn.value = currentTurn.value === "w" ? "b" : "w";
 
@@ -184,7 +199,11 @@ function onSquareClick(id) {
   highlightedSquares.value.clear();
 }
 
-
+/**
+ * Возвращает множество доступных ходов для выбранной фигуры на доске.
+ * @param {string} squareId - ID клетки в формате "буква+цифра" (например, "e2").
+ * @returns {Set<string>} Множество клеток (например, {"e3", "e4"}), куда можно походить выбранной фигурой.
+ */
 function getAvailableMoves(squareId) {
   const moves = new Set();
   const piece = pieces.value[squareId];
@@ -838,4 +857,9 @@ function isValidMove(from, to, piece) {
 .cell.selected.highlighted {
   background: inherit !important;
 }
+
+.cell.last-move {
+  background: rgba(255, 255, 0, 0.435) !important; 
+}
+
 </style>
