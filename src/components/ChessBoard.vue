@@ -802,18 +802,12 @@ function isValidMove(from, to, piece) {
   height: 100%;
   object-fit: contain;
   pointer-events: none;
-  /* фигура не мешает клику */
-}
-
-.cell.selected {
-  border: 3px solid red;
 }
 
 .cell.highlighted {
-  background: none !important;
-  box-shadow: none !important;
   position: relative; 
 }
+
 .cell.highlighted::after {
   content: "";
   position: absolute;
@@ -821,13 +815,27 @@ function isValidMove(from, to, piece) {
   left: 50%;
   width: 30%;          
   height: 30%;
-  background: rgba(128, 128, 128, 0.6); 
+  background: rgba(136, 168, 136, 0.4); /* Очень светлый зеленый */
   border-radius: 50%;  
   transform: translate(-50%, -50%); 
   pointer-events: none; 
+  z-index: 1;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
 }
 
 .cell.dark.highlighted::after {
-  background: rgba(100, 100, 100, 0.6);
+  background: rgba(180, 200, 180, 0.45); 
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.15);
+}
+
+.cell.selected {
+  /* border: 3px solid red; */
+  box-sizing: border-box;
+  background-color: rgba(67, 94, 67, 0.4);;
+  /* background: inherit !important;  */
+}
+
+.cell.selected.highlighted {
+  background: inherit !important;
 }
 </style>
