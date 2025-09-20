@@ -13,8 +13,16 @@
             { 'last-move': lastMove.from === cell.id || lastMove.to === cell.id }
           ]"
           @click="onSquareClick(cell.id)"
+          @dragover.prevent
+          @drop="onDrop(cell.id, $event)" 
         >
-          <img v-if="pieceImage(cell.id)" :src="pieceImage(cell.id)" class="piece" />
+          <img v-if="pieceImage(cell.id)" 
+            :src="pieceImage(cell.id)" 
+            class="piece" 
+            draggable="true"
+            @dragstart="onDragStart(cell.id, $event)" 
+            @dragend="onDragEnd"
+          />
         </div>
         <div class="rank-label">
           {{ row[0].rank }}
@@ -38,10 +46,138 @@ const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
 
 const selectedSquare = ref(null) //  например "e2"
 const currentTurn = ref("w");
-const enPassantTarget = ref(null); // Клетка, на которую можно бить на проходе (например "d6")
+const enPassantTarget = ref(null); // Клетка, на которую можно бить на проходе
 const highlightedSquares = ref(new Set()); 
 
 const lastMove = ref({ from: null, to: null });
+
+
+const draggedFrom = ref(null); // клетка, с которой начали перетаскивать
+
+/**
+ * Начало перетаскивания.
+ * - Сохраняем источник в реактивную переменную (на случай необходимости).
+ * - Обязательно кладём id в event.dataTransfer, иначе drop может не сработать.
+ */
+function onDragStart(id, event) {
+  const piece = pieces.value[id];
+  
+  // Проверяем, можно ли перемещать эту фигуру
+  if (!piece || piece[0] !== currentTurn.value) {
+    event.preventDefault();
+    return;
+  }
+  
+  draggedFrom.value = id;
+  
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", id);
+    console.log("Начали перетаскивание фигуры:", id, piece);
+  }
+}
+
+/**
+ * Окончание перетаскивания — очистка временного состояния.
+ */
+function onDragEnd() {
+  // очистка запасной переменной
+  draggedFrom.value = null;
+}
+
+function onDrop(to, event) {
+  event.preventDefault(); // Важно: предотвращаем поведение по умолчанию
+  
+  let from = null;
+  
+  // Пытаемся получить from из dataTransfer
+  try {
+    if (event.dataTransfer) {
+      from = event.dataTransfer.getData("text/plain");
+    }
+  } catch (e) {
+    console.error("Ошибка при получении данных:", e);
+  }
+  
+  // Если не получилось из dataTransfer, используем запасной вариант
+  if (!from) {
+    from = draggedFrom.value;
+  }
+  
+  if (!from) {
+    console.log("Не удалось определить исходную клетку");
+    return;
+  }
+  
+  console.log("Перетаскивание from:", from, "to:", to);
+  
+  makeMove(from, to);
+  draggedFrom.value = null;
+}
+
+function makeMove(from, to) {
+  const movingPiece = pieces.value[from];
+  const targetPiece = pieces.value[to] ?? null;
+
+  if (!isValidMove(from, to, movingPiece)) return;
+
+  const dir = movingPiece[0] === "w" ? 1 : -1;
+
+  // Рокировка
+  if (isCastlingMove(from, to, movingPiece)) {
+    pieces.value[to] = movingPiece;
+    delete pieces.value[from];
+
+    if (to === "g1") { pieces.value["f1"] = "wR"; delete pieces.value["h1"]; }
+    if (to === "c1") { pieces.value["d1"] = "wR"; delete pieces.value["a1"]; }
+    if (to === "g8") { pieces.value["f8"] = "bR"; delete pieces.value["h8"]; }
+    if (to === "c8") { pieces.value["d8"] = "bR"; delete pieces.value["a8"]; }
+
+    revokeCastlingRightsForMove(movingPiece, from);
+
+    lastMove.value = { from, to };
+    selectedSquare.value = null;
+    currentTurn.value = currentTurn.value === "w" ? "b" : "w";
+    checkGameState(currentTurn.value);
+    return;
+  }
+
+  // Пешка: en passant, двойной ход, превращение
+  if (movingPiece[1] === "P") {
+    if (to === enPassantTarget.value && !targetPiece) {
+      const capturedPawnSquare = `${files[parseSquare(to).fileIndex]}${parseSquare(to).rank - dir}`;
+      delete pieces.value[capturedPawnSquare];
+    }
+
+    if (Math.abs(parseSquare(to).rank - parseSquare(from).rank) === 2) {
+      const enPassantRank = parseSquare(from).rank + dir;
+      enPassantTarget.value = `${files[parseSquare(from).fileIndex]}${enPassantRank}`;
+    } else {
+      enPassantTarget.value = null;
+    }
+  } else {
+    enPassantTarget.value = null;
+  }
+
+  if (targetPiece && targetPiece[1] === "R") revokeCastlingRightsForSquare(to);
+
+  pieces.value[to] = movingPiece;
+  delete pieces.value[from];
+
+  if (movingPiece[1] === "P") {
+    const toRank = parseSquare(to).rank;
+    if (movingPiece[0] === "w" && toRank === 8) pieces.value[to] = "wQ";
+    if (movingPiece[0] === "b" && toRank === 1) pieces.value[to] = "bQ";
+  }
+
+  revokeCastlingRightsForMove(movingPiece, from);
+
+  lastMove.value = { from, to };
+  selectedSquare.value = null;
+  currentTurn.value = currentTurn.value === "w" ? "b" : "w";
+  checkGameState(currentTurn.value);
+  highlightedSquares.value.clear();
+}
 
 const castlingRights = ref({
   whiteKingSide: true,
@@ -107,97 +243,19 @@ function pieceImage(squareId) {
 function onSquareClick(id) {
   const clickedPiece = pieces.value[id];
 
-  // Сбрасываем подсветку при любом клике
   highlightedSquares.value.clear();
 
   if (clickedPiece && clickedPiece[0] === currentTurn.value) {
     selectedSquare.value = id;
-    // Подсвечиваем доступные ходы для выбранной фигуры
     highlightedSquares.value = getAvailableMoves(id);
     return;
   }
 
   if (!selectedSquare.value) return;
 
-  const from = selectedSquare.value;
-  const to = id;
-  const movingPiece = pieces.value[from];
-  const targetPiece = pieces.value[to] ?? null;
-
-  if (!isValidMove(from, to, movingPiece)) {
-    console.log("Недопустимый ход!");
-    selectedSquare.value = null;
-    return;
-  }
-
-  const dir = movingPiece[0] === "w" ? 1 : -1;
-
-  // Рокировка
-  if (isCastlingMove(from, to, movingPiece)) {
-    pieces.value[to] = movingPiece;
-    delete pieces.value[from];
-
-    if (to === "g1") { pieces.value["f1"] = "wR"; delete pieces.value["h1"]; }
-    if (to === "c1") { pieces.value["d1"] = "wR"; delete pieces.value["a1"]; }
-    if (to === "g8") { pieces.value["f8"] = "bR"; delete pieces.value["h8"]; }
-    if (to === "c8") { pieces.value["d8"] = "bR"; delete pieces.value["a8"]; }
-
-    revokeCastlingRightsForMove(movingPiece, from);
-
-    lastMove.value = { from, to };
-
-    selectedSquare.value = null;
-    currentTurn.value = currentTurn.value === "w" ? "b" : "w";
-    checkGameState(currentTurn.value);
-    return;
-  }
-
-  if (movingPiece[1] === "P") {
-    if (to === enPassantTarget.value && !targetPiece) {
-      const capturedPawnSquare = `${files[parseSquare(to).fileIndex]}${parseSquare(to).rank - dir}`;
-      delete pieces.value[capturedPawnSquare];
-    }
-
-    if (Math.abs(parseSquare(to).rank - parseSquare(from).rank) === 2) {
-      const enPassantRank = parseSquare(from).rank + dir; // промежуточная клетка
-      enPassantTarget.value = `${files[parseSquare(from).fileIndex]}${enPassantRank}`;
-    } else {
-      enPassantTarget.value = null;
-    }
-  } else {
-    enPassantTarget.value = null; // любое другое движение сбрасывает en passant
-  }
-
-  // Захват или обычный ход
-  if (targetPiece && targetPiece[1] === "R") revokeCastlingRightsForSquare(to);
-
-  pieces.value[to] = movingPiece;
-  delete pieces.value[from];
-
-  if (movingPiece[1] === "P") {
-    const toRank = parseSquare(to).rank;
-
-    // Для белых пешек достижение 8-й линии
-    if (movingPiece[0] === "w" && toRank === 8) {
-      pieces.value[to] = "wQ";
-    }
-
-    // Для чёрных пешек достижение 1-й линии
-    if (movingPiece[0] === "b" && toRank === 1) {
-      pieces.value[to] = "bQ";
-    }
-  }
-
-  revokeCastlingRightsForMove(movingPiece, from);
-
-  lastMove.value = { from, to };
-
-  selectedSquare.value = null;
-  currentTurn.value = currentTurn.value === "w" ? "b" : "w";
-
-  checkGameState(currentTurn.value);
-  highlightedSquares.value.clear();
+  makeMove(selectedSquare.value, id);
 }
+
 
 /**
  * Возвращает множество доступных ходов для выбранной фигуры на доске.
@@ -402,7 +460,6 @@ function isValidRookMove(from, to) {
   const { fileIndex: fFile, rank: fRank } = parseSquare(from);
   const { fileIndex: tFile, rank: tRank } = parseSquare(to);
 
-  // Ладья должна двигаться строго по прямой линии
   if (fFile !== tFile && fRank !== tRank) {
     return false;
   }
@@ -426,7 +483,6 @@ function isValidRookMove(from, to) {
     }
   }
 
-  // путь чистый
   return true;
 }
 
@@ -564,6 +620,16 @@ function revokeCastlingRightsForSquare(square) {
   if (square === "a8") castlingRights.value.blackQueenSide = false;
 }
 
+/**
+ * Проверяет, атакована ли указанная клетка фигурами определённого цвета.
+ * @param {string} square - Клетка, которую проверяем (например, "e4").
+ * @param {"w"|"b"} byColor - Цвет атакующих фигур ("w" для белых, "b" для чёрных).
+ * @param {Object} [board=pieces.value] - Текущее состояние доски
+ *   в формате объекта { "e4": "wP", ... }. По умолчанию берётся глобальное `pieces.value`.
+ * @returns {boolean} true — если клетка атакована хотя бы одной фигурой указанного цвета,
+ *                    false — если клетка безопасна.
+ * Если находится фигура нужного типа и цвета — возвращается true.
+ */
 function isSquareAttacked(square, byColor, board = pieces.value) {
   const { fileIndex: tFile, rank: tRank } = parseSquare(square);
 
@@ -592,6 +658,16 @@ function isSquareAttacked(square, byColor, board = pieces.value) {
   const rookDirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
   const bishopDirs = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
 
+  /**
+   * Проверяет, атакуется ли целевая клетка фигурами дальнобойного типа 
+   * (ладья, слон или ферзь), двигающимися по заданным направлениям.
+   *
+   * @param {number[][]} dirs - Массив направлений движения в формате [df, dr].
+   * @param {string[]} attackers - Список типов фигур (по обозначению),
+   *   которые могут атаковать по этим направлениям, например ["R","Q"] или ["B","Q"].
+   * @returns {boolean} true, если в каком-либо направлении найдена фигура `attackers` цвета `byColor`,
+   *   которая может атаковать целевую клетку; иначе false.
+   */
   const checkSliding = (dirs, attackers) => {
     for (const [df, dr] of dirs) {
       let f = tFile + df;
@@ -762,7 +838,6 @@ function isValidMove(from, to, piece) {
 .board-wrapper {
   display: flex;
   justify-content: center;
-  /* align-items: center; */
   min-height: 100vh;
 }
 
@@ -778,7 +853,6 @@ function isValidMove(from, to, piece) {
 
 .rank-label {
   width: clamp(20px, 4vw, 32px);
-  /* цифры тоже адаптивные */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -787,8 +861,6 @@ function isValidMove(from, to, piece) {
 }
 
 .cell {
-  /* width: clamp(50px, 10vw, 80px);  
-  height: clamp(50px, 10vw, 80px);  */
   width: clamp(35px, 7vw, 60px);
   height: clamp(35px, 7vw, 60px);
   box-sizing: border-box;
@@ -820,7 +892,6 @@ function isValidMove(from, to, piece) {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  pointer-events: none;
 }
 
 .cell.highlighted {
@@ -834,7 +905,7 @@ function isValidMove(from, to, piece) {
   left: 50%;
   width: 30%;          
   height: 30%;
-  background: rgba(136, 168, 136, 0.4); /* Очень светлый зеленый */
+  background: rgba(136, 168, 136, 0.4); 
   border-radius: 50%;  
   transform: translate(-50%, -50%); 
   pointer-events: none; 
@@ -844,7 +915,7 @@ function isValidMove(from, to, piece) {
 
 .cell.dark.highlighted::after {
   background: rgba(180, 200, 180, 0.45); 
-  box-shadow: 0 0 2px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.549);
 }
 
 .cell.selected {
