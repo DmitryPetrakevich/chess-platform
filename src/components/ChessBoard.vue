@@ -37,7 +37,6 @@
   </div>
 </template>
 
-
 <script setup>
 import { computed, ref } from "vue";
 
@@ -48,136 +47,15 @@ const selectedSquare = ref(null) //  например "e2"
 const currentTurn = ref("w");
 const enPassantTarget = ref(null); // Клетка, на которую можно бить на проходе
 const highlightedSquares = ref(new Set()); 
-
 const lastMove = ref({ from: null, to: null });
 
-
+/**
+ * Клетка, с которой начали перетаскивание.
+ * @type {import('vue').Ref<string|null>}
+ * Используется как запасной источник информации о начальной клетке,
+ * если event.dataTransfer не содержит данных (разные браузеры/платформы).
+ */
 const draggedFrom = ref(null); // клетка, с которой начали перетаскивать
-
-/**
- * Начало перетаскивания.
- * - Сохраняем источник в реактивную переменную (на случай необходимости).
- * - Обязательно кладём id в event.dataTransfer, иначе drop может не сработать.
- */
-function onDragStart(id, event) {
-  const piece = pieces.value[id];
-  
-  // Проверяем, можно ли перемещать эту фигуру
-  if (!piece || piece[0] !== currentTurn.value) {
-    event.preventDefault();
-    return;
-  }
-  
-  draggedFrom.value = id;
-  
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", id);
-    console.log("Начали перетаскивание фигуры:", id, piece);
-  }
-}
-
-/**
- * Окончание перетаскивания — очистка временного состояния.
- */
-function onDragEnd() {
-  // очистка запасной переменной
-  draggedFrom.value = null;
-}
-
-function onDrop(to, event) {
-  event.preventDefault(); // Важно: предотвращаем поведение по умолчанию
-  
-  let from = null;
-  
-  // Пытаемся получить from из dataTransfer
-  try {
-    if (event.dataTransfer) {
-      from = event.dataTransfer.getData("text/plain");
-    }
-  } catch (e) {
-    console.error("Ошибка при получении данных:", e);
-  }
-  
-  // Если не получилось из dataTransfer, используем запасной вариант
-  if (!from) {
-    from = draggedFrom.value;
-  }
-  
-  if (!from) {
-    console.log("Не удалось определить исходную клетку");
-    return;
-  }
-  
-  console.log("Перетаскивание from:", from, "to:", to);
-  
-  makeMove(from, to);
-  draggedFrom.value = null;
-}
-
-function makeMove(from, to) {
-  const movingPiece = pieces.value[from];
-  const targetPiece = pieces.value[to] ?? null;
-
-  if (!isValidMove(from, to, movingPiece)) return;
-
-  const dir = movingPiece[0] === "w" ? 1 : -1;
-
-  // Рокировка
-  if (isCastlingMove(from, to, movingPiece)) {
-    pieces.value[to] = movingPiece;
-    delete pieces.value[from];
-
-    if (to === "g1") { pieces.value["f1"] = "wR"; delete pieces.value["h1"]; }
-    if (to === "c1") { pieces.value["d1"] = "wR"; delete pieces.value["a1"]; }
-    if (to === "g8") { pieces.value["f8"] = "bR"; delete pieces.value["h8"]; }
-    if (to === "c8") { pieces.value["d8"] = "bR"; delete pieces.value["a8"]; }
-
-    revokeCastlingRightsForMove(movingPiece, from);
-
-    lastMove.value = { from, to };
-    selectedSquare.value = null;
-    currentTurn.value = currentTurn.value === "w" ? "b" : "w";
-    checkGameState(currentTurn.value);
-    return;
-  }
-
-  // Пешка: en passant, двойной ход, превращение
-  if (movingPiece[1] === "P") {
-    if (to === enPassantTarget.value && !targetPiece) {
-      const capturedPawnSquare = `${files[parseSquare(to).fileIndex]}${parseSquare(to).rank - dir}`;
-      delete pieces.value[capturedPawnSquare];
-    }
-
-    if (Math.abs(parseSquare(to).rank - parseSquare(from).rank) === 2) {
-      const enPassantRank = parseSquare(from).rank + dir;
-      enPassantTarget.value = `${files[parseSquare(from).fileIndex]}${enPassantRank}`;
-    } else {
-      enPassantTarget.value = null;
-    }
-  } else {
-    enPassantTarget.value = null;
-  }
-
-  if (targetPiece && targetPiece[1] === "R") revokeCastlingRightsForSquare(to);
-
-  pieces.value[to] = movingPiece;
-  delete pieces.value[from];
-
-  if (movingPiece[1] === "P") {
-    const toRank = parseSquare(to).rank;
-    if (movingPiece[0] === "w" && toRank === 8) pieces.value[to] = "wQ";
-    if (movingPiece[0] === "b" && toRank === 1) pieces.value[to] = "bQ";
-  }
-
-  revokeCastlingRightsForMove(movingPiece, from);
-
-  lastMove.value = { from, to };
-  selectedSquare.value = null;
-  currentTurn.value = currentTurn.value === "w" ? "b" : "w";
-  checkGameState(currentTurn.value);
-  highlightedSquares.value.clear();
-}
 
 const castlingRights = ref({
   whiteKingSide: true,
@@ -256,6 +134,157 @@ function onSquareClick(id) {
   makeMove(selectedSquare.value, id);
 }
 
+/**
+ * Начало перетаскивания фигуры.
+ *
+ * Что делает:
+ * - Проверяет, есть ли фигура на клетке и принадлежит ли она игроку, который сейчас ходит.
+ *   Если нет — отменяет перетаскивание (event.preventDefault()).
+ * - Сохраняет исходную клетку в draggedFrom (запасной источник).
+ * - Кладёт id клетки в event.dataTransfer (тип "text/plain") — это облегчает
+ *   получение исходной клетки в обработчике drop в разных браузерах.
+ * - Устанавливает event.dataTransfer.effectAllowed = "move".
+ *
+ * @param {string} id - id клетки-источника (например "e2").
+ * @param {DragEvent} event - объект события dragstart.
+ */
+function onDragStart(id, event) {
+  const piece = pieces.value[id];
+  
+  if (!piece || piece[0] !== currentTurn.value) {
+    event.preventDefault();
+    return;
+  }
+  
+  draggedFrom.value = id;
+  
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", id);
+    console.log("Начали перетаскивание фигуры:", id, piece);
+  }
+}
+
+/**
+ * Завершение перетаскивания (dragend).
+ * Просто очищает временное состояние (draggedFrom).
+ *
+ * @param {DragEvent} [event] - объект события dragend (не обязателен).
+ */
+function onDragEnd() {
+  draggedFrom.value = null;
+}
+
+/**
+ * Обработчик drop на клетке-приёмнике.
+ *
+ * Шаги:
+ * - Предотвращает дефолтное поведение браузера (event.preventDefault()).
+ * - Пытается извлечь исходную клетку (from) из event.dataTransfer (text/plain).
+ * - Если dataTransfer пуст или недоступен — использует запасную draggedFrom.
+ * - Если from определена — вызывает makeMove(from, to).
+ * - В конце очищает draggedFrom.
+ *
+ * @param {string} to - id клетки-приёмника (например "e4").
+ * @param {DragEvent} event - объект события drop.
+ */
+function onDrop(to, event) {
+  event.preventDefault(); // Важно: предотвращаем поведение по умолчанию
+  let from = null;
+  
+  try {
+    if (event.dataTransfer) {
+      from = event.dataTransfer.getData("text/plain");
+    }
+  } catch (e) {
+    console.error("Ошибка при получении данных:", e);
+  }
+  
+  if (!from) {
+    from = draggedFrom.value;
+  }
+  
+  if (!from) {
+    console.log("Не удалось определить исходную клетку");
+    return;
+  }
+  
+  console.log("Перетаскивание from:", from, "to:", to);
+  
+  makeMove(from, to);
+  draggedFrom.value = null;
+}
+
+/**
+ * Выполняет и применяет ход from → to на основной доске.
+ *
+ * @param {string} from - начальная клетка (например "e2").
+ * @param {string} to - целевая клетка (например "e4").
+ * @returns {void}
+ */
+function makeMove(from, to) {
+  const movingPiece = pieces.value[from];
+  const targetPiece = pieces.value[to] ?? null;
+
+  if (!isValidMove(from, to, movingPiece)) return;
+
+  const dir = movingPiece[0] === "w" ? 1 : -1;
+
+  // Рокировка
+  if (isCastlingMove(from, to, movingPiece)) {
+    pieces.value[to] = movingPiece;
+    delete pieces.value[from];
+
+    if (to === "g1") { pieces.value["f1"] = "wR"; delete pieces.value["h1"]; }
+    if (to === "c1") { pieces.value["d1"] = "wR"; delete pieces.value["a1"]; }
+    if (to === "g8") { pieces.value["f8"] = "bR"; delete pieces.value["h8"]; }
+    if (to === "c8") { pieces.value["d8"] = "bR"; delete pieces.value["a8"]; }
+
+    revokeCastlingRightsForMove(movingPiece, from);
+
+    lastMove.value = { from, to };
+    selectedSquare.value = null;
+    currentTurn.value = currentTurn.value === "w" ? "b" : "w";
+    checkGameState(currentTurn.value);
+    return;
+  }
+
+  // Пешка: en passant, двойной ход, превращение
+  if (movingPiece[1] === "P") {
+    if (to === enPassantTarget.value && !targetPiece) {
+      const capturedPawnSquare = `${files[parseSquare(to).fileIndex]}${parseSquare(to).rank - dir}`;
+      delete pieces.value[capturedPawnSquare];
+    }
+
+    if (Math.abs(parseSquare(to).rank - parseSquare(from).rank) === 2) {
+      const enPassantRank = parseSquare(from).rank + dir;
+      enPassantTarget.value = `${files[parseSquare(from).fileIndex]}${enPassantRank}`;
+    } else {
+      enPassantTarget.value = null;
+    }
+  } else {
+    enPassantTarget.value = null;
+  }
+
+  if (targetPiece && targetPiece[1] === "R") revokeCastlingRightsForSquare(to);
+
+  pieces.value[to] = movingPiece;
+  delete pieces.value[from];
+
+  if (movingPiece[1] === "P") {
+    const toRank = parseSquare(to).rank;
+    if (movingPiece[0] === "w" && toRank === 8) pieces.value[to] = "wQ";
+    if (movingPiece[0] === "b" && toRank === 1) pieces.value[to] = "bQ";
+  }
+
+  revokeCastlingRightsForMove(movingPiece, from);
+
+  lastMove.value = { from, to };
+  selectedSquare.value = null;
+  currentTurn.value = currentTurn.value === "w" ? "b" : "w";
+  checkGameState(currentTurn.value);
+  highlightedSquares.value.clear();
+}
 
 /**
  * Возвращает множество доступных ходов для выбранной фигуры на доске.
