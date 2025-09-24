@@ -49,6 +49,9 @@ const enPassantTarget = ref(null); // Клетка, на которую можн
 const highlightedSquares = ref(new Set()); 
 const lastMove = ref({ from: null, to: null });
 
+const moveCountWithoutAction = ref(0); // Счетчик ходов без действий
+const totalMoveCount = ref(0); // Общий счетчик ходов (опционально)
+
 /**
  * Клетка, с которой начали перетаскивание.
  * @type {import('vue').Ref<string|null>}
@@ -216,6 +219,32 @@ function onDrop(to, event) {
 }
 
 /**
+ * Проверяет, был ли ход "действующим" (сбрасывающим счетчик 50 ходов)
+ * @param {string} from - откуда
+ * @param {string} to - куда  
+ * @param {string} movingPiece - какая фигура
+ * @param {string|null} targetPiece - какая фигура была на целевой клетке
+ * @returns {boolean} true если ход сбрасывает счетчик (взятие или ход пешкой)
+ */
+function isActionMove(from, to, movingPiece, targetPiece) {
+  // Ход пешкой всегда сбрасывает счетчик
+  if (movingPiece[1] === "P") return true;
+  
+  // Взятие фигуры сбрасывает счетчик
+  if (targetPiece) return true;
+  
+  return false;
+}
+
+/**
+ * Проверяет, достигнуто ли правило 50 ходов
+ * @returns {boolean} true если ничья по правилу 50 ходов
+ */
+function isFiftyMoveRule() {
+  return moveCountWithoutAction.value >= 100;
+}
+
+/**
  * Выполняет и применяет ход from → to на основной доске.
  *
  * @param {string} from - начальная клетка (например "e2").
@@ -226,9 +255,23 @@ function makeMove(from, to) {
   const movingPiece = pieces.value[from];
   const targetPiece = pieces.value[to] ?? null;
 
+  // правило 50 ходов 
+  if(moveCountWithoutAction.value >= 100) { 
+    console.log("Ничья по правилу 50 ходов") 
+    return;
+  }
+ 
   if (!isValidMove(from, to, movingPiece)) return;
 
   const dir = movingPiece[0] === "w" ? 1 : -1;
+
+  if(isActionMove(from, to, movingPiece, targetPiece)) {
+    moveCountWithoutAction.value = 0; 
+  } else {
+    moveCountWithoutAction.value += 1; 
+  }
+
+  totalMoveCount.value += 1; 
 
   // Рокировка
   if (isCastlingMove(from, to, movingPiece)) {
@@ -246,7 +289,7 @@ function makeMove(from, to) {
     selectedSquare.value = null;
     currentTurn.value = currentTurn.value === "w" ? "b" : "w";
     checkGameState(currentTurn.value);
-    return;
+    return; 
   }
 
   // Пешка: en passant, двойной ход, превращение
@@ -282,6 +325,13 @@ function makeMove(from, to) {
   lastMove.value = { from, to };
   selectedSquare.value = null;
   currentTurn.value = currentTurn.value === "w" ? "b" : "w";
+  
+  // ПРОВЕРКА ПРАВИЛА 50 ХОДОВ ПОСЛЕ ХОДА
+  if (moveCountWithoutAction.value >= 100) {
+    console.log("Ничья по правилу 50 ходов!");
+    // Можно добавить обработку ничьи
+  }
+  
   checkGameState(currentTurn.value);
   highlightedSquares.value.clear();
 }
@@ -463,6 +513,11 @@ function checkMateOrStalemate(color) {
  * @param {string} color - цвет, который должен ходить следующим ("w" или "b").
  */
 function checkGameState(color) {
+  if(isFiftyMoveRule()) {
+    console.log("Ничья по правилу 50 ходов")
+    return "fifty-move-rule";
+  }
+
   const state = checkMateOrStalemate(color);
 
   if (state === "checkmate") {
