@@ -90,16 +90,16 @@ const pieces = ref({});
  * Пример: "wP" = белая пешка, "bK" = чёрный король.
  */
 function setInitialPosition() {
-  pieces.value = {
-    a8: 'bR', b8: 'bN', c8: 'bB', d8: 'bQ', e8: 'bK', f8: 'bB', g8: 'bN', h8: 'bR',
-    a7: 'bP', b7: 'bP', c7: 'bP', d7: 'bP', e7: 'bP', f7: 'bP', g7: 'bP', h7: 'bP',
-    a2: 'wP', b2: 'wP', c2: 'wP', d2: 'wP', e2: 'wP', f2: 'wP', g2: 'wP', h2: 'wP',
-    a1: 'wR', b1: 'wN', c1: 'wB', d1: 'wQ', e1: 'wK', f1: 'wB', g1: 'wN', h1: 'wR'
-  };
-
   // pieces.value = {
-  //   a1: "wK", a2: "wP", a8: "bK"
+  //   a8: 'bR', b8: 'bN', c8: 'bB', d8: 'bQ', e8: 'bK', f8: 'bB', g8: 'bN', h8: 'bR',
+  //   a7: 'bP', b7: 'bP', c7: 'bP', d7: 'bP', e7: 'bP', f7: 'bP', g7: 'bP', h7: 'bP',
+  //   a2: 'wP', b2: 'wP', c2: 'wP', d2: 'wP', e2: 'wP', f2: 'wP', g2: 'wP', h2: 'wP',
+  //   a1: 'wR', b1: 'wN', c1: 'wB', d1: 'wQ', e1: 'wK', f1: 'wB', g1: 'wN', h1: 'wR'
   // };
+
+  pieces.value = {
+    a5: "wK", b5: "wP", a8: "bK", a4: "wB"
+  };
 }
 
 setInitialPosition();
@@ -557,11 +557,35 @@ function checkMateOrStalemate(color) {
   return null;
 }
 
+function isInsufficientMaterial(pieces) {
+  const others = Object.values(pieces).filter(p => p[1].toLowerCase() !== 'k');
+
+  if (others.length === 0) return true; // король против короля
+
+  if (others.length === 1) {
+    const f = others[0][1].toLowerCase();
+    if (f === 'b' || f === 'n') return true; // слон или конь против короля
+  }
+
+  if (others.length === 2) {
+    const [f1, f2] = others.map(f => f[1].toLowerCase());
+
+    if (f1 === 'n' && f2 === 'n') return true; // два коня
+    if (f1 === 'b' && f2 === 'b') {
+      // здесь проверка цвета клеток слонов
+    }
+  }
+
+  return false;
+}
+
 /**
  * Проверяет состояние игры после хода.
  * @param {string} color - цвет, который должен ходить следующим ("w" или "b").
  */
 function checkGameState(color) {
+  const state = checkMateOrStalemate(color);
+
   if(isFiftyMoveRule()) {
     console.log("Ничья по правилу 50 ходов")
     return "fifty-move-rule";
@@ -572,8 +596,10 @@ function checkGameState(color) {
     return "threefold-repetition";
   }
 
-  const state = checkMateOrStalemate(color);
-
+  if (isInsufficientMaterial(pieces.value)) {
+    console.log("Ничья, недостаточно материала для постановки мата")
+    return "insufficient-material";
+  }
   if (state === "checkmate") {
     console.log(`Мат! Победил игрок ${color === "w" ? "черными" : "белыми"}.`);
     return "checkmate"; 
