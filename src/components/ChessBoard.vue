@@ -52,6 +52,11 @@ const lastMove = ref({ from: null, to: null });
 const moveCountWithoutAction = ref(0); // Счетчик ходов без действий
 const totalMoveCount = ref(0); // Общий счетчик ходов (опционально)
 
+const positionHistory = ref([]); // массив хэшей позиций
+
+const halfmoveClock = moveCountWithoutAction; // alias, чтобы не ломать остальной код
+const result = ref(null); // { type: 'draw', reason: '50-move rule' } и т.п.
+
 /**
  * Клетка, с которой начали перетаскивание.
  * @type {import('vue').Ref<string|null>}
@@ -219,24 +224,6 @@ function onDrop(to, event) {
 }
 
 /**
- * Проверяет, был ли ход "действующим" (сбрасывающим счетчик 50 ходов)
- * @param {string} from - откуда
- * @param {string} to - куда  
- * @param {string} movingPiece - какая фигура
- * @param {string|null} targetPiece - какая фигура была на целевой клетке
- * @returns {boolean} true если ход сбрасывает счетчик (взятие или ход пешкой)
- */
-function isActionMove(from, to, movingPiece, targetPiece) {
-  // Ход пешкой всегда сбрасывает счетчик
-  if (movingPiece[1] === "P") return true;
-  
-  // Взятие фигуры сбрасывает счетчик
-  if (targetPiece) return true;
-  
-  return false;
-}
-
-/**
  * Проверяет, достигнуто ли правило 50 ходов
  * @returns {boolean} true если ничья по правилу 50 ходов
  */
@@ -255,25 +242,21 @@ function makeMove(from, to) {
   const movingPiece = pieces.value[from];
   const targetPiece = pieces.value[to] ?? null;
 
-  // правило 50 ходов 
-  if(moveCountWithoutAction.value >= 100) { 
-    console.log("Ничья по правилу 50 ходов") 
+  if (result.value) {
+    console.warn('Game finished:', result.value);
     return;
   }
- 
+
+  // базовые проверки
+  if (!movingPiece) return;
   if (!isValidMove(from, to, movingPiece)) return;
 
-  const dir = movingPiece[0] === "w" ? 1 : -1;
+  // вычисляем флаги ДО изменения доски
+  const isPawnMove = movingPiece[1] === "P";
+  const isEnPassantCapture = isPawnMove && (to === enPassantTarget.value) && !targetPiece;
+  const isCapture = Boolean(targetPiece) || isEnPassantCapture;
 
-  if(isActionMove(from, to, movingPiece, targetPiece)) {
-    moveCountWithoutAction.value = 0; 
-  } else {
-    moveCountWithoutAction.value += 1; 
-  }
-
-  totalMoveCount.value += 1; 
-
-  // Рокировка
+  // рокировка
   if (isCastlingMove(from, to, movingPiece)) {
     pieces.value[to] = movingPiece;
     delete pieces.value[from];
@@ -285,53 +268,80 @@ function makeMove(from, to) {
 
     revokeCastlingRightsForMove(movingPiece, from);
 
+    // обновляем счётчики и историю
+    if (isPawnMove || isCapture) halfmoveClock.value = 0; else halfmoveClock.value += 1;
+    totalMoveCount.value += 1;
+
     lastMove.value = { from, to };
     selectedSquare.value = null;
     currentTurn.value = currentTurn.value === "w" ? "b" : "w";
+
+    positionHistory.value.push(getPositionHash());
     checkGameState(currentTurn.value);
-    return; 
+    return;
   }
 
-  // Пешка: en passant, двойной ход, превращение
-  if (movingPiece[1] === "P") {
-    if (to === enPassantTarget.value && !targetPiece) {
-      const capturedPawnSquare = `${files[parseSquare(to).fileIndex]}${parseSquare(to).rank - dir}`;
-      delete pieces.value[capturedPawnSquare];
-    }
+  // обработка en-passant
+  if (isEnPassantCapture) {
+    const dir = movingPiece[0] === "w" ? 1 : -1;
+    const fileIndex = parseSquare(to).fileIndex;
+    const capturedPawnSquare = `${files[fileIndex]}${parseSquare(to).rank - dir}`;
+    // удаляем захваченную пешку
+    delete pieces.value[capturedPawnSquare];
+  }
 
-    if (Math.abs(parseSquare(to).rank - parseSquare(from).rank) === 2) {
-      const enPassantRank = parseSquare(from).rank + dir;
-      enPassantTarget.value = `${files[parseSquare(from).fileIndex]}${enPassantRank}`;
-    } else {
-      enPassantTarget.value = null;
-    }
+  // обновление enPassantTarget (для двойного шага пешки)
+  if (isPawnMove && Math.abs(parseSquare(to).rank - parseSquare(from).rank) === 2) {
+    // средняя клетка между from и to
+    const midRank = (parseSquare(from).rank + parseSquare(to).rank) / 2;
+    enPassantTarget.value = `${files[parseSquare(from).fileIndex]}${midRank}`;
   } else {
     enPassantTarget.value = null;
   }
 
+  // если бьем ладью — лишаем прав на рокировку
   if (targetPiece && targetPiece[1] === "R") revokeCastlingRightsForSquare(to);
 
   pieces.value[to] = movingPiece;
   delete pieces.value[from];
 
-  if (movingPiece[1] === "P") {
+  // превращение пешки 
+  if (isPawnMove) {
     const toRank = parseSquare(to).rank;
     if (movingPiece[0] === "w" && toRank === 8) pieces.value[to] = "wQ";
     if (movingPiece[0] === "b" && toRank === 1) pieces.value[to] = "bQ";
   }
 
+  // лишаем прав на рокировку если делал ход король/ладья
   revokeCastlingRightsForMove(movingPiece, from);
 
+  // обновляем halfmove clock (правило 50 ходов)
+  if (isPawnMove || isCapture) {
+    halfmoveClock.value = 0;
+  } else {
+    halfmoveClock.value += 1;
+  }
+
+  totalMoveCount.value += 1;
+
+  // завершение хода
   lastMove.value = { from, to };
   selectedSquare.value = null;
   currentTurn.value = currentTurn.value === "w" ? "b" : "w";
-  
-  // ПРОВЕРКА ПРАВИЛА 50 ХОДОВ ПОСЛЕ ХОДА
-  if (moveCountWithoutAction.value >= 100) {
+
+  // сохраняем позицию  и затем проверяем ничью/повторение
+  positionHistory.value.push(getPositionHash());
+
+  if (halfmoveClock.value >= 100) {
+    result.value = { type: 'draw', reason: '50-move rule' };
     console.log("Ничья по правилу 50 ходов!");
-    // Можно добавить обработку ничьи
   }
-  
+
+  if (isThreefoldRepetition()) {
+    result.value = { type: 'draw', reason: 'threefold repetition' };
+    console.log("Ничья по правилу троекратного повторения!");
+  }
+
   checkGameState(currentTurn.value);
   highlightedSquares.value.clear();
 }
@@ -354,8 +364,47 @@ function getAvailableMoves(squareId) {
       }
     }
   }
-
   return moves;
+}
+
+/**
+ * Создает простой "отпечаток" текущей позиции
+ */
+function getPositionHash() {
+  const pieceArray = [];
+  for (const square in pieces.value) {
+    pieceArray.push(`${square}${pieces.value[square]}`);
+  }
+
+  pieceArray.sort();
+
+  // Учитываем очередь хода
+  let hash = pieceArray.join('|') + '|' + currentTurn.value;
+
+  // Учитываем права на рокировку
+  hash += '|CR:' + JSON.stringify(castlingRights.value);
+
+  // Учитываем en passant
+  hash += '|EP:' + (enPassantTarget.value ?? '-');
+
+  return hash;
+}
+
+
+/**
+ * Проверяет, повторилась ли позиция 3 раза
+ */
+function isThreefoldRepetition() {
+  const currentHash = getPositionHash();
+  let count = 0;
+  
+  for (const pastHash of positionHistory.value) {
+    if (pastHash === currentHash) {
+      count++;
+    }
+  }
+  
+  return count >= 3;
 }
 
 /**
@@ -518,19 +567,24 @@ function checkGameState(color) {
     return "fifty-move-rule";
   }
 
+  if (isThreefoldRepetition()) {
+    console.log("Ничья по правилу троекратного повторения");
+    return "threefold-repetition";
+  }
+
   const state = checkMateOrStalemate(color);
 
   if (state === "checkmate") {
     console.log(`Мат! Победил игрок ${color === "w" ? "черными" : "белыми"}.`);
-    return true;
+    return "checkmate"; 
   }
 
   if (state === "stalemate") {
     console.log("Пат! Ничья.");
-    return true;
+    return "stalemate"; 
   }
 
-  return false;
+  return null;
 }
 
 /**
