@@ -10,7 +10,7 @@
             cell.color, 
             { selected: selectedSquare === cell.id },
             { highlighted: highlightedSquares.has(cell.id) },
-            { 'last-move': lastMove.from === cell.id || lastMove.to === cell.id }
+            { 'last-move': game.lastMove.from === cell.id || game.lastMove.to === cell.id }
           ]"
           @click="onSquareClick(cell.id)"
           @dragover.prevent
@@ -38,24 +38,16 @@
 </template>
 
 <script setup>
+import { useGameStore } from "@/store/gameStore";
 import { computed, ref } from "vue";
+
+const game = useGameStore();
 
 const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
 
 const selectedSquare = ref(null) //  например "e2"
-const currentTurn = ref("w");
-const enPassantTarget = ref(null); // Клетка, на которую можно бить на проходе
 const highlightedSquares = ref(new Set()); 
-const lastMove = ref({ from: null, to: null });
-
-const moveCountWithoutAction = ref(0); // Счетчик ходов без действий
-const totalMoveCount = ref(0); // Общий счетчик ходов (опционально)
-
-const positionHistory = ref([]); // массив хэшей позиций
-
-const halfmoveClock = moveCountWithoutAction; // alias, чтобы не ломать остальной код
-const result = ref(null); // { type: 'draw', reason: '50-move rule' } и т.п.
 
 /**
  * Клетка, с которой начали перетаскивание.
@@ -64,13 +56,6 @@ const result = ref(null); // { type: 'draw', reason: '50-move rule' } и т.п.
  * если event.dataTransfer не содержит данных (разные браузеры/платформы).
  */
 const draggedFrom = ref(null); // клетка, с которой начали перетаскивать
-
-const castlingRights = ref({
-  whiteKingSide: true,
-  whiteQueenSide: true,
-  blackKingSide: true,
-  blackQueenSide: true,
-});
 
 const squares = computed(() =>
   ranks.map((rank, rIdx) =>
@@ -81,7 +66,6 @@ const squares = computed(() =>
   )
 );
 
-const pieces = ref({});
 /**
  * Устанавливает фигуры в начальную шахматную позицию.
  * Заполняет объект pieces.value кодами фигур:
@@ -90,21 +74,19 @@ const pieces = ref({});
  * Пример: "wP" = белая пешка, "bK" = чёрный король.
  */
 function setInitialPosition() {
-  // pieces.value = {
-  //   a8: 'bR', b8: 'bN', c8: 'bB', d8: 'bQ', e8: 'bK', f8: 'bB', g8: 'bN', h8: 'bR',
-  //   a7: 'bP', b7: 'bP', c7: 'bP', d7: 'bP', e7: 'bP', f7: 'bP', g7: 'bP', h7: 'bP',
-  //   a2: 'wP', b2: 'wP', c2: 'wP', d2: 'wP', e2: 'wP', f2: 'wP', g2: 'wP', h2: 'wP',
-  //   a1: 'wR', b1: 'wN', c1: 'wB', d1: 'wQ', e1: 'wK', f1: 'wB', g1: 'wN', h1: 'wR'
-  // };
-
-  pieces.value = {
-    a5: "wK", b5: "wP", a8: "bK", a4: "wB"
+  game.pieces = {
+    a8: 'bR', b8: 'bN', c8: 'bB', d8: 'bQ', e8: 'bK', f8: 'bB', g8: 'bN', h8: 'bR',
+    a7: 'bP', b7: 'bP', c7: 'bP', d7: 'bP', e7: 'bP', f7: 'bP', g7: 'bP', h7: 'bP',
+    a2: 'wP', b2: 'wP', c2: 'wP', d2: 'wP', e2: 'wP', f2: 'wP', g2: 'wP', h2: 'wP',
+    a1: 'wR', b1: 'wN', c1: 'wB', d1: 'wQ', e1: 'wK', f1: 'wB', g1: 'wN', h1: 'wR'
   };
+
+  // pieces.value = {
+  //   a5: "wK", b5: "wP", a8: "bK", a4: "wB"
+  // };
 }
 
 setInitialPosition();
-
-console.log('initial pieces:', pieces.value);
 
 /**
  * Возвращает путь к картинке фигуры на указанной клетке.
@@ -112,7 +94,7 @@ console.log('initial pieces:', pieces.value);
  * @returns {string|null} путь к svg-файлу или null, если фигуры нет.
  */
 function pieceImage(squareId) {
-  const code = pieces.value[squareId] // например "wP" или "bK"
+  const code = game.pieces[squareId] // например "wP" или "bK"
   if (!code) return null;
 
   return new URL(`../assets/chess-pieces/${code}.svg`, import.meta.url).href;
@@ -127,11 +109,11 @@ function pieceImage(squareId) {
  * @param {string} id - id клетки, по которой кликнули (например "e2").
  */
 function onSquareClick(id) {
-  const clickedPiece = pieces.value[id];
+  const clickedPiece = game.pieces[id];
 
   highlightedSquares.value.clear();
 
-  if (clickedPiece && clickedPiece[0] === currentTurn.value) {
+  if (clickedPiece && clickedPiece[0] === game.currentTurn) {
     selectedSquare.value = id;
     highlightedSquares.value = getAvailableMoves(id);
     return;
@@ -157,9 +139,9 @@ function onSquareClick(id) {
  * @param {DragEvent} event - объект события dragstart.
  */
 function onDragStart(id, event) {
-  const piece = pieces.value[id];
+  const piece = game.pieces[id];
   
-  if (!piece || piece[0] !== currentTurn.value) {
+  if (!piece || piece[0] !== game.currentTurn) {
     event.preventDefault();
     return;
   }
@@ -169,7 +151,6 @@ function onDragStart(id, event) {
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", id);
-    console.log("Начали перетаскивание фигуры:", id, piece);
   }
 }
 
@@ -213,12 +194,9 @@ function onDrop(to, event) {
   }
   
   if (!from) {
-    console.log("Не удалось определить исходную клетку");
     return;
   }
-  
-  console.log("Перетаскивание from:", from, "to:", to);
-  
+    
   makeMove(from, to);
   draggedFrom.value = null;
 }
@@ -228,7 +206,7 @@ function onDrop(to, event) {
  * @returns {boolean} true если ничья по правилу 50 ходов
  */
 function isFiftyMoveRule() {
-  return moveCountWithoutAction.value >= 100;
+  return game.moveCountWithoutAction >= 100;
 }
 
 /**
@@ -239,11 +217,11 @@ function isFiftyMoveRule() {
  * @returns {void}
  */
 function makeMove(from, to) {
-  const movingPiece = pieces.value[from];
-  const targetPiece = pieces.value[to] ?? null;
+  const movingPiece = game.pieces[from];
+  const targetPiece = game.pieces[to] ?? null;
 
-  if (result.value) {
-    console.warn('Game finished:', result.value);
+  if (game.result) {
+    console.warn('Game finished:', game.result);
     return;
   }
 
@@ -253,31 +231,31 @@ function makeMove(from, to) {
 
   // вычисляем флаги ДО изменения доски
   const isPawnMove = movingPiece[1] === "P";
-  const isEnPassantCapture = isPawnMove && (to === enPassantTarget.value) && !targetPiece;
+  const isEnPassantCapture = isPawnMove && (to === game.enPassantTarget) && !targetPiece;
   const isCapture = Boolean(targetPiece) || isEnPassantCapture;
 
   // рокировка
   if (isCastlingMove(from, to, movingPiece)) {
-    pieces.value[to] = movingPiece;
-    delete pieces.value[from];
+    game.pieces[to] = movingPiece;
+    delete game.pieces[from];
 
-    if (to === "g1") { pieces.value["f1"] = "wR"; delete pieces.value["h1"]; }
-    if (to === "c1") { pieces.value["d1"] = "wR"; delete pieces.value["a1"]; }
-    if (to === "g8") { pieces.value["f8"] = "bR"; delete pieces.value["h8"]; }
-    if (to === "c8") { pieces.value["d8"] = "bR"; delete pieces.value["a8"]; }
+    if (to === "g1") { game.pieces["f1"] = "wR"; delete game.pieces["h1"]; }
+    if (to === "c1") { game.pieces["d1"] = "wR"; delete game.pieces["a1"]; }
+    if (to === "g8") { game.pieces["f8"] = "bR"; delete game.pieces["h8"]; }
+    if (to === "c8") { game.pieces["d8"] = "bR"; delete game.pieces["a8"]; }
 
     revokeCastlingRightsForMove(movingPiece, from);
 
     // обновляем счётчики и историю
-    if (isPawnMove || isCapture) halfmoveClock.value = 0; else halfmoveClock.value += 1;
-    totalMoveCount.value += 1;
+    if (isPawnMove || isCapture) game.moveCountWithoutAction = 0; else game.moveCountWithoutAction += 1;
+    game.totalMoveCount += 1;
 
-    lastMove.value = { from, to };
+    game.lastMove = { from, to };
     selectedSquare.value = null;
-    currentTurn.value = currentTurn.value === "w" ? "b" : "w";
+    game.currentTurn = game.currentTurn === "w" ? "b" : "w";
 
-    positionHistory.value.push(getPositionHash());
-    checkGameState(currentTurn.value);
+    game.positionHistory.push(getPositionHash());
+    checkGameState(game.currentTurn);
     return;
   }
 
@@ -287,29 +265,29 @@ function makeMove(from, to) {
     const fileIndex = parseSquare(to).fileIndex;
     const capturedPawnSquare = `${files[fileIndex]}${parseSquare(to).rank - dir}`;
     // удаляем захваченную пешку
-    delete pieces.value[capturedPawnSquare];
+    delete game.pieces[capturedPawnSquare];
   }
 
   // обновление enPassantTarget (для двойного шага пешки)
   if (isPawnMove && Math.abs(parseSquare(to).rank - parseSquare(from).rank) === 2) {
     // средняя клетка между from и to
     const midRank = (parseSquare(from).rank + parseSquare(to).rank) / 2;
-    enPassantTarget.value = `${files[parseSquare(from).fileIndex]}${midRank}`;
+    game.enPassantTarget = `${files[parseSquare(from).fileIndex]}${midRank}`;
   } else {
-    enPassantTarget.value = null;
+    game.enPassantTarget = null;
   }
 
   // если бьем ладью — лишаем прав на рокировку
   if (targetPiece && targetPiece[1] === "R") revokeCastlingRightsForSquare(to);
 
-  pieces.value[to] = movingPiece;
-  delete pieces.value[from];
+  game.pieces[to] = movingPiece;
+  delete game.pieces[from];
 
   // превращение пешки 
   if (isPawnMove) {
     const toRank = parseSquare(to).rank;
-    if (movingPiece[0] === "w" && toRank === 8) pieces.value[to] = "wQ";
-    if (movingPiece[0] === "b" && toRank === 1) pieces.value[to] = "bQ";
+    if (movingPiece[0] === "w" && toRank === 8) game.pieces[to] = "wQ";
+    if (movingPiece[0] === "b" && toRank === 1) game.pieces[to] = "bQ";
   }
 
   // лишаем прав на рокировку если делал ход король/ладья
@@ -317,32 +295,30 @@ function makeMove(from, to) {
 
   // обновляем halfmove clock (правило 50 ходов)
   if (isPawnMove || isCapture) {
-    halfmoveClock.value = 0;
+    game.moveCountWithoutAction = 0;
   } else {
-    halfmoveClock.value += 1;
+    game.moveCountWithoutAction += 1;
   }
 
-  totalMoveCount.value += 1;
+  game.totalMoveCount += 1;
 
   // завершение хода
-  lastMove.value = { from, to };
+  game.lastMove = { from, to };
   selectedSquare.value = null;
-  currentTurn.value = currentTurn.value === "w" ? "b" : "w";
+  game.currentTurn = game.currentTurn === "w" ? "b" : "w";
 
   // сохраняем позицию  и затем проверяем ничью/повторение
-  positionHistory.value.push(getPositionHash());
+  game.positionHistory.push(getPositionHash());
 
-  if (halfmoveClock.value >= 100) {
-    result.value = { type: 'draw', reason: '50-move rule' };
-    console.log("Ничья по правилу 50 ходов!");
+  if (game.moveCountWithoutAction >= 100) {
+    game.result = { type: 'draw', reason: '50-move rule' };
   }
 
   if (isThreefoldRepetition()) {
-    result.value = { type: 'draw', reason: 'threefold repetition' };
-    console.log("Ничья по правилу троекратного повторения!");
+    game.result = { type: 'draw', reason: 'threefold repetition' };
   }
 
-  checkGameState(currentTurn.value);
+  checkGameState(game.currentTurn);
   highlightedSquares.value.clear();
 }
 
@@ -353,8 +329,8 @@ function makeMove(from, to) {
  */
 function getAvailableMoves(squareId) {
   const moves = new Set();
-  const piece = pieces.value[squareId];
-  if (!piece || piece[0] !== currentTurn.value) return moves;
+  const piece = game.pieces[squareId];
+  if (!piece || piece[0] !== game.currentTurn) return moves;
 
   for (const file of files) {
     for (const rank of ranks) {
@@ -372,20 +348,20 @@ function getAvailableMoves(squareId) {
  */
 function getPositionHash() {
   const pieceArray = [];
-  for (const square in pieces.value) {
-    pieceArray.push(`${square}${pieces.value[square]}`);
+  for (const square in game.pieces) {
+    pieceArray.push(`${square}${game.pieces[square]}`);
   }
 
   pieceArray.sort();
 
   // Учитываем очередь хода
-  let hash = pieceArray.join('|') + '|' + currentTurn.value;
+  let hash = pieceArray.join('|') + '|' + game.currentTurn;
 
   // Учитываем права на рокировку
-  hash += '|CR:' + JSON.stringify(castlingRights.value);
+  hash += '|CR:' + JSON.stringify(game.castlingRights);
 
   // Учитываем en passant
-  hash += '|EP:' + (enPassantTarget.value ?? '-');
+  hash += '|EP:' + (game.enPassantTarget ?? '-');
 
   return hash;
 }
@@ -398,7 +374,7 @@ function isThreefoldRepetition() {
   const currentHash = getPositionHash();
   let count = 0;
   
-  for (const pastHash of positionHistory.value) {
+  for (const pastHash of game.positionHistory) {
     if (pastHash === currentHash) {
       count++;
     }
@@ -426,7 +402,7 @@ function parseSquare(sq) {
  * @returns {string|null} код фигуры ("wP", "bK" и т.п.) или null, если пусто.
  */
 function getPieceAt(square) {
-  return pieces.value[square] ?? null;
+  return game.pieces[square] ?? null;
 }
 
 /**
@@ -476,7 +452,7 @@ function isValidPawnMove(from, to, piece) {
 
   if (Math.abs(tFile - fFile) === 1 && 
       tRank === fRank + dir && 
-      to === enPassantTarget.value) {
+      to === game.enPassantTarget) {
     return true;
   }
 
@@ -491,7 +467,7 @@ function isValidPawnMove(from, to, piece) {
  * @returns {boolean} true, если король цвета `color` атакуется хотя бы одной фигурой противника.
  * @throws {Error} Если король не найден на доске.
  */
-function isKingInCheck(color, board = pieces.value) {
+function isKingInCheck(color, board = game.pieces) {
   const opponent = color === "w" ? "b" : "w";
   let kingSquare = Object.keys(board).find(sq => board[sq] === `${color}K`);
   if (!kingSquare) throw new Error(`Король цвета ${color} не найден!`);
@@ -505,7 +481,7 @@ function isKingInCheck(color, board = pieces.value) {
  * @param {object} board - текущая доска { square: piece }
  * @returns {boolean} true, если есть хотя бы один допустимый ход
  */
-function hasAnyValidMoves(color, board = pieces.value) {
+function hasAnyValidMoves(color, board = game.pieces) {
   for (const from in board) {
     const piece = board[from];
     if (!piece || piece[0] !== color) continue;
@@ -596,7 +572,7 @@ function checkGameState(color) {
     return "threefold-repetition";
   }
 
-  if (isInsufficientMaterial(pieces.value)) {
+  if (isInsufficientMaterial(game.pieces)) {
     console.log("Ничья, недостаточно материала для постановки мата")
     return "insufficient-material";
   }
@@ -752,22 +728,22 @@ function revokeCastlingRightsForMove(piece, from) {
 
   if (type === "K") {
     if (color === "w") {
-      castlingRights.value.whiteKingSide = false;
-      castlingRights.value.whiteQueenSide = false;
+      game.castlingRights.whiteKingSide = false;
+      game.castlingRights.whiteQueenSide = false;
     } else {
-      castlingRights.value.blackKingSide = false;
-      castlingRights.value.blackQueenSide = false;
+      game.castlingRights.blackKingSide = false;
+      game.castlingRights.blackQueenSide = false;
     }
     return;
   }
 
   if (type === "R") {
     if (color === "w") {
-      if (from === "h1") castlingRights.value.whiteKingSide = false;
-      if (from === "a1") castlingRights.value.whiteQueenSide = false;
+      if (from === "h1") game.castlingRights.whiteKingSide = false;
+      if (from === "a1") game.castlingRights.whiteQueenSide = false;
     } else {
-      if (from === "h8") castlingRights.value.blackKingSide = false;
-      if (from === "a8") castlingRights.value.blackQueenSide = false;
+      if (from === "h8") game.castlingRights.blackKingSide = false;
+      if (from === "a8") game.castlingRights.blackQueenSide = false;
     }
   }
 }
@@ -778,10 +754,10 @@ function revokeCastlingRightsForMove(piece, from) {
  * @param {string} square - клетка, где стояла (или была захвачена) ладья, например "h1"
  */
 function revokeCastlingRightsForSquare(square) {
-  if (square === "h1") castlingRights.value.whiteKingSide = false;
-  if (square === "a1") castlingRights.value.whiteQueenSide = false;
-  if (square === "h8") castlingRights.value.blackKingSide = false;
-  if (square === "a8") castlingRights.value.blackQueenSide = false;
+  if (square === "h1") game.castlingRights.whiteKingSide = false;
+  if (square === "a1") game.castlingRights.whiteQueenSide = false;
+  if (square === "h8") game.castlingRights.blackKingSide = false;
+  if (square === "a8") game.castlingRights.blackQueenSide = false;
 }
 
 /**
@@ -794,7 +770,7 @@ function revokeCastlingRightsForSquare(square) {
  *                    false — если клетка безопасна.
  * Если находится фигура нужного типа и цвета — возвращается true.
  */
-function isSquareAttacked(square, byColor, board = pieces.value) {
+function isSquareAttacked(square, byColor, board = game.pieces) {
   const { fileIndex: tFile, rank: tRank } = parseSquare(square);
 
   // Пешка
@@ -892,7 +868,7 @@ function isCastlingMove(from, to, piece) {
 
     // короткая
     if (to === "g1") {
-      if (!castlingRights.value.whiteKingSide) return false;
+      if (!game.castlingRights.whiteKingSide) return false;
       if (getPieceAt("h1") !== "wR") return false;
       if (getPieceAt("f1") || getPieceAt("g1")) return false;
 
@@ -905,7 +881,7 @@ function isCastlingMove(from, to, piece) {
 
     // длинная
     if (to === "c1") {
-      if (!castlingRights.value.whiteQueenSide) return false;
+      if (!game.castlingRights.whiteQueenSide) return false;
       if (getPieceAt("a1") !== "wR") return false;
       if (getPieceAt("d1") || getPieceAt("c1") || getPieceAt("b1")) return false;
 
@@ -923,7 +899,7 @@ function isCastlingMove(from, to, piece) {
     if (from !== "e8") return false;
 
     if (to === "g8") {
-      if (!castlingRights.value.blackKingSide) return false;
+      if (!game.castlingRights.blackKingSide) return false;
       if (getPieceAt("h8") !== "bR") return false;
       if (getPieceAt("f8") || getPieceAt("g8")) return false;
 
@@ -935,7 +911,7 @@ function isCastlingMove(from, to, piece) {
     }
 
     if (to === "c8") {
-      if (!castlingRights.value.blackQueenSide) return false;
+      if (!game.castlingRights.blackQueenSide) return false;
       if (getPieceAt("a8") !== "bR") return false;
       if (getPieceAt("d8") || getPieceAt("c8") || getPieceAt("b8")) return false;
 
@@ -979,7 +955,7 @@ function isValidMove(from, to, piece) {
   if (!valid) return false;
 
   // король не должен оставаться под шахом
-  const tempBoard = { ...pieces.value };
+  const tempBoard = { ...game.pieces };
   tempBoard[to] = piece;
   delete tempBoard[from];
 
