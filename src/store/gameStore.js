@@ -2,25 +2,67 @@ import { defineStore } from "pinia";
 import { ref, reactive } from "vue";
 
 export const useGameStore = defineStore("game", () => {
-  const pieces = ref({});              // расположение фигур
-  const currentTurn = ref("w");        // чей ход ("w" или "b")
-  const lastMove = reactive({ from: null, to: null });
-  const enPassantTarget = ref(null);   // клетка для взятия на проходе
-  const positionHistory = ref([]);     // история позиций
-  const result = ref(null);            // результат партии ("1-0", "0-1", "½-½", null)
-  const moveCountWithoutAction = ref(0); // счётчик для правила 50 ходов
-  const totalMoveCount = ref(0);       // общее число полуходов
+  /**
+   * Расположение фигур на доске
+   */
+  const pieces = ref({});
+  /**
+   * Очередь хода ("w" или "b")
+   */              
+  const currentTurn = ref("w");
+  /**
+ * Информация о последнем выполненном ходе.
+ * @property {string|null} from - начальная клетка хода (например "e2")
+ * @property {string|null} to - конечная клетка хода (например "e4")
+ */        
+  const lastMove = ref({ from: null, to: null });
+  /**
+ * Клетка, доступная для взятия на проходе (en passant).
+ * Устанавливается когда пешка делает ход на 2 клетки вперёд.
+ */
+  const enPassantTarget = ref(null);
+  /**
+ * История позиций для отслеживания повторений.
+ * Содержит хэши позиций для проверки правила трёхкратного повторения.
+ */   
+  const positionHistory = ref([]);
+  /**
+ * Результат партии. null - игра продолжается.
+ * @example { type: 'draw', reason: '50-move rule' }
+ * @example { type: 'checkmate', winner: 'w' }
+ */     
+  const result = ref(null);
+  /**
+ * Счётчик ходов без взятия фигур и движения пешек.
+ * Используется для правила 50 ходов.
+ */            
+  const moveCountWithoutAction = ref(0);
+  /**
+ * Общее количество полуходов в партии.
+ * Увеличивается после каждого хода (белых или чёрных).
+ */ 
+  const totalMoveCount = ref(0);       
 
   const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
   const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
 
+  /**
+ * Права на рокировку для обеих сторон.
+ * @property {boolean} whiteKingSide - рокировка белых в короткую сторону (O-O)
+ * @property {boolean} whiteQueenSide - рокировка белых в длинную сторону (O-O-O)
+ * @property {boolean} blackKingSide - рокировка чёрных в короткую сторону (O-O)
+ * @property {boolean} blackQueenSide - рокировка чёрных в длинную сторону (O-O-O)
+ */
   const castlingRights = reactive({
     whiteKingSide: true,
     whiteQueenSide: true,
     blackKingSide: true, 
     blackQueenSide: true
 });
-  // --- Actions ---
+
+/**
+ * Устанавливает начальную позицию фигур на шахматной доске.
+ */
 function setInitialPosition() {
   pieces.value = {
     a8: 'bR', b8: 'bN', c8: 'bB', d8: 'bQ', e8: 'bK', f8: 'bB', g8: 'bN', h8: 'bR',
@@ -165,6 +207,14 @@ function isSquareAttacked(square, byColor, board = pieces.value) {
   return false;
 }
 
+/**
+ * Выполняет ход фигуры с одной клетки на другую.
+ * Проверяет валидность хода, обрабатывает специальные правила (рокировка, en passant, превращение пешки),
+ * обновляет состояние игры и проверяет конечные состояния (мат, пат, ничья).
+ * 
+ * @param {string} from - Начальная клетка хода (например "e2")
+ * @param {string} to - Конечная клетка хода (например "e4")
+ */
 function makeMove(from, to) {
   const movingPiece = pieces.value[from];
   const targetPiece = pieces.value[to] ?? null;
@@ -268,6 +318,18 @@ function makeMove(from, to) {
   checkGameState(currentTurn.value);
 }
 
+/**
+ * Проверяет текущее состояние игры для указанного цвета.
+ * Определяет мат, пат, ничьи по различным правилам (50 ходов, троекратное повторение, недостаток материала).
+ * 
+ * @param {"w"|"b"} color - Цвет игрока, для которого проверяется состояние
+ * @returns {string|null} Результат проверки или null если игра продолжается
+ * 
+ * @example
+ * checkGameState("w") // "checkmate" - мат белым
+ * checkGameState("b") // "stalemate" - пат чёрным  
+ * checkGameState("w") // "fifty-move-rule" - ничья по правилу 50 ходов
+ */
 function checkGameState(color) {
   const state = checkMateOrStalemate(color);
 

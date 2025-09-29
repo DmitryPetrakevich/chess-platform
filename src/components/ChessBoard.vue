@@ -43,7 +43,37 @@ import { computed, ref } from "vue";
 
 const game = useGameStore();
 
-const selectedSquare = ref(null) //  например "e2"
+/**
+ * ID клетки, которая в данный момент выбрана (выделена) пользователем.
+ * Используется для отслеживания выбранной фигуры перед выполнением хода.
+ * 
+ * @example "e2" - выбрана клетка e2
+ * @example null - нет выбранной клетки
+ * 
+ * @usage
+ * // При клике на фигуру:
+ * selectedSquare.value = "e2"
+ * 
+ * // После выполнения хода:
+ * selectedSquare.value = null
+ */
+const selectedSquare = ref(null) 
+/**
+ * Множество клеток, которые должны быть подсвечены как доступные для хода.
+ * Содержит ID клеток, куда может переместиться выбранная фигура.
+ * 
+ * @example Set {"e3", "e4"} - пешка на e2 может пойти на e3 и e4
+ * @example Set {} - нет доступных ходов или фигура не выбрана
+ * 
+ * @usage
+ * // При выборе фигуры:
+ * highlightedSquares.value = new Set(["e3", "e4"])
+ * 
+ * // При сбросе выбора:
+ * highlightedSquares.value.clear()
+ * 
+ * @see getAvailableMoves - функция, которая заполняет это множество
+ */
 const highlightedSquares = ref(new Set()); 
 
 /**
@@ -231,7 +261,6 @@ function onDrop(to, event) {
 
 .file-label {
   width: clamp(40px, 8vw, 64px);
-  /* ширина равна клетке */
   text-align: center;
   font-weight: 600;
 }
