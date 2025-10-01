@@ -1,47 +1,36 @@
 <template>
-    <div class="chess-timer">
-        <div class="player-info player-top">
-            <div class="player-avatar">♛</div>
-            <div class="player-details">
-                <div class="player-name">Player1</div>
-                <div class="player-rating">1000</div>
-            </div>
-            <div class="timer timer-top">
-                5:00
-            </div>
-        </div>
-
-        <div class="moves-history">
-            История ходов
-        </div>
-
-        <div class="game-result">
-
-        </div>
-
-        <div class="game-status">
-            Мат, победа белых
-        </div>
-
-        <div class="player-info player-bottom">
-            <div class="player-avatar">♛</div>
-            <div class="player-details">
-                <div class="player-name">Player1</div>
-                <div class="player-rating">1000</div>
-            </div>
-            <div class="timer timer-bottom">
-                5:00
-            </div>
-        </div>
+  <div class="chess-timer">
+    <div class="player-info player-top">
+      <div class="player-avatar">♛</div>
+      <div class="player-details">
+        <div class="player-name">Player1</div>
+        <div class="player-rating">1000</div>
+      </div>
+      <div class="timer timer-top">5:00</div>
     </div>
+
+    <div class="moves-history">История ходов</div>
+
+    <div class="game-result"></div>
+
+    <div class="game-status">Мат, победа белых</div>
+
+    <div class="player-info player-bottom">
+      <div class="player-avatar">♛</div>
+      <div class="player-details">
+        <div class="player-name">Player1</div>
+        <div class="player-rating">1000</div>
+      </div>
+      <div class="timer timer-bottom">5:00</div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useGameStore } from '../store/gameStore';
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { useGameStore } from "../store/gameStore";
 
 const gameStore = useGameStore();
-
 </script>
 
 <style scoped>
@@ -55,7 +44,7 @@ const gameStore = useGameStore();
   flex-direction: column;
   gap: 15px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .player-info {
@@ -113,23 +102,28 @@ const gameStore = useGameStore();
 }
 
 .timer-top {
-  color: #FF9800;
+  color: #ff9800;
 }
 
 .timer-bottom {
-  color: #2196F3;
+  color: #2196f3;
 }
 
 .timer.low-time {
-  color: #F44336;
+  color: #f44336;
   animation: pulse 1s infinite;
   background: rgba(244, 67, 54, 0.1);
 }
 
 /*ХЗ что этл */
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .game-status {
@@ -155,8 +149,4 @@ const gameStore = useGameStore();
   background: rgba(25, 25, 35, 0.9);
   border-radius: 8px;
 }
-
-
-
-
 </style>
