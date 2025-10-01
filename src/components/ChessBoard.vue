@@ -208,6 +208,10 @@ function onDrop(to, event) {
   }
     
   game.makeMove(from, to);
+
+  selectedSquare.value = null;
+  highlightedSquares.value.clear();
+
   draggedFrom.value = null;
 }
 </script>

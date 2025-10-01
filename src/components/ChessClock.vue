@@ -47,6 +47,7 @@ const gameStore = useGameStore();
 <style scoped>
 .chess-timer {
   width: 300px;
+  height: 500px;
   background: rgba(30, 30, 46, 0.9);
   border-radius: 12px;
   padding: 20px;
