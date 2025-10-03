@@ -26,11 +26,11 @@
 
 <style scoped>
 .page-header {
-    height: 80px;
+    height: 60px;
     width: 100%;
     background: #1a1a1a;
     border-bottom: 1px solid #333;
-    margin-bottom: 40px;
+    /* margin-bottom: 40px; */
 }
 
 .page-header__container {
@@ -58,13 +58,13 @@
 }
 
 .page-header__btn {
-    padding: 10px 20px;
+    padding: 8px 15px;
     border: none;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 15px;
+    font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 1px;
 }

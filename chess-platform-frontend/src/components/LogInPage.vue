@@ -1,20 +1,12 @@
 <template>
-    <div class="registration-page">
-        <div class="registration-form">
-            <form class="registration-form__container">
-                <h2 class="title">Регистрация</h2>
-                <input class="form-input" type="text" placeholder="Имя пользователя" />
-                <input class="form-input" type="email" placeholder="Email" />
+    <div class="login-page">
+        <div class="login-form">
+            <h2 class="title">Войти</h2>
+            <form class="login-form__container">
+                <input class="form-input" type="text" placeholder="Логин или электронная почта" />
                 <input class="form-input" type="password" placeholder="Пароль" />
 
-                <div class="checkbox-container">
-                    <input type="checkbox" id="agreement" class="checkbox">
-                    <label for="agreement" class="checkbox-label">
-                        Я соглашаюсь с <a href="#" class="link">политикой конфиденциальности</a>
-                    </label>
-                </div>
-
-                <button class="submit-btn" type="submit">Зарегистрироваться</button>
+                <button class="submit-btn" type="submit">Войти</button>
             </form>
         </div>
     </div>
@@ -24,7 +16,7 @@
 </script>
 
 <style scoped lang="less">
-.registration-page {
+.login-page {
     display: flex;
     justify-content: center;
     align-items: flex-start;
@@ -33,17 +25,18 @@
     background: #2c2c2c; 
 }
 
-.registration-form {
-    border: 1px solid #666;
-    border-radius: 12px;
-    padding: 40px 30px;
-    background: #353535; 
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+.login-form {
     width: 100%;
     max-width: 420px;
+    padding: 40px 30px;
+    border-radius: 12px;
+    border: 1px solid #666;
+    background-color: #353535; 
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+
 }
 
-.registration-form__container {
+.login-form__container {
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -149,11 +142,11 @@
 }
 
 @media (max-width: 768px) {
-    .registration-page {
+    .login-page {
         padding: 20px 15px;
     }
     
-    .registration-form {
+    .login-form {
         padding: 30px 20px;
     }
     
@@ -161,4 +154,11 @@
         font-size: 22px;
     }
 }
+
+/* Убираем скролл */
+// :global(html),
+// :global(body) {
+//     overflow: hidden;
+//     height: 100%;
+// }
 </style>
