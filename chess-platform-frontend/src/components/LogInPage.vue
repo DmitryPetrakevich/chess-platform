@@ -2,20 +2,111 @@
     <div class="login-page">
         <div class="login-form">
             <h2 class="title">Войти</h2>
-            <form class="login-form__container">
-                <input class="form-input" type="text" placeholder="Логин или электронная почта" />
-                <input class="form-input" type="password" placeholder="Пароль" />
+            <form class="login-form__container" @submit.prevent="handleLogin">
+                <input 
+                v-model="loginData.identifier"
+                class="form-input" 
+                type="text" 
+                placeholder="Логин или электронная почта" 
+                required
+                />
+                <input 
+                v-model="loginData.password"
+                class="form-input" 
+                type="password" 
+                placeholder="Пароль"
+                required 
+                />
 
-                <button class="submit-btn" type="submit">Войти</button>
+                <button class="submit-btn" type="submit" :disabled="isLoading">
+                    {{ isLoading ? "Вход..." : "Войти" }}
+                </button>
             </form>
+
+            <div v-if="message" :class="['message', messageType]">
+                {{ message }}
+            </div>
+
+            <div class="form-footer">
+                <a href="#" class="footer-link">Сброс пароля</a>
+                <a href="#" class="footer-link">Нет аккаунта?</a>
+            </div>
         </div>
     </div>
 </template>
 
 <script setup>
+import { ref, reactive } from 'vue';
+
+const loginData = reactive({
+    identifier: '', // Может быть email или username
+    password: ''
+});
+
+const message = ref('');
+const messageType = ref('');
+const isLoading = ref(false);
+
+const handleLogin = async () => {
+    if (!loginData.identifier || !loginData.password) {
+        showMessage('Заполните все поля', 'error');
+        return;
+    }
+
+    isLoading.value = true;
+    showMessage('Выполняется вход...', 'info');
+
+    try {
+        const response = await fetch('http://localhost:3000/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                identifier: loginData.identifier,
+                password: loginData.password
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showMessage('Вход выполнен успешно!', 'success');
+            
+            localStorage.setItem('authToken', result.token);
+            localStorage.setItem('user', JSON.stringify(result.user));
+            
+            // Перенаправляем на главную страницу
+            setTimeout(() => {
+                window.location.href = '/'; // Или router.push('/') если используешь Vue Router
+            }, 1500);
+            
+        } else {
+            showMessage(`${result.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Ошибка входа:', error);
+        showMessage('Ошибка подключения к серверу', 'error');
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+const showMessage = (text, type) => {
+    message.value = text;
+    messageType.value = type;
+    
+    if (type !== 'info') {
+        setTimeout(() => {
+            message.value = '';
+            messageType.value = '';
+        }, 5000);
+    }
+};
 </script>
 
 <style scoped lang="less">
+
 .login-page {
     display: flex;
     justify-content: center;
@@ -30,10 +121,8 @@
     max-width: 420px;
     padding: 40px 30px;
     border-radius: 12px;
-    border: 1px solid #666;
     background-color: #353535; 
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-
 }
 
 .login-form__container {
@@ -43,10 +132,10 @@
 }
 
 .title {
-    margin: 0%;
+    margin: 0;
     margin-bottom: 30px;
     font-size: 38px;
-    font-weight: 700;
+    font-weight: 500;
     color: #fff;
     letter-spacing: 1.5px;
     font-family: 'Arial', sans-serif;
@@ -61,21 +150,19 @@
     color: #fff;
     transition: all 0.3s ease;
 
-      /* Хак для Chrome/Safari */
-  &:-webkit-autofill {
-    -webkit-box-shadow: 0 0 0px 1000px #343434 inset !important;
-    -webkit-text-fill-color: #fff !important;
-  }
-  
-  &:-webkit-autofill:focus {
-    -webkit-box-shadow: 0 0 0px 1000px #282828 inset !important;
-  }
-  
-  /* Для Firefox */
-  &:autofill {
-    background-color: #343434 !important;
-    color: #fff !important;
-  }
+    &:-webkit-autofill {
+        -webkit-box-shadow: 0 0 0px 1000px #343434 inset !important;
+        -webkit-text-fill-color: #fff !important;
+    }
+    
+    &:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0px 1000px #282828 inset !important;
+    }
+    
+    &:autofill {
+        background-color: #343434 !important;
+        color: #fff !important;
+    }
 }
 
 .form-input::placeholder {
@@ -87,37 +174,6 @@
     border-color: #e74c3c;
     background: #282828;
     box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
-}
-
-.checkbox-container {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    margin: 10px 0;
-}
-
-.checkbox {
-    height: 15px;
-    width: 15px;
-    margin-top: 2px;
-    transform: scale(1.2);
-    accent-color: #e74c3c; 
-}
-
-.checkbox-label {
-    color: #fff;
-    font-size: 18px;
-    line-height: 1.4;
-    cursor: pointer;
-}
-
-.link {
-    color: #e74c3c;
-    text-decoration: none;
-}
-
-.link:hover {
-    text-decoration: underline;
 }
 
 .submit-btn {
@@ -135,10 +191,66 @@
     margin-top: 10px;
 }
 
-.submit-btn:hover {
+.submit-btn:hover:not(:disabled) {
     background: #c0392b;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.submit-btn:disabled {
+    background: #666;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Стили для сообщений */
+.message {
+    padding: 12px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 500;
+    margin: 15px 0;
+}
+
+.message.success {
+    background: rgba(46, 204, 113, 0.2);
+    border: 1px solid #2ecc71;
+    color: #2ecc71;
+}
+
+.message.error {
+    background: rgba(231, 76, 60, 0.2);
+    border: 1px solid #e74c3c;
+    color: #e74c3c;
+}
+
+.message.info {
+    background: rgba(52, 152, 219, 0.2);
+    border: 1px solid #3498db;
+    color: #3498db;
+}
+
+.form-footer {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #444;
+}
+
+.footer-link {
+    color: #3498db; 
+    text-decoration: none;
+    font-size: 18px;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+}
+
+.footer-link:hover {
+    color: #2980b9; 
+    text-decoration: underline;
 }
 
 @media (max-width: 768px) {
@@ -154,11 +266,4 @@
         font-size: 22px;
     }
 }
-
-/* Убираем скролл */
-// :global(html),
-// :global(body) {
-//     overflow: hidden;
-//     height: 100%;
-// }
 </style>
