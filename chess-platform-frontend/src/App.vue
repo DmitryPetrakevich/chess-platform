@@ -1,9 +1,12 @@
 <template>
-  <PageHeader />
-  <!-- <Play /> -->
-   <RegistrationForm />
-   <!-- <LogInPage /> -->
-    <!-- <MainPage /> -->
+  <div class="app">
+    <PageHeader />
+    <RouterView></RouterView>
+    <!-- <Play /> -->
+    <!-- <RegistrationForm /> -->
+    <!-- <LogInPage /> -->
+      <!-- <MainPage /> -->
+  </div>
 </template>
 
 <script setup>

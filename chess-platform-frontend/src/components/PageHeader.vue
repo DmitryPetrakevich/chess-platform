@@ -1,27 +1,36 @@
 <template>
     <header class="page-header">
         <div class="page-header__container">
-            <div class="page-header__logo">
+            <router-link 
+                to="/" 
+                class="page-header__logo"
+            >
                 <span class="page-header__logo-img">
-                TUSUR Chess
+                    TUSUR Chess
                 </span>
-            </div>
+            </router-link>
             
             <nav class="page-header__btns">
-                <button class="page-header__btn page-header__btn--primary">
+                <router-link
+                    to="/login"
+                    class="page-header__btn page-header__btn--primary"
+                >
                     Войти
-                </button>
+                </router-link> 
 
-                <button class="page-header__btn page-header__btn--accent">
+                <router-link 
+                    to="/signup"
+                    class="page-header__btn page-header__btn--accent"
+                >
                     Регистрация
-                </button>
+                </router-link>
             </nav>
         </div>
     </header>
 </template>
 
 <script setup>
-// Логика компонента
+
 </script>
 
 <style scoped>
@@ -30,7 +39,6 @@
     width: 100%;
     background: #1a1a1a;
     border-bottom: 1px solid #333;
-    /* margin-bottom: 40px; */
 }
 
 .page-header__container {
@@ -44,12 +52,15 @@
 }
 
 .page-header__logo {
+    display: block; 
     font-size: 28px;
     font-weight: 800;
     color: #fff;
     text-transform: uppercase;
     letter-spacing: 3px;
     font-family: 'Arial', sans-serif;
+    text-decoration: none; 
+    
 }
 
 .page-header__btns {
@@ -58,6 +69,7 @@
 }
 
 .page-header__btn {
+    display: inline-block; 
     padding: 8px 15px;
     border: none;
     border-radius: 8px;
@@ -67,6 +79,9 @@
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 1px;
+    text-decoration: none; 
+    text-align: center; 
+    color: inherit; 
 }
 
 .page-header__btn--primary {
@@ -89,6 +104,16 @@
 .page-header__btn--accent:hover {
     background: #c0392b;
     border-color: #c0392b;
+}
+
+/* Убираем стандартные стили ссылок */
+.page-header__btn:focus,
+.page-header__btn:active {
+    outline: none; /* Убираем outline по умолчанию */
+}
+
+.page-header__btn.router-link-active {
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.3); 
 }
 
 @media (max-width: 768px) {
