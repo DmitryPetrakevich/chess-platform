@@ -53,6 +53,11 @@
 
 <script setup>
 import { ref, reactive } from 'vue'; 
+import { useRouter } from 'vue-router';
+import { useUserStore } from '@/store/user';
+
+const router = useRouter(); 
+const userStore = useUserStore(); 
 
 const formData = reactive({
     username: '',
@@ -80,7 +85,7 @@ const handleRegistration = async () => {
     showMessage('Отправка данных...', 'info');
 
     try {
-        const response = await fetch('http://localhost:3000/register', {
+        const response = await fetch('http://localhost:3000/auth/register', {
             method: 'POST', 
             headers: {
                 'Content-Type': 'application/json', // Указываем что отправляем JSON
@@ -96,7 +101,13 @@ const handleRegistration = async () => {
 
         if (result.success) {
             showMessage('Регистрация успешна!', 'success');
+            
+            userStore.login(result.user, result.token);
             resetForm();
+            
+            setTimeout(() => {
+                router.push('/');
+            }, 1500);
         } else {
             showMessage(`${result.error}`, 'error');
         }

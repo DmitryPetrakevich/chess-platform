@@ -29,7 +29,7 @@
 
             <div class="form-footer">
                 <a href="#" class="footer-link">Сброс пароля</a>
-                <a href="#" class="footer-link">Нет аккаунта?</a>
+                <router-link to="signup" class="footer-link">Нет аккаунта?</router-link>
             </div>
         </div>
     </div>
@@ -37,6 +37,11 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
+import { useRouter } from 'vue-router';
+import { useUserStore } from '@/store/user';
+
+const userStore = useUserStore();
+const router = useRouter();
 
 const loginData = reactive({
     identifier: '', // Может быть email или username
@@ -57,7 +62,7 @@ const handleLogin = async () => {
     showMessage('Выполняется вход...', 'info');
 
     try {
-        const response = await fetch('http://localhost:3000/login', {
+        const response = await fetch('http://localhost:3000/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -73,12 +78,11 @@ const handleLogin = async () => {
         if (result.success) {
             showMessage('Вход выполнен успешно!', 'success');
             
-            localStorage.setItem('authToken', result.token);
-            localStorage.setItem('user', JSON.stringify(result.user));
+            userStore.login(result.user, result.token);
             
             // Перенаправляем на главную страницу
             setTimeout(() => {
-                window.location.href = '/'; // Или router.push('/') если используешь Vue Router
+                router.push('/'); 
             }, 1500);
             
         } else {

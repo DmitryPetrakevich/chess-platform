@@ -14,10 +14,15 @@ import ChessClock from '@/components/ChessClock.vue';
 </script>
 
 <style scoped>
+.play {
+    margin-top: 100px;
+}
+
 .board_chess {
     display: flex;
     flex-direction: row;
-    margin: 0 100px;
+    justify-content: center;
+    
 }
 
 
