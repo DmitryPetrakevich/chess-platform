@@ -80,7 +80,6 @@ const handleLogin = async () => {
             
             userStore.login(result.user, result.token);
             
-            // Перенаправляем на главную страницу
             setTimeout(() => {
                 router.push('/'); 
             }, 1500);

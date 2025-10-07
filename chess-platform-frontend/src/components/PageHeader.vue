@@ -47,12 +47,13 @@
             
             <!-- Меню для АВТОРИЗОВАННЫХ -->
             <nav v-else class="page-header__user-menu">
-                <span 
+                <div 
                     class="page-header__user-name"
                     @click="toggleMenu"
                 >
-                    👤 {{ userStore.username }}
-                </span>
+                <img :src="profileNameIcon" alt="Профиль" class="profile-icon">    
+                {{ userStore.username }}
+                </div>
 
                 <div
                 v-if="isMenuOpen"
@@ -69,7 +70,8 @@
                         class="page-header__dropdown-item"
                         @click="closeMenu"
                     >
-                        👤 Профиль
+                        <img :src="profileIcon" alt="Профиль" class="profile-menu-icon">   
+                        Профиль
                     </router-link>
 
                     <router-link 
@@ -77,7 +79,8 @@
                         class="page-header__dropdown-item"
                         @click="closeMenu"
                     >
-                        📨 Входящие
+                        <img :src="messageIcon" alt="Входящие" class="profile-menu-icon">  
+                        Входящие
                     </router-link>
 
                     <router-link 
@@ -85,14 +88,16 @@
                         class="page-header__dropdown-item"
                         @click="closeMenu"
                     >
-                        ⚙️ Настройки
+                        <img :src="settingsIcon" alt="Настройки" class="profile-menu-icon">  
+                        Настройки
                     </router-link>
 
                     <button 
                         @click="userStore.logout()" 
                         class="page-header__dropdown-item"
                     >
-                        ↩ Выйти
+                        <img :src="logOutIcon" alt="Выйти" class="profile-menu-icon">   
+                        Выйти
                     </button>
 
                     <hr class="divider"/>
@@ -102,7 +107,8 @@
                         class="page-header__dropdown-item"
                         @click="closeMenu"
                     >
-                        🌐 Язык
+                        <img :src="languageIcon" alt="Язык" class="profile-menu-icon">
+                        Язык
                     </router-link>
 
                     <router-link 
@@ -110,7 +116,8 @@
                         class="page-header__dropdown-item"
                         @click="closeMenu"
                     >
-                        ☀ Тема
+                        <img :src="themeIcon" alt="Тема" class="profile-menu-icon"> 
+                        Тема
                     </router-link>
                 </div>
             </nav>
@@ -119,8 +126,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue' 
-import { useUserStore } from '@/store/user' 
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { useUserStore } from '@/store/user'
+
+
+import profileNameIcon from '@/assets/icons/profile-name.svg'
+import profileIcon from '@/assets/icons/profile.svg'
+import messageIcon from '@/assets/icons/message.svg'
+import settingsIcon from '@/assets/icons/settings.svg'
+import logOutIcon from '@/assets/icons/logout.svg'
+import languageIcon from '@/assets/icons/language.svg'
+import themeIcon from '@/assets/icons/theme.svg'
+
+const route = useRoute()
 
 /**
  * Хранилище состояния пользователя
@@ -153,6 +172,10 @@ const toggleMenu = () => {
 const closeMenu = () => {
     isMenuOpen.value = false
 }
+
+watch(() => route.fullPath, closeMenu)
+
+watch(() => userStore.isLoggedIn, closeMenu);
 </script>
 
 <style scoped lang="less">
@@ -176,6 +199,18 @@ const closeMenu = () => {
     margin: 0 auto;
 }
 
+.profile-icon {
+    width: 35px;           
+    height: 35px;
+    filter: invert(1);     
+}
+
+.profile-menu-icon {
+    width: 20px;           
+    height: 20px;
+    filter: invert(1);     
+}
+
 .page-header__user-menu {
     position: relative;
     display: flex;
@@ -184,6 +219,10 @@ const closeMenu = () => {
 }
 
 .page-header__user-name {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
     color: white;
     font-size: 20px;
     font-weight: 600;
@@ -199,10 +238,6 @@ const closeMenu = () => {
     }
 }
 
-/**
- * Оверлей для затемнения фона при открытом меню
- * Занимает весь экран, затемняет контент позади
- */
 .page-header__overlay {
     position: fixed;
     top: 0;
@@ -210,7 +245,7 @@ const closeMenu = () => {
     width: 100vw;
     height: 100vh;
     background: rgba(0, 0, 0, 0.2);
-    z-index: 998; /* Под меню, но над всем остальным контентом */
+    z-index: 998; 
 }
 
 .page-header__dropdown {
@@ -228,22 +263,23 @@ const closeMenu = () => {
     z-index: 999; 
     box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
     transform: translateX(0); 
-    animation: slideIn 0.3s ease-out; 
+    animation: slideIn 0.2s ease-out; 
 }
 
-/**
- * Анимация выезжания меню с правой стороны
- */
 @keyframes slideIn {
     from {
-        transform: translateX(100%); /* Начинается за правым краем */
+        transform: translateX(100%); 
     }
     to {
-        transform: translateX(0); /* Заканчивается у правого края */
+        transform: translateX(0); 
     }
 }
 
 .page-header__dropdown-item {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
     color: white;
     text-decoration: none;
     padding: 10px 15px;
@@ -259,7 +295,6 @@ const closeMenu = () => {
     background: #3b3b3b;
 }
 
-/* Остальные стили без изменений */
 .page-header__logo {
     display: block; 
     font-size: 20px;

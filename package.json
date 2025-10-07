@@ -3,6 +3,7 @@
     "less": "^4.4.1"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2"
   }
 }

@@ -23,6 +23,7 @@ import ChessClock from '@/components/ChessClock.vue';
     flex-direction: row;
     justify-content: center;
     
+    
 }
 
 

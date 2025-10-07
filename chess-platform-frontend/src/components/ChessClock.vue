@@ -3,8 +3,8 @@
     <div class="player-info player-top">
       <div class="player-avatar">♛</div>
       <div class="player-details">
-        <div class="player-name">Player1</div>
-        <div class="player-rating">1000</div>
+        <div class="player-name">{{userStore.username}}</div>
+        <div class="player-rating">{{userStore.blitzRating}}</div>
       </div>
       <div class="timer timer-top">5:00</div>
     </div>
@@ -29,14 +29,16 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useGameStore } from "../store/gameStore";
+import { useUserStore } from "@/store/user";
 
 const gameStore = useGameStore();
+const userStore = useUserStore();
 </script>
 
 <style scoped>
 .chess-timer {
   width: 300px;
-  height: 500px;
+  max-height: 400px;
   background: rgba(30, 30, 46, 0.9);
   border-radius: 12px;
   padding: 20px;
