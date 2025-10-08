@@ -888,6 +888,70 @@ function isValidMove(from, to, piece) {
   return true; // ход разрешён
 }
 
+// --- WebSocket подключение --- //
+let ws = null;
+
+/**
+ * Подключается к серверу WebSocket и слушает события.
+ * @param {string} roomId - ID комнаты (например "game123")
+ */
+  function connectToServer(roomId = "game123", name = "Player") {
+    if (ws && ws.readyState === WebSocket.OPEN && ws.roomId === roomId) return; 
+
+    // Закрыть старое соединение, если есть
+    if (ws) {
+      try { ws.close(); } catch (e) { /* ignore */ }
+      ws = null;
+    }
+
+    ws = new WebSocket("ws://localhost:3000"); 
+    ws.roomId = roomId; 
+
+    ws.onopen = () => {
+      console.log("✅ WebSocket подключен (client)");
+      ws.send(JSON.stringify({ type: "join", roomId, name }));
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log("📩 Сообщение от сервера:", data);
+
+      if (data.type === "move" && data.move) {
+        makeMove(data.move.from, data.move.to);
+      }
+
+      if (data.type === "joined") {
+        console.log("joined:", data);
+      }
+      if (data.type === "player_joined") {
+        console.log("player_joined:", data);
+      }
+      if (data.type === "player_left") {
+        console.log("player_left:", data);
+      }
+    };
+
+    ws.onclose = () => { console.log("❌ WS closed"); ws = null; }; 
+    ws.onerror = (err) => console.error("⚠️ WS error:", err); 
+  }
+
+/**
+ * Отправляет ход на сервер.
+ */
+  function sendMove(from, to) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      console.warn("WS not connected, cannot send move");
+      return;
+    }
+    ws.send(JSON.stringify({ type: "move", roomId: ws.roomId, move: { from, to } }));
+  }
+
+  function disconnect() {
+    if (!ws) return;
+    try { ws.close(); } catch (e) { /* ignore */ }
+    ws = null;
+  }
+
   return {
     pieces,
     currentTurn,
@@ -901,6 +965,9 @@ function isValidMove(from, to, piece) {
     setInitialPosition,
     makeMove,
     checkGameState,
-    getAvailableMoves 
+    getAvailableMoves,
+    connectToServer,
+    sendMove,
+    disconnect
   };
 });

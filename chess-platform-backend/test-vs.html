@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>WebSocket тест</title>
+</head>
+<body>
+  <h1>Тест WebSocket соединения</h1>
+  <script>
+    const socket = new WebSocket("ws://localhost:3000");
+
+    socket.onopen = () => {
+      console.log("✅ Соединение установлено");
+      socket.send("Привет сервер!");
+    };
+
+    socket.onmessage = (e) => {
+      console.log("📩 Сообщение от сервера:", e.data);
+    };
+
+    socket.onclose = () => {
+      console.log("❌ Соединение закрыто");
+    };
+
+    socket.onerror = (err) => {
+      console.error("⚠️ Ошибка соединения:", err);
+    };
+  </script>
+</body>
+</html>

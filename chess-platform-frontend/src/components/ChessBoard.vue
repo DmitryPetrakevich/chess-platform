@@ -39,9 +39,22 @@
 
 <script setup>
 import { useGameStore } from "@/store/gameStore";
-import { computed, ref } from "vue";
+import { computed, ref, onMounted, onBeforeUnmount } from "vue"; 
+import { useRoute } from "vue-router"; 
 
 const game = useGameStore();
+const route = useRoute();
+
+onMounted(() => {
+  const roomId = route.params.roomId;
+  if(roomId) {
+    game.connectToServer(roomId);
+  } 
+});
+
+onBeforeUnmount(() => {
+  if (game.disconnect) game.disconnect();
+})
 
 /**
  * ID клетки, которая в данный момент выбрана (выделена) пользователем.
@@ -132,6 +145,7 @@ function onSquareClick(id) {
   if (!selectedSquare.value) return;
 
   game.makeMove(selectedSquare.value, id);
+  game.sendMove(selectedSquare.value, id);
 }
 
 /**
@@ -208,6 +222,7 @@ function onDrop(to, event) {
   }
     
   game.makeMove(from, to);
+  game.sendMove(from, to);
 
   selectedSquare.value = null;
   highlightedSquares.value.clear();
@@ -234,7 +249,8 @@ function onDrop(to, event) {
 }
 
 .rank-label {
-  width: clamp(20px, 4vw, 32px);
+  /* width: clamp(20px, 4vw, 32px); */
+  width: clamp(22px, 4.5vw, 35px);    
   display: flex;
   align-items: center;
   justify-content: center;
@@ -243,8 +259,10 @@ function onDrop(to, event) {
 }
 
 .cell {
-  width: clamp(35px, 7vw, 60px);
-  height: clamp(35px, 7vw, 60px);
+  /* width: clamp(35px, 7vw, 60px);
+  height: clamp(35px, 7vw, 60px); */
+  width: clamp(45px, 8vw, 70px);
+  height: clamp(45px, 8vw, 70px);
   box-sizing: border-box;
   cursor: pointer;
 }
@@ -264,7 +282,8 @@ function onDrop(to, event) {
 }
 
 .file-label {
-  width: clamp(40px, 8vw, 64px);
+  /* width: clamp(40px, 8vw, 64px); */
+  width: clamp(45px, 8vw, 70px); 
   text-align: center;
   font-weight: 600;
 }

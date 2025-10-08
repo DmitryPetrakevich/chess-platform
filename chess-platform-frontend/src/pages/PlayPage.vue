@@ -15,7 +15,7 @@ import ChessClock from '@/components/ChessClock.vue';
 
 <style scoped>
 .play {
-    margin-top: 100px;
+    margin-top: 50px;
 }
 
 .board_chess {

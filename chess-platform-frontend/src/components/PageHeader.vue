@@ -6,6 +6,7 @@
                 class="page-header__logo"
             >
                 <span class="page-header__logo-img">
+                    <img :src="logoIcon" alt="Настройки" class="profile-menu-icon">  
                     TUSUR Chess
                 </span>
             </router-link>
@@ -130,7 +131,7 @@ import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/store/user'
 
-
+import logoIcon from '@/assets/icons/logo.svg'
 import profileNameIcon from '@/assets/icons/profile-name.svg'
 import profileIcon from '@/assets/icons/profile.svg'
 import messageIcon from '@/assets/icons/message.svg'
@@ -200,8 +201,8 @@ watch(() => userStore.isLoggedIn, closeMenu);
 }
 
 .profile-icon {
-    width: 35px;           
-    height: 35px;
+    width: 30px;           
+    height: 30px;
     filter: invert(1);     
 }
 
@@ -225,7 +226,8 @@ watch(() => userStore.isLoggedIn, closeMenu);
     align-items: center;
     color: white;
     font-size: 20px;
-    font-weight: 600;
+    font-weight: 400;
+    font-family: 'Manrope', sans-serif;
     border-radius: 5px;
     cursor: pointer;
     user-select: none;
@@ -255,10 +257,11 @@ watch(() => userStore.isLoggedIn, closeMenu);
     top: 70px;
     right: 10px;
     width: 200px; 
+    border-radius: 5px;
     padding: 10px;
     min-height: 300px;
     background: #2b2b2b;
-    border-left: 1px solid #444;
+    border-left: 3px solid #444;
     border-top: 1px solid #444;
     z-index: 999; 
     box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
@@ -279,8 +282,9 @@ watch(() => userStore.isLoggedIn, closeMenu);
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     color: white;
+    font-family: 'Manrope', sans-serif;
     text-decoration: none;
     padding: 10px 15px;
     text-align: left;
@@ -300,6 +304,7 @@ watch(() => userStore.isLoggedIn, closeMenu);
     font-size: 20px;
     font-weight: 800;
     color: #fff;
+    font-family: 'Manrope', sans-serif;
     text-transform: uppercase;
     letter-spacing: 3px;
     font-family: 'Arial', sans-serif;
@@ -315,10 +320,11 @@ watch(() => userStore.isLoggedIn, closeMenu);
     color: white;
     text-decoration: none;
     font-size: 20px;
+    font-family: 'Poppins', sans-serif;
     font-weight: 500;
     padding: 8px 0;
     position: relative;
-    transition: color 0.3s ease;
+    transition: all 0.3s ease;
     cursor: pointer;
 }
 
@@ -326,16 +332,16 @@ watch(() => userStore.isLoggedIn, closeMenu);
     color: #e74c3c;
 }
 
-.page-header__nav-link::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background: #e74c3c;
-    transition: width 0.3s ease;
-}
+// .page-header__nav-link::after {
+//     content: '';
+//     position: absolute;
+//     bottom: 0;
+//     left: 0;
+//     width: 0;
+//     height: 2px;
+//     background: #e74c3c;
+//     transition: width 0.3s ease;
+// }
 
 .page-header__nav-link:hover::after {
     width: 100%;

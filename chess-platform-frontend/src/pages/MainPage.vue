@@ -16,14 +16,18 @@
         Сыграть с компьютером
       </router-link>
 
-      <router-link to="/play" class="play-friends-btn">
+      <button class="play-friends-btn" @click="openInvite">
         Бросить вызов другу
-      </router-link>
+      </button>
     </div>
+
+    <InviteModal v-if="showInvite" @close="showInvite = false" @created="onRoomCreated" />
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue';
+import InviteModal from '@/components/InviteModal.vue';
 import { RouterLink } from 'vue-router'
 
 const modes = [
@@ -31,6 +35,16 @@ const modes = [
   { id: 2, time: '5 мин', label: 'Блиц' },
   { id: 3, time: '10 мин', label: 'Классика' }
 ]
+
+const showInvite = ref(false); 
+
+function openInvite() { 
+  showInvite.value = true;
+}
+
+function onRoomCreated(roomId) { // ADDED: optional hook for side-effects
+  console.log('Создана комната:', roomId);
+}
 </script>
 
 <style scoped>
@@ -39,6 +53,8 @@ const modes = [
   width: 100%;
   height: 100vh;
   padding-top: 100px;
+  /* padding-left: 40px;
+  padding-right: 40px; */
   color: #ecf0f1;
 }
 
@@ -52,15 +68,19 @@ const modes = [
   font-size: 28px;
   font-weight: 700;
   margin-bottom: 25px;
+  font-family: 'Poppins', sans-serif;
   color: #fff;
   letter-spacing: 1px;
 }
 
 .quick-start__container {
   display: flex;
+  flex-direction: row;
+  /* justify-content: flex-start; */
   justify-content: center;
-  gap: 25px;
   flex-wrap: wrap;
+  gap: 25px;
+  
 }
 
 .quick-start-item {
@@ -69,6 +89,7 @@ const modes = [
   border-radius: 12px;
   background: linear-gradient(145deg, #353535, #2b2b2b);
   border: 1px solid #3d3d3d;
+  font-family: 'Poppins', sans-serif;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s;
@@ -120,6 +141,7 @@ const modes = [
   padding: 14px 20px;
   background: linear-gradient(135deg, #3498db, #2980b9);
   color: white;
+  font-family: 'Poppins', sans-serif;
   border: none;
   border-radius: 8px;
   font-size: 15px;
