@@ -254,7 +254,6 @@ const resetForm = () => {
     box-shadow: none;
 }
 
-/* Стили для сообщений */
 .message {
     padding: 12px;
     border-radius: 6px;

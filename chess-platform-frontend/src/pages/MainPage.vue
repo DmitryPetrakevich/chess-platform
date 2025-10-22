@@ -1,6 +1,5 @@
 <template>
   <div class="main">
-    <!-- Быстрый старт -->
     <div class="quick-start">
       <h2 class="quick-start__title">Быстрый старт</h2>
       <div class="quick-start__container">
@@ -42,8 +41,8 @@ function openInvite() {
   showInvite.value = true;
 }
 
-function onRoomCreated(roomId) { // ADDED: optional hook for side-effects
-  console.log('Создана комната:', roomId);
+function onRoomCreated(roomData) {
+  console.log('Создана комната:', roomData); // roomData = { roomId: '...', color: '...' }
 }
 </script>
 

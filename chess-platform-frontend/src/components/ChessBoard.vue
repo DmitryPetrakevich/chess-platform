@@ -1,6 +1,11 @@
 <template>
   <div class="board-wrapper">
-    <div class="board">
+    <!-- <div>
+      <p>Цвет игрока: {{ props.playerColor }}</p>
+      <p>Доска перевернута: {{ props.flipped }}</p>
+    </div> -->
+
+    <div class="board" :class="{ flipped: flipped }">
       <div v-for="(row, rIndex) in squares" :key="rIndex" class="rank-row">
         <div 
           v-for="cell in row" 
@@ -40,21 +45,13 @@
 <script setup>
 import { useGameStore } from "@/store/gameStore";
 import { computed, ref, onMounted, onBeforeUnmount } from "vue"; 
-import { useRoute } from "vue-router"; 
 
 const game = useGameStore();
-const route = useRoute();
 
-onMounted(() => {
-  const roomId = route.params.roomId;
-  if(roomId) {
-    game.connectToServer(roomId);
-  } 
+const props = defineProps({
+  flipped: { type: Boolean, default: false },
+  playerColor: { type: String, default: "w" },
 });
-
-onBeforeUnmount(() => {
-  if (game.disconnect) game.disconnect();
-})
 
 /**
  * ID клетки, которая в данный момент выбрана (выделена) пользователем.
@@ -95,14 +92,18 @@ const highlightedSquares = ref(new Set());
  * Используется как запасной источник информации о начальной клетке,
  * если event.dataTransfer не содержит данных (разные браузеры/платформы).
  */
-const draggedFrom = ref(null); // клетка, с которой начали перетаскивать
+const draggedFrom = ref(null); 
 
-const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
-const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
+const files = computed(() => 
+  props.flipped ? ["h", "g", "f", "e", "d", "c", "b", "a"] : ["a", "b", "c", "d", "e", "f", "g", "h"]
+);
+const ranks = computed(() => 
+  props.flipped ? [1, 2, 3, 4, 5, 6, 7, 8] : [8, 7, 6, 5, 4, 3, 2, 1]
+);
 
 const squares = computed(() =>
-  ranks.map((rank, rIdx) =>
-    files.map((file, fIdx) => {
+  ranks.value.map((rank, rIdx) =>
+    files.value.map((file, fIdx) => {
       const color = (rIdx + fIdx) % 2 === 0 ? "light" : "dark";
       return { id: `${file}${rank}`, file, rank, color };
     })
@@ -134,18 +135,45 @@ function pieceImage(squareId) {
 function onSquareClick(id) {
   const clickedPiece = game.pieces[id];
 
-  highlightedSquares.value.clear();
+  if (clickedPiece) {
+    if (clickedPiece[0] !== game.currentTurn && selectedSquare.value) {
+      if (highlightedSquares.value.has(id)) {
+        game.makeMove(selectedSquare.value, id);
+        game.sendMove(selectedSquare.value, id);
+        selectedSquare.value = null;
+        highlightedSquares.value.clear();
+      }
+      return;
+    }
+    
+    if (clickedPiece[0] === game.currentTurn) {
+      if (selectedSquare.value === id) {
+        selectedSquare.value = null;
+        highlightedSquares.value.clear();
+      } else {
+        selectedSquare.value = id;
+        highlightedSquares.value = game.getAvailableMoves(id);
+      }
+      return;
+    }
+  }
 
-  if (clickedPiece && clickedPiece[0] === game.currentTurn) {
-    selectedSquare.value = id;
-    highlightedSquares.value = game.getAvailableMoves(id);
+  if (selectedSquare.value) {
+    if (highlightedSquares.value.has(id)) {
+      game.makeMove(selectedSquare.value, id);
+      game.sendMove(selectedSquare.value, id);
+      
+      selectedSquare.value = null;
+      highlightedSquares.value.clear();
+    } else {
+      selectedSquare.value = null;
+      highlightedSquares.value.clear();
+    }
     return;
   }
 
-  if (!selectedSquare.value) return;
-
-  game.makeMove(selectedSquare.value, id);
-  game.sendMove(selectedSquare.value, id);
+  selectedSquare.value = null;
+  highlightedSquares.value.clear();
 }
 
 /**
@@ -165,7 +193,12 @@ function onSquareClick(id) {
 function onDragStart(id, event) {
   const piece = game.pieces[id];
   
-  if (!piece || piece[0] !== game.currentTurn) {
+  if (!piece) {
+    event.preventDefault();
+    return;
+  }
+
+  if (piece[0] !== game.currentTurn) {
     event.preventDefault();
     return;
   }
@@ -202,7 +235,7 @@ function onDragEnd() {
  * @param {DragEvent} event - объект события drop.
  */
 function onDrop(to, event) {
-  event.preventDefault(); // Важно: предотвращаем поведение по умолчанию
+  event.preventDefault(); 
   let from = null;
   
   try {
@@ -234,37 +267,61 @@ function onDrop(to, event) {
 <style>
 .board-wrapper {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .board {
   display: inline-block;
   user-select: none;
+  max-width: min(80vh, 1000px);
+  max-height: min(80vh, 1000px);
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1; 
 }
 
 .rank-row {
   display: flex;
   align-items: stretch;
+  height: calc(100% / 8); 
+}
+
+.cell {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  flex: 1;
+  aspect-ratio: 1 / 1;
 }
 
 .rank-label {
-  /* width: clamp(20px, 4vw, 32px); */
-  width: clamp(22px, 4.5vw, 35px);    
+  width: clamp(20px, 3vw, 30px);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
   margin-left: 2px;
+  font-size: clamp(12px, 2vw, 16px);
 }
 
-.cell {
-  /* width: clamp(35px, 7vw, 60px);
-  height: clamp(35px, 7vw, 60px); */
-  width: clamp(45px, 8vw, 70px);
-  height: clamp(45px, 8vw, 70px);
-  box-sizing: border-box;
-  cursor: pointer;
+.file-label {
+  width: 100%;
+  text-align: center;
+  font-weight: 600;
+  font-size: clamp(12px, 2vw, 16px);
+  height: clamp(20px, 3vw, 30px);
+}
+
+.piece {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 2px; 
 }
 
 .cell.light {
@@ -278,20 +335,7 @@ function onDrop(to, event) {
 .files-row {
   display: flex;
   align-items: center;
-  margin-top: 6px;
-}
-
-.file-label {
-  /* width: clamp(40px, 8vw, 64px); */
-  width: clamp(45px, 8vw, 70px); 
-  text-align: center;
-  font-weight: 600;
-}
-
-.piece {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  height: clamp(20px, 3vw, 30px);
 }
 
 .cell.highlighted {
@@ -319,10 +363,8 @@ function onDrop(to, event) {
 }
 
 .cell.selected {
-  /* border: 3px solid red; */
   box-sizing: border-box;
-  background-color: rgba(67, 94, 67, 0.4);;
-  /* background: inherit !important;  */
+  background-color: rgba(67, 94, 67, 0.4);
 }
 
 .cell.selected.highlighted {
@@ -331,6 +373,14 @@ function onDrop(to, event) {
 
 .cell.last-move {
   background: rgba(255, 255, 0, 0.435) !important; 
+}
+
+.board.flipped {
+  transform: rotate(180deg);
+}
+
+.board.flipped * {
+  transform: rotate(180deg);
 }
 
 </style>

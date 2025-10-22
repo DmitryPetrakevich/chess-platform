@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref, reactive } from "vue";
+import { ref, reactive, computed } from "vue";
 
 export const useGameStore = defineStore("game", () => {
   /**
@@ -41,7 +41,48 @@ export const useGameStore = defineStore("game", () => {
  * Общее количество полуходов в партии.
  * Увеличивается после каждого хода (белых или чёрных).
  */ 
-  const totalMoveCount = ref(0);       
+  const totalMoveCount = ref(0);
+ /**
+ * Текущий цвет игрока ("w" или "b")
+ * Устанавливается сервером при подключении к комнате
+ * @type {import('vue').Ref<"w"|"b"|null>}
+ */
+const playerColor = ref(null)
+/**
+ * Цвет оппонента (удобно для проверок)
+ * Вычисляется автоматически на основе playerColor
+ */
+const opponentColor = computed(() => (playerColor.value === "w" ? "b" : "w"))
+/**
+ * Идентификатор текущей игровой комнаты
+ */
+const currentRoomId = ref(null); 
+
+/**
+ * Устанавливает цвет игрока 
+ * @param {"w"|"b"} color - Цвет фигур игрока
+ */
+function setPlayerColor(color) {
+  console.log("🎨 setPlayerColor() вызывается с цветом:", color);
+  console.log("🎨 До установки - playerColor был:", playerColor.value);
+  
+  playerColor.value = color;
+  
+  console.log("🎨 После установки - playerColor стал:", playerColor.value);
+  console.log("🎨 Твой цвет:", color === "w" ? "белые" : "чёрные");
+}
+
+/**
+ * Устанавливает очередь хода
+ * @param {"w"|"b"} turn - Чья очередь ходить
+ */
+  function setCurrentTurn(turn) {
+    currentTurn.value = turn;
+  }
+
+  function resetBoard() {
+    console.log("♻️ Сброс доски (реализуй, если нужно)");
+  }
 
   const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
   const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
@@ -885,55 +926,93 @@ function isValidMove(from, to, piece) {
     }
   }
 
-  return true; // ход разрешён
+  return true; 
 }
 
 // --- WebSocket подключение --- //
 let ws = null;
+const playersCount = ref(0);
+const shouldRedirect = ref(null);  
 
 /**
  * Подключается к серверу WebSocket и слушает события.
  * @param {string} roomId - ID комнаты (например "game123")
  */
-  function connectToServer(roomId = "game123", name = "Player") {
-    if (ws && ws.readyState === WebSocket.OPEN && ws.roomId === roomId) return; 
+function connectToServer(roomId = "game123", color = null, name = "Player") {
+  if (ws && ws.readyState === WebSocket.OPEN && ws.roomId === roomId) return;
 
-    // Закрыть старое соединение, если есть
-    if (ws) {
-      try { ws.close(); } catch (e) { /* ignore */ }
-      ws = null;
+  if (ws) {
+    try { ws.close(); } catch (e) { /* ignore */ }
+    ws = null;
+  }
+
+  ws = new WebSocket("ws://localhost:3000");
+  ws.roomId = roomId;
+
+  ws.onopen = () => {
+    console.log("✅ WebSocket подключен (client)");
+    console.log("🎨 Отправляю roomid на сервер:", roomId);
+    console.log("🎨 Отправляю цвет на сервер:", color);
+    console.log("🎨 Отправляю имя на сервер:", name);
+    ws.send(JSON.stringify({ type: "join", roomId, name, color}));
+  };
+
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    console.log("📩 Сообщение от сервера:", data);
+
+    if (data.type === "joined") {
+      console.log("🎯 Игрок успешно присоединился:", data);
+
+    setPlayerColor(data.color);
+    currentRoomId.value = data.roomId;
+    playersCount.value = data.playersCount;
+    resetBoard();
+
+    return;
     }
 
-    ws = new WebSocket("ws://localhost:3000"); 
-    ws.roomId = roomId; 
+    if (data.type === "start_game") {
+      console.log("🚀 Игра начинается!", data);
+      shouldRedirect.value = {
+        roomId: data.roomId,
+        reason: "game_started"
+      };
+      playersCount.value = 2; 
 
-    ws.onopen = () => {
-      console.log("✅ WebSocket подключен (client)");
-      ws.send(JSON.stringify({ type: "join", roomId, name }));
-    };
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("📩 Сообщение от сервера:", data);
-
-      if (data.type === "move" && data.move) {
-        makeMove(data.move.from, data.move.to);
+      if (data.turn) {
+        setCurrentTurn(data.turn);
       }
+      return;
+    }
 
-      if (data.type === "joined") {
-        console.log("joined:", data);
-      }
-      if (data.type === "player_joined") {
-        console.log("player_joined:", data);
-      }
-      if (data.type === "player_left") {
-        console.log("player_left:", data);
-      }
-    };
+    if (data.type === "player_joined") {
+      console.log("👤 В комнату вошёл игрок:", data);
+      playersCount.value += 1; 
+      return;
+    }
 
-    ws.onclose = () => { console.log("❌ WS closed"); ws = null; }; 
-    ws.onerror = (err) => console.error("⚠️ WS error:", err); 
-  }
+    if (data.type === "move" && data.move) {
+      makeMove(data.move.from, data.move.to);
+      return;
+    }
+
+    if (data.type === "player_left") {
+      console.log("🚪 Игрок покинул комнату:", data);
+      playersCount.value = Math.max(0, playersCount.value - 1); 
+      return;
+    }
+  };
+
+  ws.onclose = () => {
+    console.log("❌ WebSocket закрыт");
+    ws = null;
+  };
+
+  ws.onerror = (err) => {
+    console.error("⚠️ Ошибка WebSocket:", err);
+  };
+}
 
 /**
  * Отправляет ход на сервер.
@@ -962,12 +1041,15 @@ let ws = null;
     result,
     moveCountWithoutAction,
     totalMoveCount,
+    opponentColor,
+    playersCount, 
+    shouldRedirect, 
     setInitialPosition,
     makeMove,
     checkGameState,
     getAvailableMoves,
     connectToServer,
     sendMove,
-    disconnect
+    disconnect,
   };
 });
