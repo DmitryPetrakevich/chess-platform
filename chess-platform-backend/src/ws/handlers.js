@@ -17,8 +17,6 @@ function handleConnection(ws) {
         const { roomId, name, color: preferredColor } = data;
         const playersCount = addClientToRoom(roomId, ws, preferredColor);
 
-        console.log(`👥 ${name} присоединился к комнате ${roomId}. Игроков: ${playersCount}`);
-
         ws.send(JSON.stringify({
           type: "joined",
           roomId,
@@ -57,8 +55,6 @@ function handleConnection(ws) {
           ws.send(JSON.stringify({ type: "error", message: "Not your turn" }));
           return;
         }
-
-        console.log(`♟️ Ход в комнате ${roomId}:`, move);
 
         room.turn = room.turn === "w" ? "b" : "w";
 

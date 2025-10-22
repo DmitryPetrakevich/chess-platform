@@ -253,13 +253,17 @@ function onDrop(to, event) {
   if (!from) {
     return;
   }
+
+  const moveMade = game.makeMove(from, to);
     
-  game.makeMove(from, to);
-  game.sendMove(from, to);
+    if (moveMade) {
+    game.sendMove(from, to);
+  } else {
+    console.warn("❌ Недопустимый ход:", from, "→", to);
+  }
 
   selectedSquare.value = null;
   highlightedSquares.value.clear();
-
   draggedFrom.value = null;
 }
 </script>

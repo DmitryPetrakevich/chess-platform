@@ -262,12 +262,12 @@ function makeMove(from, to) {
 
   if (result.value) {
     console.warn('Game finished:', result.value);
-    return;
+    return false;
   }
 
   // базовые проверки
-  if (!movingPiece) return;
-  if (!isValidMove(from, to, movingPiece)) return;
+  if (!movingPiece) return false;
+  if (!isValidMove(from, to, movingPiece)) return false;
 
   // вычисляем флаги ДО изменения доски
   const isPawnMove = movingPiece[1] === "P";
@@ -295,7 +295,7 @@ function makeMove(from, to) {
 
     positionHistory.value.push(getPositionHash());
     checkGameState(currentTurn.value);
-    return;
+    return true;
   }
 
   // обработка en-passant
@@ -357,6 +357,7 @@ function makeMove(from, to) {
   }
 
   checkGameState(currentTurn.value);
+  return true;
 }
 
 /**
