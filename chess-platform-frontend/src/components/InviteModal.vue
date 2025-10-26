@@ -96,8 +96,10 @@ const colorOptions = [
  * Формат: http://localhost:5173/play/{roomId}?color={selectedColor}
  */
 const link = computed(() => {
-    return `${window.location.origin}/play/${roomId.value}`;
+    const colorParam = selectedColor.value ? `?color=${selectedColor.value}` : "";
+    return `${window.location.origin}/play/${roomId.value}${colorParam}`;
 });
+
 
 /**
  * Генерирует уникальный идентификатор комнаты
@@ -123,6 +125,7 @@ function selectColor(color) {
     waiting.value = true;
 
     emit("created", { roomId: roomId.value, color: selectedColor.value });
+    console.log("🔗 Ссылка для приглашения:", link.value); // добавь это
 
     game.connectToServer(roomId.value, selectedColor.value, user.username);
 }
@@ -188,29 +191,16 @@ watch([
         roomId: roomId.value
     });
     
-    // Условие 1: Флаг перехода от сервера
     if (newShouldRedirect && newShouldRedirect.roomId === roomId.value) {
-        console.log("🚀 Переходим по команде сервера!");
         performRedirect();
         return;
     }
     
-    // Условие 2: В комнате 2 игрока (резервный механизм)
     if (newPlayersCount >= 2) {
-        console.log("👥 В комнате 2 игрока - переходим!");
         performRedirect();
         return;
     }
 });
-
-// onMounted(() => {
-//     if (!roomId.value) roomId.value = genId();
-//     waiting.value = true;
-
-//     emit("created", { roomId: roomId.value, color: selectedColor.value });
-
-//     game.connectToServer(roomId.value, selectedColor.value, user.username);
-// });
 </script>
 
 <style scoped>

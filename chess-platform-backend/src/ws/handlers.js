@@ -1,9 +1,6 @@
 const { generateClientId } = require("../utils/id");
 const { rooms, addClientToRoom, removeClientFromRoom, broadcastToRoom } = require("./rooms");
 
-/**
- * Обработка подключения нового клиента
- */
 function handleConnection(ws) {
   ws.id = generateClientId();
   console.log(`🟢 WS connected: ${ws.id}`);
@@ -15,6 +12,10 @@ function handleConnection(ws) {
 
       if (data.type === "join") {
         const { roomId, name, color: preferredColor } = data;
+
+        ws.name = name || "Player";
+        ws.color = preferredColor;
+
         const playersCount = addClientToRoom(roomId, ws, preferredColor);
 
         ws.send(JSON.stringify({
@@ -45,7 +46,7 @@ function handleConnection(ws) {
         }
       }
 
-      else if (data.type === "move") {
+      else if (data.type === "make_move" || data.type === "move") {
         const { roomId, move } = data;
         const room = rooms.get(roomId);
         if (!room) return;
@@ -58,10 +59,17 @@ function handleConnection(ws) {
 
         room.turn = room.turn === "w" ? "b" : "w";
 
+        ws.send(JSON.stringify({
+          type: "moveMade",
+          from: move.from,
+          to: move.to,
+          turn: room.turn,
+        }));
+
         broadcastToRoom(roomId, {
           type: "move",
           move,
-          nextTurn: room.turn,
+          turn: room.turn,
         }, ws);
       }
 

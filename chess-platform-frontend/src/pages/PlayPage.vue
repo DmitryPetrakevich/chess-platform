@@ -1,7 +1,6 @@
 <template>
   <div class="play">
       <div class="board_chess">
-        <!-- <p>Цвет игрока: {{ game.playerColor }}</p> -->
         <ChessBoard 
           :flipped="game.playerColor === 'b'" 
           :playerColor="game.playerColor" 
@@ -17,32 +16,27 @@ import { useRoute } from "vue-router";
 import { useGameStore } from "@/store/gameStore";
 import ChessBoard from "@/components/ChessBoard.vue";
 import ChessClock from "@/components/ChessClock.vue";
+import { useUserStore } from "@/store/user";
 
 const game = useGameStore();
+const user = useUserStore();
 const route = useRoute();
 
 onMounted(() => {
   const roomId = route.params.roomId;
   const colorQuery = route.query.color;
 
-  let finalColor = colorQuery || "random"; 
-  
-  console.log("🎨 PlayPage МОНТИРУЕТСЯ:");
-  console.log(" - Room ID из URL:", roomId);
-  console.log(" - Цвет из URL:", colorQuery);
-  console.log(" - Итоговый цвет для сервера:", finalColor);
-  console.log(" - Текущий playerColor в store ДО подключения:", game.playerColor);
-  console.log(" - Текущий currentRoomId в store:", game.currentRoomId);
+  let finalColor;
+  if (colorQuery === "w") finalColor = "b";
+  else if (colorQuery === "b") finalColor = "w";
+  else finalColor = Math.random() > 0.5 ? "w" : "b"; // если "random" или нет параметра
 
   if (roomId) {
-    console.log("🔄 Вызываю game.connectToServer()...");
-    game.connectToServer(roomId, finalColor);
+    game.connectToServer(roomId, finalColor, user.username);
   } else {
-    console.log("❌ Room ID не найден в URL!");
   }
 });
 
-// 🔥 ДОБАВЬ ЭТОТ watch ДЛЯ ДИАГНОСТИКИ
 watch(() => game.playerColor, (newColor, oldColor) => {
   console.log("🔴 playerColor ИЗМЕНИЛСЯ:", { 
     from: oldColor, 
@@ -51,21 +45,6 @@ watch(() => game.playerColor, (newColor, oldColor) => {
   });
 }, { immediate: true });
 
-// onMounted(() => {
-//   const roomId = route.params.roomId;
-//   const colorQuery = route.query.color;
-
-//   let finalColor = colorQuery || "random"; 
-  
-//   console.log("🎨 PlayPage:");
-//   console.log(" - Цвет из URL:", colorQuery);
-//   console.log(" - Отправляем на сервер:", finalColor);
-//   console.log(" - Текущий playerColor в store:", game.playerColor);
-
-//   if (roomId) {
-//     game.connectToServer(roomId, finalColor);
-//   }
-// });
 </script>
 
 <style scoped>

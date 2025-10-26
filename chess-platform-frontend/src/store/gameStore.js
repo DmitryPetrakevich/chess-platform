@@ -63,13 +63,8 @@ const currentRoomId = ref(null);
  * @param {"w"|"b"} color - Цвет фигур игрока
  */
 function setPlayerColor(color) {
-  console.log("🎨 setPlayerColor() вызывается с цветом:", color);
-  console.log("🎨 До установки - playerColor был:", playerColor.value);
-  
+  console.log("🎨 setPlayerColor:", color);
   playerColor.value = color;
-  
-  console.log("🎨 После установки - playerColor стал:", playerColor.value);
-  console.log("🎨 Твой цвет:", color === "w" ? "белые" : "чёрные");
 }
 
 /**
@@ -267,7 +262,11 @@ function makeMove(from, to) {
 
   // базовые проверки
   if (!movingPiece) return false;
-  if (!isValidMove(from, to, movingPiece)) return false;
+  const availableMoves = getAvailableMoves(from);
+  if (!availableMoves.has(to)) {
+    console.warn(`🚫 Недопустимый ход: ${from} → ${to}`);
+    return false; 
+  }
 
   // вычисляем флаги ДО изменения доски
   const isPawnMove = movingPiece[1] === "P";
@@ -952,56 +951,62 @@ function connectToServer(roomId = "game123", color = null, name = "Player") {
 
   ws.onopen = () => {
     console.log("✅ WebSocket подключен (client)");
-    console.log("🎨 Отправляю roomid на сервер:", roomId);
-    console.log("🎨 Отправляю цвет на сервер:", color);
-    console.log("🎨 Отправляю имя на сервер:", name);
-    ws.send(JSON.stringify({ type: "join", roomId, name, color}));
+    console.log("🎨 Отправляю данные на сервер:", { roomId, color, name });
+    ws.send(JSON.stringify({ type: "join", roomId, name, color }));
   };
 
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
     console.log("📩 Сообщение от сервера:", data);
 
-    if (data.type === "joined") {
-      console.log("🎯 Игрок успешно присоединился:", data);
+    switch (data.type) {
+      case "joined":
+        console.log("🎯 Игрок успешно присоединился:", data);
+        setPlayerColor(data.color);
+        currentRoomId.value = data.roomId;
+        playersCount.value = data.playersCount;
+        resetBoard();
+        break;
 
-    setPlayerColor(data.color);
-    currentRoomId.value = data.roomId;
-    playersCount.value = data.playersCount;
-    resetBoard();
+      case "start_game":
+        console.log("🚀 Игра начинается!", data);
+        shouldRedirect.value = {
+          roomId: data.roomId,
+          reason: "game_started"
+        };
+        playersCount.value = 2; 
+        if (data.turn) setCurrentTurn(data.turn);
+        break;
 
-    return;
-    }
+      case "player_joined":
+        console.log("👤 В комнату вошёл игрок:", data);
+        playersCount.value += 1;
+        break;
 
-    if (data.type === "start_game") {
-      console.log("🚀 Игра начинается!", data);
-      shouldRedirect.value = {
-        roomId: data.roomId,
-        reason: "game_started"
-      };
-      playersCount.value = 2; 
+      case "moveMade":
+        console.log("♟ Подтверждён ход:", data.from, "→", data.to);
+        makeMove(data.from, data.to);  // теперь только после подтверждения
+        if (data.turn) setCurrentTurn(data.turn);
+        break;
 
-      if (data.turn) {
-        setCurrentTurn(data.turn);
-      }
-      return;
-    }
+      case "move":
+        console.log("♟ Ход от другого игрока:", data.move);
+        makeMove(data.move.from, data.move.to);
+        if (data.turn) setCurrentTurn(data.turn);
+        break;
 
-    if (data.type === "player_joined") {
-      console.log("👤 В комнату вошёл игрок:", data);
-      playersCount.value += 1; 
-      return;
-    }
+      case "error":
+        console.warn("❌ Ошибка от сервера:", data.message);
+        // Можно добавить визуальное уведомление или popup
+        break;
 
-    if (data.type === "move" && data.move) {
-      makeMove(data.move.from, data.move.to);
-      return;
-    }
+      case "player_left":
+        console.log("🚪 Игрок покинул комнату:", data);
+        playersCount.value = Math.max(0, playersCount.value - 1);
+        break;
 
-    if (data.type === "player_left") {
-      console.log("🚪 Игрок покинул комнату:", data);
-      playersCount.value = Math.max(0, playersCount.value - 1); 
-      return;
+      default:
+        console.warn("⚙️ Неизвестный тип сообщения:", data.type);
     }
   };
 
@@ -1015,16 +1020,23 @@ function connectToServer(roomId = "game123", color = null, name = "Player") {
   };
 }
 
+
 /**
  * Отправляет ход на сервер.
  */
-  function sendMove(from, to) {
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-      console.warn("WS not connected, cannot send move");
-      return;
-    }
-    ws.send(JSON.stringify({ type: "move", roomId: ws.roomId, move: { from, to } }));
+function sendMove(from, to) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    const moveData = {
+      type: "make_move",            
+      roomId: currentRoomId.value,  
+      move: { from, to }            
+    };
+    ws.send(JSON.stringify(moveData));
+    console.log("📤 Отправил на сервер ход:", moveData);
+  } else {
+    console.warn("⚠️ Невозможно отправить ход — WebSocket не подключён");
   }
+}
 
   function disconnect() {
     if (!ws) return;
@@ -1045,6 +1057,7 @@ function connectToServer(roomId = "game123", color = null, name = "Player") {
     opponentColor,
     playersCount, 
     shouldRedirect, 
+    playerColor,
     setInitialPosition,
     makeMove,
     checkGameState,
@@ -1052,5 +1065,6 @@ function connectToServer(roomId = "game123", color = null, name = "Player") {
     connectToServer,
     sendMove,
     disconnect,
+    setPlayerColor,
   };
 });

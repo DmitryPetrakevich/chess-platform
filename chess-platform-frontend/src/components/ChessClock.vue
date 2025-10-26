@@ -27,11 +27,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from "vue";
-import { useGameStore } from "../store/gameStore";
 import { useUserStore } from "@/store/user";
 
-const gameStore = useGameStore();
 const userStore = useUserStore();
 </script>
 

@@ -17,30 +17,38 @@ function addClientToRoom(roomId, ws, preferredColor = "random") {
   room.players.add(ws);
   ws.roomId = roomId;
 
-  const size = room.players.size;
+  // Определяем, какие цвета уже заняты
+  const whiteTaken = !!room.white;
+  const blackTaken = !!room.black;
 
-  if (size === 1) {
-    if (preferredColor === "b") {
+  // 1Попытка назначить по желанию игрока
+  if (preferredColor === "w" && !whiteTaken) {
+    room.white = ws;
+    ws.color = "w";
+  } 
+  else if (preferredColor === "b" && !blackTaken) {
+    room.black = ws;
+    ws.color = "b";
+  } 
+  else {
+    // Если цвет random или желаемый уже занят — назначаем автоматически
+    if (!whiteTaken) {
+      room.white = ws;
+      ws.color = "w";
+    } else if (!blackTaken) {
       room.black = ws;
       ws.color = "b";
     } else {
-      room.white = ws;
-      ws.color = "w";
-    }
-  } else if (size === 2) {
-    if (room.white && !room.black) {
-      room.black = ws;
-      ws.color = "b";
-    } else if (room.black && !room.white) {
-      room.white = ws;
-      ws.color = "w";
-    } else {
-      ws.color = room.white ? "b" : "w";
-      ws.color === "w" ? (room.white = ws) : (room.black = ws);
+      // комната полная
+      ws.send(JSON.stringify({ type: "error", message: "Room is full" }));
+      return room.players.size;
     }
   }
-  return size;
+
+  console.log(`🎨 Игроку ${ws.id} назначен цвет: ${ws.color} (room: ${roomId})`);
+  return room.players.size;
 }
+
 
 /**
  * Удаляет клиента из комнаты

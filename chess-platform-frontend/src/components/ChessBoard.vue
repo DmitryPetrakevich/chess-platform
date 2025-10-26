@@ -1,11 +1,6 @@
 <template>
   <div class="board-wrapper">
-    <!-- <div>
-      <p>Цвет игрока: {{ props.playerColor }}</p>
-      <p>Доска перевернута: {{ props.flipped }}</p>
-    </div> -->
-
-    <div class="board" :class="{ flipped: flipped }">
+    <div class="board">
       <div v-for="(row, rIndex) in squares" :key="rIndex" class="rank-row">
         <div 
           v-for="cell in row" 
@@ -44,14 +39,11 @@
 
 <script setup>
 import { useGameStore } from "@/store/gameStore";
-import { computed, ref, onMounted, onBeforeUnmount } from "vue"; 
+import { computed, ref, onMounted, nextTick , watch } from "vue"; 
 
 const game = useGameStore();
 
-const props = defineProps({
-  flipped: { type: Boolean, default: false },
-  playerColor: { type: String, default: "w" },
-});
+const flipped = computed(() => game.playerColor === "b");
 
 /**
  * ID клетки, которая в данный момент выбрана (выделена) пользователем.
@@ -85,7 +77,6 @@ const selectedSquare = ref(null)
  * @see getAvailableMoves - функция, которая заполняет это множество
  */
 const highlightedSquares = ref(new Set()); 
-
 /**
  * Клетка, с которой начали перетаскивание.
  * @type {import('vue').Ref<string|null>}
@@ -94,11 +85,11 @@ const highlightedSquares = ref(new Set());
  */
 const draggedFrom = ref(null); 
 
-const files = computed(() => 
-  props.flipped ? ["h", "g", "f", "e", "d", "c", "b", "a"] : ["a", "b", "c", "d", "e", "f", "g", "h"]
+const files = computed(() =>
+  flipped.value ? ["h","g","f","e","d","c","b","a"] : ["a","b","c","d","e","f","g","h"]
 );
-const ranks = computed(() => 
-  props.flipped ? [1, 2, 3, 4, 5, 6, 7, 8] : [8, 7, 6, 5, 4, 3, 2, 1]
+const ranks = computed(() =>
+  flipped.value ? [1,2,3,4,5,6,7,8] : [8,7,6,5,4,3,2,1]
 );
 
 const squares = computed(() =>
@@ -135,50 +126,29 @@ function pieceImage(squareId) {
 function onSquareClick(id) {
   const clickedPiece = game.pieces[id];
 
-  if (clickedPiece) {
-    if (clickedPiece[0] !== game.currentTurn && selectedSquare.value) {
-      if (highlightedSquares.value.has(id)) {
-        game.makeMove(selectedSquare.value, id);
-        game.sendMove(selectedSquare.value, id);
-        selectedSquare.value = null;
-        highlightedSquares.value.clear();
-      }
-      return;
-    }
-    
-    if (clickedPiece[0] === game.currentTurn) {
-      if (selectedSquare.value === id) {
-        selectedSquare.value = null;
-        highlightedSquares.value.clear();
-      } else {
-        selectedSquare.value = id;
-        highlightedSquares.value = game.getAvailableMoves(id);
-      }
-      return;
-    }
-  }
-
-  if (selectedSquare.value) {
-    if (highlightedSquares.value.has(id)) {
-      game.makeMove(selectedSquare.value, id);
-      game.sendMove(selectedSquare.value, id);
-      
+  if (clickedPiece && clickedPiece[0] === game.currentTurn) {
+    if (selectedSquare.value === id) {
       selectedSquare.value = null;
       highlightedSquares.value.clear();
     } else {
-      selectedSquare.value = null;
-      highlightedSquares.value.clear();
+      selectedSquare.value = id;
+      highlightedSquares.value = game.getAvailableMoves(id);
     }
     return;
   }
 
-  selectedSquare.value = null;
-  highlightedSquares.value.clear();
+  if (selectedSquare.value && highlightedSquares.value.has(id)) {
+    game.sendMove(selectedSquare.value, id);
+    selectedSquare.value = null;
+    highlightedSquares.value.clear();
+  } else {
+    selectedSquare.value = null;
+    highlightedSquares.value.clear();
+  }
 }
 
 /**
  * Начало перетаскивания фигуры.
- *
  * Что делает:
  * - Проверяет, есть ли фигура на клетке и принадлежит ли она игроку, который сейчас ходит.
  *   Если нет — отменяет перетаскивание (event.preventDefault()).
@@ -235,32 +205,53 @@ function onDragEnd() {
  * @param {DragEvent} event - объект события drop.
  */
 function onDrop(to, event) {
-  event.preventDefault(); 
+  event.preventDefault();
+
   let from = null;
-  
   try {
-    if (event.dataTransfer) {
-      from = event.dataTransfer.getData("text/plain");
-    }
+    from = event.dataTransfer?.getData("text/plain") || draggedFrom.value;
   } catch (e) {
-    console.error("Ошибка при получении данных:", e);
-  }
-  
-  if (!from) {
+    console.error("Ошибка при получении dataTransfer:", e);
     from = draggedFrom.value;
   }
-  
-  if (!from) {
+
+  if (!from) return;
+
+  if (from === to) {
+    selectedSquare.value = null;
+    highlightedSquares.value.clear();
+    draggedFrom.value = null;
     return;
   }
 
-  const moveMade = game.makeMove(from, to);
-    
-    if (moveMade) {
-    game.sendMove(from, to);
-  } else {
-    console.warn("❌ Недопустимый ход:", from, "→", to);
+  const piece = game.pieces[from];
+  if (!piece) {
+    console.warn("onDrop: нет фигуры на from", from);
+    draggedFrom.value = null;
+    return;
   }
+  if (piece[0] !== game.playerColor) { // защита: игрок пытается двигать чужую фигуру
+    console.warn("onDrop: пытаются двигать не свою фигуру:", from);
+    draggedFrom.value = null;
+    return;
+  }
+
+  if (game.currentTurn !== game.playerColor) {
+    console.warn("onDrop: сейчас не ваша очередь:", game.currentTurn);
+    draggedFrom.value = null;
+    return;
+  }
+
+  const avail = game.getAvailableMoves(from);
+  if (!avail.has(to)) {
+    console.warn(`onDrop: недопустимый ход ${from} → ${to}`);
+    draggedFrom.value = null;
+    selectedSquare.value = null;
+    highlightedSquares.value.clear();
+    return;
+  }
+
+  game.sendMove(from, to);
 
   selectedSquare.value = null;
   highlightedSquares.value.clear();
@@ -383,8 +374,9 @@ function onDrop(to, event) {
   transform: rotate(180deg);
 }
 
-.board.flipped * {
+.board.flipped .piece,
+.board.flipped .file-label,
+.board.flipped .rank-label {
   transform: rotate(180deg);
 }
-
 </style>
