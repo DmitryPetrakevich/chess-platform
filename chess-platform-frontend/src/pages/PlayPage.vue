@@ -5,7 +5,7 @@
           :flipped="game.playerColor === 'b'" 
           :playerColor="game.playerColor" 
         />  
-        <!-- <ChessClock /> -->
+        <ChessClock></ChessClock> 
       </div>
   </div>
 </template>

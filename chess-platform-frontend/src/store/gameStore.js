@@ -1,7 +1,11 @@
 import { defineStore } from "pinia";
 import { ref, reactive, computed } from "vue";
+import { useTimerStore } from "./timerStore";
 
 export const useGameStore = defineStore("game", () => {
+
+const timerStore = useTimerStore(); 
+
   /**
    * Расположение фигур на доске
    */
@@ -57,6 +61,20 @@ const opponentColor = computed(() => (playerColor.value === "w" ? "b" : "w"))
  * Идентификатор текущей игровой комнаты
  */
 const currentRoomId = ref(null); 
+
+const opponent = ref({
+    id: null,
+    username: "Opponent",
+    blitzRating: 1200
+});
+
+  function setOpponent(data) {
+    opponent.value = {
+      id: data.id,
+      username: data.username,
+      blitzRating: data.blitz_rating ?? 1200
+    };
+  }
 
 /**
  * Устанавливает цвет игрока 
@@ -976,15 +994,49 @@ function connectToServer(roomId = "game123", color = null, name = "Player") {
         };
         playersCount.value = 2; 
         if (data.turn) setCurrentTurn(data.turn);
+
+          // СБРОС/ИНИЦИАЛИЗАЦИЯ времен (если сервер передаёт — используй их)
+        if (data.timers && typeof data.timers.white === "number") {
+          timerStore.setTimes(data.timers.white, data.timers.black);
+        } else {
+          timerStore.reset(5); // или взять формат из data.timeControl
+        }
+
+        // Запуск pre-start: 10 секунд до первого хода.
+        timerStore.startPreStart(10, () => {
+          console.log("⏱ Pre-start истёк — отменяем партию");
+          // 1) локально отмечаем результат/отмену
+          result.value = { type: "cancelled", reason: "no_move_in_time" };
+          // 2) опционально — сообщаем серверу, чтобы и второй клиент узнал:
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: "cancel_game", roomId: currentRoomId.value, reason: "no_move" }));
+          }
+        });
+
         break;
 
       case "player_joined":
         console.log("👤 В комнату вошёл игрок:", data);
         playersCount.value += 1;
+        setOpponent(data.player);
         break;
 
       case "moveMade":
         console.log("♟ Подтверждён ход:", data.from, "→", data.to);
+
+          // Если был pre-start — отменяем его и стартуем основные таймеры (first move)
+        if (timerStore.preSeconds > 0) {
+          timerStore.cancelPreStart();
+          // старт основного таймера за цвет, чей ход теперь (data.turn содержит следующий ход)
+          // Мы хотим запустить таймер за того, кто сейчас ходит (data.turn)
+          if (data.turn) {
+            timerStore.start(data.turn);
+          } else {
+            // если сервер вернул nextTurn в другом поле — попробуй setCurrentTurn и потом start
+            if (currentTurn.value) timerStore.start(currentTurn.value);
+          }
+        }
+
         makeMove(data.from, data.to);  // теперь только после подтверждения
         if (data.turn) setCurrentTurn(data.turn);
         break;
@@ -1058,6 +1110,7 @@ function sendMove(from, to) {
     playersCount, 
     shouldRedirect, 
     playerColor,
+    opponent,
     setInitialPosition,
     makeMove,
     checkGameState,
@@ -1066,5 +1119,6 @@ function sendMove(from, to) {
     sendMove,
     disconnect,
     setPlayerColor,
+    setOpponent,
   };
 });
