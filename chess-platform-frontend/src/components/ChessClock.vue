@@ -1,6 +1,5 @@
 <template>
   <div class="chess-timer" role="region" aria-label="Chess clock">
-    <!-- Top player -->
     <div
       class="player-info player-top"
       :class="{ active: topActive }"
@@ -25,17 +24,7 @@
       </div>
     </div>
 
-    <!-- Middle: status, pre-start countdown, and moves -->
     <div class="middle">
-      <!-- Предматчевый таймер -->
-      <div
-        v-if="gameStore.prestartCountdown > 0 && !gameStore.currentTurn"
-        class="prestart"
-        aria-live="assertive"
-      >
-        <div class="prestart-label">Начало партии через</div>
-        <div class="prestart-timer">{{ gameStore.prestartCountdown }}</div>
-      </div>
 
       <!-- Moves -->
       <div class="moves-history" aria-label="Moves history">
@@ -48,13 +37,20 @@
         </div>
       </div>
 
-      <!-- Status -->
       <div class="game-status" role="status" aria-live="polite">
         {{ gameStatusText }}
       </div>
+
+      <div
+        v-if="timerStore.preSeconds > 0"
+        class="prestart-countdown"
+        aria-live="assertive"
+      >
+        <div class="prestart-label">Ожидание первого хода</div>
+        <div class="prestart-value">{{ timerStore.formattedPre }}</div>
+      </div>
     </div>
 
-    <!-- Bottom player -->
     <div
       class="player-info player-bottom"
       :class="{ active: bottomActive }"
@@ -90,7 +86,11 @@ const userStore = useUserStore();
 const gameStore = useGameStore();
 const timerStore = useTimerStore();
 
-// --- Players ---
+/**
+ * Определяет данные верхнего игрока (оппонента):
+ * - имя, рейтинг и цвет фигур.
+ * Если данных оппонента нет, используется fallback-значение ("Opponent", рейтинг 1200).
+ */
 const topPlayer = computed(() => {
   if (gameStore.opponent && Object.keys(gameStore.opponent).length) {
     return {
@@ -103,66 +103,119 @@ const topPlayer = computed(() => {
   return { username: "Opponent", blitzRating: 1200, color: fallbackColor };
 });
 
+
+/**
+ * Данные нижнего игрока (пользователь):
+ * - берётся из userStore.
+ */
 const bottomPlayer = computed(() => ({
   username: userStore.username || "You",
   blitzRating: userStore.blitzRating ?? 1200,
   color: gameStore.playerColor || "w",
 }));
 
+/**
+ * Первая буква имени игрока для аватара.
+ */
 const topInitial = computed(() => (topPlayer.value.username?.[0] || "O").toUpperCase());
+/**
+ * Первая буква имени игрока для аватара.
+ */
 const bottomInitial = computed(() => (bottomPlayer.value.username?.[0] || "Y").toUpperCase());
-
-// --- Active states ---
+/**
+ * Определяет, чей сейчас ход (чей таймер должен идти).
+ */
 const topActive = computed(() => topPlayer.value.color === gameStore.currentTurn);
+/**
+ * Определяет, чей сейчас ход (чей таймер должен идти).
+ */
 const bottomActive = computed(() => bottomPlayer.value.color === gameStore.currentTurn);
-
-// --- Timers ---
+/**
+ * Сырое значение секунд для из timerStore.
+ */
 const topTimeRaw = computed(() =>
   topPlayer.value.color === "w" ? timerStore.whiteSeconds : timerStore.blackSeconds
 );
+/**
+ * Сырое значение секунд для из timerStore.
+ */
 const bottomTimeRaw = computed(() =>
   bottomPlayer.value.color === "w" ? timerStore.whiteSeconds : timerStore.blackSeconds
 );
+/**
+ * Отформатированное отображение времени (в виде 05:00 и т.д.).
+ */
 const topTimeDisplay = computed(() =>
   topPlayer.value.color === "w" ? timerStore.formattedWhite : timerStore.formattedBlack
 );
+/**
+ * Отформатированное отображение времени (в виде 05:00 и т.д.).
+ */
 const bottomTimeDisplay = computed(() =>
   bottomPlayer.value.color === "w" ? timerStore.formattedWhite : timerStore.formattedBlack
 );
-
-// --- Moves ---
+/**
+ * Преобразует историю ходов в формат:
+ * 1. e4
+ * 2. e5
+ * и т.д.
+ */
 const formattedMoves = computed(() =>
   gameStore.moveHistory?.map((m, i) => `${i + 1}. ${m}`) || []
 );
-
-// --- Status text ---
+/**
+ * Формирует текстовое описание текущего состояния партии:
+ * - "Ничья", "Победа белых", "Ожидание первого хода", "Ход белых" и т.д.
+ */
 const gameStatusText = computed(() => {
   if (gameStore.result) {
-    if (gameStore.result.type === "draw") return "Ничья";
-    if (gameStore.result.type === "win")
+    if (gameStore.result.type === "draw") {
+      return "Ничья";
+    }
+    if (gameStore.result.type === "win") {
       return gameStore.result.winner === "w" ? "Победа белых" : "Победа чёрных";
+    }
   }
-  if (gameStore.prestartCountdown > 0 && !gameStore.currentTurn)
-    return "Ожидание первого хода...";
-  return gameStore.currentTurn
-    ? `Ход: ${gameStore.currentTurn === "w" ? "белые" : "чёрные"}`
-    : "Ожидание игроков";
+  if (timerStore.preSeconds <= 0) {
+    return "Игра отменена";
+  }
+  if (gameStore.currentTurn) {
+    return `Ход: ${gameStore.currentTurn === "w" ? "белые" : "чёрные"}`;
+  } else {
+    return "Ожидание игроков";
+  }
 });
-
+/**
+ * Проверяет, осталось ли менее 30 секунд.
+ * Используется для визуального предупреждения игрока (красный цвет, анимация).
+ * @param {number} sec - оставшееся время в секундах
+ * @returns {boolean}
+ */
 function isLowTime(sec) {
   return Number(sec) <= 30;
 }
 
-// --- Lifecycle ---
+/**
+ * При монтировании компонента запускается pre-start таймер (если игра ещё не началась).
+ * Если по истечении 15 секунд никто не сделал первый ход — партия завершается вничью.
+ */
 onMounted(() => {
-  if (gameStore.timers) {
-    timerStore.setTimes(gameStore.timers.white, gameStore.timers.black);
-  }
-  if (gameStore.currentTurn) {
-    timerStore.start(gameStore.currentTurn);
+  if (!gameStore.currentTurn && !gameStore.result) {
+    timerStore.startPreStart(15, () => {
+      gameStore.result = {
+        type: "draw",
+        reason: "no_move",
+        message: "Партия отменена: никто не сделал первый ход",
+      };
+    });
   }
 });
 
+/**
+ * Реакция на смену хода:
+ * - если текущий ход есть → запускаем соответствующий таймер (черных или белых);
+ * - если хода нет (или есть результат) → останавливаем таймер.
+ */
 watch(
   () => gameStore.currentTurn,
   (newTurn) => {
@@ -174,6 +227,9 @@ watch(
   }
 );
 
+/**
+ * При завершении партии — останавливаем таймер.
+ */
 watch(
   () => gameStore.result,
   (res) => {
@@ -181,9 +237,26 @@ watch(
   }
 );
 
+/**
+ * При размонтировании компонента останавливаем все таймеры,
+ * чтобы избежать утечек памяти или дублирования интервалов.
+ */
 onBeforeUnmount(() => {
   timerStore.stop();
 });
+
+
+/**
+ * Как только кто-то сделал первый ход — отменяем pre-start таймер.
+ */
+watch(
+  () => gameStore.currentTurn,
+  (turn) => {
+    if (turn) {
+      timerStore.cancelPreStart();
+    }
+  }
+);
 </script>
 
 <style scoped>
@@ -340,6 +413,15 @@ onBeforeUnmount(() => {
   padding: 8px;
   animation: fadeIn 0.4s ease;
 }
+
+.prestart-countdown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+}
+
 .prestart-label {
   font-size: 13px;
   font-weight: 600;
