@@ -30,7 +30,6 @@ export const useUserStore = defineStore('user', () => {
      * Используется для аутентифицированных запросов к серверу
      */
     const token = ref(null)
-    
     /**
      * Имя пользователя (безопасное получение)
      * @description Возвращает username из userData или пустую строку если данных нет

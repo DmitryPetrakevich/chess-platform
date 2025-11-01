@@ -1,24 +1,31 @@
 import { defineStore } from "pinia";
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, Ref } from "vue";
 import { useTimerStore } from "./timerStore";
 
 export const useGameStore = defineStore("game", () => {
   const timerStore = useTimerStore();
 
+  interface GameResult {
+    type: "draw" | "blackWin" | "whiteWin" | "canceledGame" | null;
+    reason: string | null;
+}
   /**
    * Расположение фигур на доске
    */
-  const pieces = ref({});
+  const pieces = ref<object>({});
   /**
    * Очередь хода ("w" или "b")
    */
-  const currentTurn = ref("w");
+  const currentTurn = ref<"w" | "b" | null>("w");
   /**
    * Информация о последнем выполненном ходе.
    * @property {string|null} from - начальная клетка хода (например "e2")
    * @property {string|null} to - конечная клетка хода (например "e4")
    */
-  const lastMove = ref({ from: null, to: null });
+  const lastMove = ref({ 
+    from: null, 
+    to: null 
+  });
   /**
    * Клетка, доступная для взятия на проходе (en passant).
    * Устанавливается когда пешка делает ход на 2 клетки вперёд.
@@ -34,27 +41,27 @@ export const useGameStore = defineStore("game", () => {
    * @example { type: 'draw', reason: '50-move rule' }
    * @example { type: 'checkmate', winner: 'w' }
    */
-  const result = ref({
+  const result = ref<GameResult>({
     type: null,
-    reason: null
+    reason: null,
   });
   /**
    * Счётчик ходов без взятия фигур и движения пешек.
    * Используется для правила 50 ходов.
    */
-  const moveCountWithoutAction = ref(0);
+  const moveCountWithoutAction = ref<number>(0);
   /**
    * Общее количество полуходов в партии.
    * Увеличивается после каждого хода (белых или чёрных).
    */
-  const totalMoveCount = ref(0);
-  const gameStarted = ref(false);
+  const totalMoveCount = ref<number>(0);
+  const gameStarted = ref<boolean>(false);
   /**
    * Текущий цвет игрока ("w" или "b")
    * Устанавливается сервером при подключении к комнате
    * @type {import('vue').Ref<"w"|"b"|null>}
    */
-  const playerColor = ref(null);
+  const playerColor = ref<"w" | "b" | null>(null);
   /**
    * Цвет оппонента (удобно для проверок)
    * Вычисляется автоматически на основе playerColor
@@ -569,20 +576,20 @@ export const useGameStore = defineStore("game", () => {
               valid = isValidPawnMove(from, to, piece);
               break;
             case "R":
-              valid = isValidRookMove(from, to, piece);
+              valid = isValidRookMove(from, to);
               break;
             case "B":
-              valid = isValidBishopMove(from, to, piece);
+              valid = isValidBishopMove(from, to);
               break;
             case "Q":
-              valid = isValidQueenMove(from, to, piece);
+              valid = isValidQueenMove(from, to);
               break;
             case "N":
-              valid = isValidKnightMove(from, to, piece);
+              valid = isValidKnightMove(from, to);
               break;
             case "K":
               valid =
-                isValidKingMove(from, to, piece) ||
+                isValidKingMove(from, to) ||
                 isCastlingMove(from, to, piece);
               break;
           }
@@ -686,69 +693,6 @@ export const useGameStore = defineStore("game", () => {
     if (square === "a8") castlingRights.blackQueenSide = false;
   }
 
-  /**
-   * Проверяет состояние игры после хода.
-   * @param {string} color - цвет, который должен ходить следующим ("w" или "b").
-   */
-  function checkGameState(color) {
-    const state = checkMateOrStalemate(color);
-
-    if (isFiftyMoveRule()) {
-      console.log("Ничья по правилу 50 ходов");
-      result.value = {
-        type: "draw",
-        reason: "fifty-move-rule"
-      }
-      return "fifty-move-rule";
-    }
-
-    if (isThreefoldRepetition()) {
-      console.log("Ничья по правилу троекратного повторения");
-        result.value = {
-          type: "draw",
-          reason: "threefold-repetition"
-      }
-      return "threefold-repetition";
-    }
-
-    if (isInsufficientMaterial(pieces.value)) {
-      console.log("Ничья, недостаточно материала для постановки мата");
-      return "insufficient-material";
-    }
-    if (state === "checkmate") {
-      console.log(
-        `Мат! Победил игрок ${color === "w" ? "черными" : "белыми"}.`
-      );
-
-      if(color === "w") {
-        result.value = {
-          type: "blackWin",
-          reason: "checkmate"
-        }
-      }
-
-      if(color === "b") {
-        result.value = {
-          type: "whiteWin",
-          reason: "checkmate"
-        }
-      }
-
-      return "checkmate";
-    }
-
-    if (state === "stalemate") {
-      console.log("Пат! Ничья.");
-      result.value = {
-        type: "draw",
-        reason: "stalemate"
-      }
-
-      return "stalemate";
-    }
-
-    return null;
-  }
 
   /**
    * Проверяет, является ли ход короля рокировкой, и разрешена ли она в текущей позиции.
@@ -1091,20 +1035,20 @@ export const useGameStore = defineStore("game", () => {
         valid = isValidPawnMove(from, to, piece);
         break;
       case "R":
-        valid = isValidRookMove(from, to, piece);
+        valid = isValidRookMove(from, to);
         break;
       case "B":
-        valid = isValidBishopMove(from, to, piece);
+        valid = isValidBishopMove(from, to);
         break;
       case "Q":
-        valid = isValidQueenMove(from, to, piece);
+        valid = isValidQueenMove(from, to);
         break;
       case "N":
-        valid = isValidKnightMove(from, to, piece);
+        valid = isValidKnightMove(from, to);
         break;
       case "K":
         valid =
-          isValidKingMove(from, to, piece) || isCastlingMove(from, to, piece);
+          isValidKingMove(from, to) || isCastlingMove(from, to, piece);
         break;
     }
 
