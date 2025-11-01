@@ -147,7 +147,7 @@ export const useTimerStore = defineStore("timer", () => {
    * Если отсчёт достигает нуля — вызывает колбэк onExpired (если задан).
    * Если секунды равны нулю или меньше — сразу вызывает onExpired.
    */
-  function startPreStart(seconds = 15, onExpired = null) {
+  function startPreStart(seconds = 10, onExpired = null) {
     cancelPreStart();
     preSeconds.value = Math.max(0, Math.floor(seconds));
 

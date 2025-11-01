@@ -103,7 +103,6 @@ const topPlayer = computed(() => {
   return { username: "Opponent", blitzRating: 1200, color: fallbackColor };
 });
 
-
 /**
  * Данные нижнего игрока (пользователь):
  * - берётся из userStore.
@@ -168,23 +167,31 @@ const formattedMoves = computed(() =>
  * - "Ничья", "Победа белых", "Ожидание первого хода", "Ход белых" и т.д.
  */
 const gameStatusText = computed(() => {
-  if (gameStore.result) {
+  if (gameStore.result && gameStore.result.type) {
     if (gameStore.result.type === "draw") {
+      console.log("Результат игры", gameStore.result.type )
       return "Ничья";
     }
-    if (gameStore.result.type === "win") {
-      return gameStore.result.winner === "w" ? "Победа белых" : "Победа чёрных";
+    if (gameStore.result.type === "whiteWin") {
+      return "Победа белых"
+    }
+
+    if (gameStore.result.type === "blackWin") {
+      return "Победа черных"
+    }
+
+    if (gameStore.result.type === "canceledGame") {
+       return "Игра отменена";
     }
   }
-  if (timerStore.preSeconds <= 0) {
-    return "Игра отменена";
-  }
+  
   if (gameStore.currentTurn) {
-    return `Ход: ${gameStore.currentTurn === "w" ? "белые" : "чёрные"}`;
+    return `Ход ${gameStore.currentTurn === "w" ? "белых" : "чёрных"}`;
   } else {
     return "Ожидание игроков";
   }
 });
+
 /**
  * Проверяет, осталось ли менее 30 секунд.
  * Используется для визуального предупреждения игрока (красный цвет, анимация).
@@ -200,12 +207,11 @@ function isLowTime(sec) {
  * Если по истечении 15 секунд никто не сделал первый ход — партия завершается вничью.
  */
 onMounted(() => {
-  if (!gameStore.currentTurn && !gameStore.result) {
-    timerStore.startPreStart(15, () => {
+  if (!gameStore.result.type) {
+    timerStore.startPreStart(10, () => {
       gameStore.result = {
-        type: "draw",
+        type: "canceledGame",
         reason: "no_move",
-        message: "Партия отменена: никто не сделал первый ход",
       };
     });
   }
@@ -219,7 +225,7 @@ onMounted(() => {
 watch(
   () => gameStore.currentTurn,
   (newTurn) => {
-    if (!newTurn || gameStore.result) {
+    if (!newTurn || gameStore.result.type) {
       timerStore.stop();
       return;
     }
