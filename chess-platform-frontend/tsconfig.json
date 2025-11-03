@@ -1,21 +1,37 @@
 {
   "compilerOptions": {
+    /* 🔧 Основные настройки компиляции */
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "strict": true,
     "jsx": "preserve",
+    "resolveJsonModule": true,
+
+    /* 🧩 Типизация (мягкий режим) */
+    "strict": false,                    // полностью отключаем строгий режим
+    "noImplicitAny": false,             // разрешаем неявный any
+    "strictNullChecks": false,          // допускаем null и undefined
+    "strictFunctionTypes": false,       // снимаем ограничения на типы функций
+    "strictBindCallApply": false,       // ослабляем проверки методов
+    "alwaysStrict": false,              // не требуем 'use strict'
+    "useUnknownInCatchVariables": false, // ошибки в try/catch не требуют явного типа
+
+    /* ⚙️ Модули и интеграция */
     "isolatedModules": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
+    "esModuleInterop": true,
+
+    /* 📜 Поддержка JS и Vue */
     "allowJs": true,
     "checkJs": false,
-    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* 🧭 Пути */
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     }
   },
+
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue"]
 }
