@@ -1,33 +1,50 @@
 <template>
-    <div class="invite-overlay" @click.self="close">
-        <div class="invite-card" role="dialog" aria-modal="true">
-            <h3 class="title">Пригласить друга</h3>
-            <p class="desc">Отправь эту ссылку другу — по ней он попадёт в твою игру:</p>
+  <div class="invite-overlay" @click.self="close">
+    <div class="invite-card" role="dialog" aria-modal="true">
+      <h3 class="title">Пригласить друга</h3>
 
-            <div class="color-select">
-                <p>Выбери, за кого хочешь играть:</p>
-                <div class="color-buttons">
-                    <button 
-                    v-for="option in colorOptions" 
-                    :key="option.value" 
-                    class="btn color-btn"
-                    :class="{ active: selectedColor === option.value }" @click="selectColor(option.value)">
-                    <img :src="option.src" :alt="option.label" class="color-icon"> 
-                    <!-- {{ option.label }} -->
-                    </button>
-                </div>
-            </div>
-
-            <div class="link-row">
-                <input class="link-input" :value="link" readonly />
-                <button class="btn" @click="copy">{{ copied ? "Скопировано!" : "Копировать" }}</button>
-            </div>
-
-            <p v-if="waiting" class="invite-waiting">
-                Ждём, пока друг перейдёт по ссылке...
-            </p>
+      <div class="color-select">
+        <p>Выбери, за кого хочешь играть:</p>
+        <div class="color-buttons">
+          <button
+            v-for="option in colorOptions"
+            :key="option.value"
+            class="btn color-btn"
+            :class="{
+              active: colorWasSelected && selectedColor === option.value,
+            }"
+            @click="selectColor(option.value)"
+          >
+            <img :src="option.src" :alt="option.label" class="color-icon" />
+          </button>
         </div>
+      </div>
+
+      <p class="desc">
+        Отправь эту ссылку другу — по ней он попадёт в твою игру:
+      </p>
+
+      <div class="link-row">
+        <input
+          class="link-input"
+          :value="link"
+          readonly
+          :disabled="!colorWasSelected"
+        />
+        <button
+          class="btn"
+          :class="{ disabled: !colorWasSelected }"
+          @click="copy"
+        >
+          {{ copied ? "Скопировано!" : "Копировать" }}
+        </button>
+      </div>
+
+      <p v-if="waiting" class="invite-waiting">
+        Ждём, пока друг перейдёт по ссылке...
+      </p>
     </div>
+  </div>
 </template>
 
 <script setup>
@@ -36,11 +53,11 @@ import { useRouter } from "vue-router";
 import { useGameStore } from "@/store/gameStore";
 import { useUserStore } from "@/store/user";
 
-import whiteIcon from '@/assets/inviteModel/choice-white.svg'
-import blackIcon from '@/assets/inviteModel/choice-black.svg'
-import randomIcon from '@/assets/inviteModel/choice-random.svg'
+import whiteIcon from "@/assets/inviteModel/choice-white.svg";
+import blackIcon from "@/assets/inviteModel/choice-black.svg";
+import randomIcon from "@/assets/inviteModel/choice-random.svg";
 
-const game = useGameStore()
+const game = useGameStore();
 const user = useUserStore();
 const router = useRouter();
 
@@ -49,7 +66,7 @@ const router = useRouter();
  * @property {string} [initialRoomId] - Идентификатор комнаты, переданный извне
  */
 const props = defineProps({
-    initialRoomId: { type: String, default: null }
+  initialRoomId: { type: String, default: null },
 });
 
 /**
@@ -76,42 +93,43 @@ const waiting = ref(false);
 
 /**
  * Выбранный цвет фигур игрока
- * 
+ *
  * "w" | "b" | "random"
  */
 const selectedColor = ref("random");
+
+const colorWasSelected = ref(false);
 
 /**
  * Опции выбора цвета фигур
  */
 const colorOptions = [
-    { value: "random", label: "Случайно", src: randomIcon },
-    { value: "b", label: "Черные", src: blackIcon },
-    { value: "w", label: "Белые", src: whiteIcon }
+  { value: "random", label: "Случайно", src: randomIcon },
+  { value: "b", label: "Черные", src: blackIcon },
+  { value: "w", label: "Белые", src: whiteIcon },
 ];
 
 /**
  * Вычисляемое свойство - ссылка для приглашения друга
- * 
+ *
  * Формат: http://localhost:5173/play/{roomId}?color={selectedColor}
  */
 const link = computed(() => {
-    const colorParam = selectedColor.value ? `?color=${selectedColor.value}` : "";
-    return `${window.location.origin}/play/${roomId.value}${colorParam}`;
+  const colorParam = selectedColor.value ? `?color=${selectedColor.value}` : "";
+  return `${window.location.origin}/play/${roomId.value}${colorParam}`;
 });
-
 
 /**
  * Генерирует уникальный идентификатор комнаты
  * Использует crypto.randomUUID() если доступно, иначе случайную строку
  */
 function genId() {
-    try {
-        if (typeof crypto !== "undefined" && crypto.randomUUID) {
-            return crypto.randomUUID().slice(0, 8);
-        }
-    } catch (e) { }
-    return Math.random().toString(36).slice(2, 10);
+  try {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
+      return crypto.randomUUID().slice(0, 8);
+    }
+  } catch (e) {}
+  return Math.random().toString(36).slice(2, 10);
 }
 
 /**
@@ -119,15 +137,15 @@ function genId() {
  * Обновляет selectedColor и пересчитывает ссылку через computed свойство
  */
 function selectColor(color) {
-    selectedColor.value = color;
+  selectedColor.value = color;
+  colorWasSelected.value = true;
 
-    if (!roomId.value) roomId.value = genId();
-    waiting.value = true;
+  if (!roomId.value) roomId.value = genId();
+  waiting.value = true;
 
-    emit("created", { roomId: roomId.value, color: selectedColor.value });
-    console.log("🔗 Ссылка для приглашения:", link.value); // добавь это
+  emit("created", { roomId: roomId.value, color: selectedColor.value });
 
-    game.connectToServer(roomId.value, selectedColor.value, user.username);
+  game.connectToServer(roomId.value, selectedColor.value, user.username);
 }
 
 /**
@@ -135,13 +153,17 @@ function selectColor(color) {
  * Использует modern Clipboard API с fallback для старых браузеров
  */
 function copy() {
-    if (!link.value) return;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(link.value).then(() => {
-            copied.value = true;
-            setTimeout(() => (copied.value = false), 1500);
-        }).catch(() => fallbackCopy());
-    } else fallbackCopy();
+  if (!colorWasSelected.value) return;
+  if (!link.value) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard
+      .writeText(link.value)
+      .then(() => {
+        copied.value = true;
+        setTimeout(() => (copied.value = false), 1500);
+      })
+      .catch(() => fallbackCopy());
+  } else fallbackCopy();
 }
 
 /**
@@ -149,18 +171,18 @@ function copy() {
  * Создает временный textarea элемент для копирования
  */
 function fallbackCopy() {
-    const el = document.createElement("textarea");
-    el.value = link.value;
-    document.body.appendChild(el);
-    el.select();
-    try {
-        document.execCommand("copy");
-        copied.value = true;
-    } catch (e) {
-        console.warn(e);
-    }
-    el.remove();
-    setTimeout(() => (copied.value = false), 1500);
+  const el = document.createElement("textarea");
+  el.value = link.value;
+  document.body.appendChild(el);
+  el.select();
+  try {
+    document.execCommand("copy");
+    copied.value = true;
+  } catch (e) {
+    console.warn(e);
+  }
+  el.remove();
+  setTimeout(() => (copied.value = false), 1500);
 }
 
 /**
@@ -168,150 +190,181 @@ function fallbackCopy() {
  * Вызывает emit события 'close'
  */
 function close() {
-    emit("close");
+  emit("close");
 }
-
 
 /**
  * Выполняет переход на страницу игры и закрывает модалку
  */
 function performRedirect() {
-    router.push(`/play/${roomId.value}`);
-    game.clearRedirect?.();
-    emit("close");
+  router.push(`/play/${roomId.value}`);
+  game.clearRedirect?.();
+  emit("close");
 }
 
-watch([
-    () => game.shouldRedirect,
-    () => game.playersCount
-], ([newShouldRedirect, newPlayersCount]) => {
+watch(
+  [() => game.shouldRedirect, () => game.playersCount],
+  ([newShouldRedirect, newPlayersCount]) => {
     console.log("🎯 Reactivity: Проверяем переход...", {
-        shouldRedirect: newShouldRedirect,
-        playersCount: newPlayersCount,
-        roomId: roomId.value
+      shouldRedirect: newShouldRedirect,
+      playersCount: newPlayersCount,
+      roomId: roomId.value,
     });
-    
+
     if (newShouldRedirect && newShouldRedirect.roomId === roomId.value) {
-        performRedirect();
-        return;
+      performRedirect();
+      return;
     }
-    
+
     if (newPlayersCount >= 2) {
-        performRedirect();
-        return;
+      performRedirect();
+      return;
     }
-});
+  }
+);
+
+onMounted(() => {
+    document.body.style.overflow = 'hidden';
+})
+
+onBeforeUnmount(() => {
+    document.body.style.overflow = '';
+})
 </script>
 
 <style scoped>
+.invite-card {
+  width: 450px;
+  max-width: 700px;
+  min-width: 300px;
+  background: #222;
+  color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
 .title {
-    font-family: 'Manrope', sans-serif;
+  font-family: "Manrope", sans-serif;
 }
 
 .desc {
-    font-family: 'Manrope', sans-serif;
+  font-family: "Manrope", sans-serif;
 }
 
 .invite-waiting {
-    text-align: center;
-    margin-top: 10px;
-    font-family: 'Manrope', sans-serif;
-    color: #aaa;
+  text-align: center;
+  margin-top: 10px;
+  font-family: "Manrope", sans-serif;
+  color: #aaa;
 }
 
 .invite-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 80;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
 .color-select {
-    margin-bottom: 12px;
-    font-family: 'Manrope', sans-serif;
-    text-align: center;
+  margin-bottom: 12px;
+  font-family: "Manrope", sans-serif;
+  text-align: center;
 }
 
 .color-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 6px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 6px;
 }
 
 .color-icon {
-    width: 34px;
-    height: 34px;
-    object-fit: contain;
+  width: 35px;
+  height: 35px;
+  object-fit: contain;
 }
 
 .color-btn {
-    background: #444;
-    border: 1px solid #555;
+  background: #444;
+  border: 1px solid #555;
 }
 
 .color-btn.active {
-    background: #1856b9;
-}
-
-.invite-card {
-    width: min(560px, 92%);
-    background: #222;
-    color: #fff;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+  background: #1856b9;
 }
 
 .link-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 14px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 14px;
 }
 
 .link-input {
-    flex: 1;
-    padding: 8px 10px;
-    border-radius: 6px;
-    font-family: 'Manrope', sans-serif;
-    background: #121212;
-    color: #eee;
-    border: 1px solid #333;
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-family: "Manrope", sans-serif;
+  background: #121212;
+  color: #eee;
+  border: 1px solid #333;
 }
 
 .btn {
-    padding: 8px 32px;
-    border-radius: 6px;
-    background: #3b82f6;
-    font-family: 'Manrope', sans-serif;
-    border: none;
-    color: white;
-    cursor: pointer;
+  padding: 8px 25px;
+  border-radius: 6px;
+  background: #3b82f6;
+  font-family: "Manrope", sans-serif;
+  border: none;
+  color: white;
+  cursor: pointer;
 }
 
 .btn.outline {
-    background: transparent;
-    border: 1px solid #666;
-    color: #ddd;
+  background: transparent;
+  border: 1px solid #666;
+  color: #ddd;
 }
 
 .btn.primary {
-    background: #10b981;
+  background: #10b981;
 }
 
 .btn.cancel {
-    background: #555;
-    margin-left: 8px;
+  background: #555;
+  margin-left: 8px;
 }
 
 .actions {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-    margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.btn.disabled {
+  background: #6b7280;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.link-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 576px) {
+  .invite-card {
+    width: 300px;
+    padding: 10px;
+  }
+
+  .btn {
+    padding: 6px 15px;
+  }
 }
 </style>

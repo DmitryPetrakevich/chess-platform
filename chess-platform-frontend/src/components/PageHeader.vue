@@ -432,7 +432,7 @@ watch(() => userStore.isLoggedIn, closeMenu);
   background: none;
   border: none;
   cursor: pointer;
-  z-index: 1001;
+  z-index: 999;
 
   span {
     display: block;

@@ -18,6 +18,12 @@ import MainPage from './pages/MainPage.vue';
 </script>
 
 <style scoped>
+.no-scroll {
+  overflow: hidden !important;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
 
 </style>
 
