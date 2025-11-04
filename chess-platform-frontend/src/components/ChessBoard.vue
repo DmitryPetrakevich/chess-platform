@@ -101,7 +101,7 @@ const squares = computed(() =>
   )
 );
 
-game.setInitialPosition();
+ game.setInitialPosition();
 
 /**
  * Возвращает путь к картинке фигуры на указанной клетке.
