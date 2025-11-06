@@ -409,8 +409,8 @@ watch(() => userStore.isLoggedIn, closeMenu);
   }
 
   .page-header__btn {
-    padding: 10px 20px;
-    font-size: 13px;
+    padding: 6px 15px;
+    font-size: 10px;
   }
 
   .page-header__nav {
@@ -548,6 +548,15 @@ watch(() => userStore.isLoggedIn, closeMenu);
 
   .page-header__user-menu {
     gap: 5px;
+  }
+
+  .page-header__btn {
+    padding: 6px 15px;
+    font-size: 8px;
+  }
+
+  .page-header__btns {
+    gap: 10px;
   }
 }
 

@@ -1,6 +1,7 @@
 <template>
   <div class="chess-timer" role="region" aria-label="Chess clock">
     <div
+      v-if="mode !== 'bottom'"
       class="player-info player-top"
       :class="{ active: topActive }"
       aria-live="polite"
@@ -52,6 +53,7 @@
     </div>
 
     <div
+      v-if="mode !== 'top'"
       class="player-info player-bottom"
       :class="{ active: bottomActive }"
     >
@@ -77,7 +79,7 @@
 </template>
 
 <script setup>
-import { computed, watch, onMounted, onBeforeUnmount } from "vue";
+import { computed, watch, onMounted, onBeforeUnmount, defineProps } from "vue";
 import { useUserStore } from "@/store/user";
 import { useGameStore } from "@/store/gameStore";
 import { useTimerStore } from "@/store/timerStore";
@@ -85,6 +87,17 @@ import { useTimerStore } from "@/store/timerStore";
 const userStore = useUserStore();
 const gameStore = useGameStore();
 const timerStore = useTimerStore();
+
+const props = defineProps({
+  mode: { 
+    type: String,
+    default: "both", //  "top" | "bottom" | "both"
+  },
+  managePrestart: { 
+    type: Boolean,
+    default: true,
+  },
+});
 
 /**
  * Определяет данные верхнего игрока (оппонента):
@@ -207,6 +220,8 @@ function isLowTime(sec) {
  * Если по истечении 15 секунд никто не сделал первый ход — партия завершается вничью.
  */
 onMounted(() => {
+  if(!props.managePrestart) return;
+
   if (!gameStore.result.type) {
     timerStore.startPreStart(10, () => {
       gameStore.result = {
@@ -225,6 +240,7 @@ onMounted(() => {
 watch(
   () => gameStore.currentTurn,
   (newTurn) => {
+    if (!props.managePrestart) return;
     if (!newTurn || gameStore.result.type) {
       timerStore.stop();
       return;
@@ -248,7 +264,7 @@ watch(
  * чтобы избежать утечек памяти или дублирования интервалов.
  */
 onBeforeUnmount(() => {
-  timerStore.stop();
+   if (props.managePrestart) timerStore.stop();
 });
 
 
