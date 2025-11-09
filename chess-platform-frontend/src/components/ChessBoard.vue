@@ -379,4 +379,15 @@ function onDrop(to, event) {
 .board.flipped .rank-label {
   transform: rotate(180deg);
 }
+
+@media (max-width: 768px) {
+  .board-wrapper {
+    padding: 0;
+  }
+
+  .board {
+    max-width: min(70vh, 1000px);
+    max-height: min(70vh, 1000px);
+}
+}
 </style>

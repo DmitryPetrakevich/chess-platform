@@ -28,7 +28,7 @@
     <div class="middle">
 
       <!-- Moves -->
-      <div class="moves-history" aria-label="Moves history">
+      <div v-if="mode === 'both'" class="moves-history" aria-label="Moves history">
         <div class="moves-title">История ходов</div>
         <div class="moves-placeholder">
           <template v-if="gameStore.moveHistory?.length">
@@ -38,12 +38,12 @@
         </div>
       </div>
 
-      <div class="game-status" role="status" aria-live="polite">
+      <div v-if="mode === 'both'" class="game-status" role="status" aria-live="polite">
         {{ gameStatusText }}
       </div>
 
       <div
-        v-if="timerStore.preSeconds > 0"
+        v-if="mode === 'both' && timerStore.preSeconds > 0"
         class="prestart-countdown"
         aria-live="assertive"
       >
@@ -220,9 +220,7 @@ function isLowTime(sec) {
  * Если по истечении 15 секунд никто не сделал первый ход — партия завершается вничью.
  */
 onMounted(() => {
-  if(!props.managePrestart) return;
-
-  if (!gameStore.result.type) {
+  if (!gameStore.result.type && !gameStore.gameStarted) {
     timerStore.startPreStart(10, () => {
       gameStore.result = {
         type: "canceledGame",
@@ -240,7 +238,6 @@ onMounted(() => {
 watch(
   () => gameStore.currentTurn,
   (newTurn) => {
-    if (!props.managePrestart) return;
     if (!newTurn || gameStore.result.type) {
       timerStore.stop();
       return;
@@ -264,7 +261,7 @@ watch(
  * чтобы избежать утечек памяти или дублирования интервалов.
  */
 onBeforeUnmount(() => {
-   if (props.managePrestart) timerStore.stop();
+  //  if (props.managePrestart) timerStore.stop();
 });
 
 
@@ -293,10 +290,12 @@ watch(
 }
 
 .chess-timer {
-  width: min(430px, 96%);
+  /* width: min(430px, 96%); */
+  min-width: 280px;
+  width: 100%;
   background: linear-gradient(180deg, var(--card-bg), #f6fbff);
   border-radius: var(--radius);
-  padding: 14px;
+  /* padding: 14px; */
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -345,7 +344,7 @@ watch(
 .player-details {
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  min-width: 80px;
 }
 .player-name {
   font-size: 15px;
@@ -369,9 +368,9 @@ watch(
   min-width: 140px;
 }
 .timer {
-  padding: 6px 10px;
+  padding: 4px 8px;
   border-radius: 8px;
-  font-weight: 800;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   text-align: center;
@@ -455,24 +454,35 @@ watch(
   color: #b45309;
 }
 
-/* Responsive tweaks */
-@media (max-width: 480px) {
+@media (max-width: 990px) {
+  /* .chess-timer {
+  width: 500px;
+  padding: 14px;
+  gap: 12px;
+} */
+
+  .timer {
+    padding: 4px 8px;
+    font-weight: 600;
+}
+  
+
+}
+
+@media (max-width: 768px) {
+  .player-info {
+    padding: 0;
+  }
+
   .chess-timer {
-    padding: 10px;
+    padding: 0;
     gap: 10px;
   }
-  .player-avatar {
-    width: 44px;
-    height: 44px;
-    font-size: 18px;
-  }
-  .timer-wrap {
-    min-width: 110px;
-  }
-  .timer-top,
-  .timer-bottom {
-    font-size: 32px;
-  }
+
+}
+
+@media (max-width: 480px) {
+
 }
 
 @keyframes pulse {

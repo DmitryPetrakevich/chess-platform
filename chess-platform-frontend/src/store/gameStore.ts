@@ -8,7 +8,7 @@ export const useGameStore = defineStore("game", () => {
   interface GameResult {
     type: "draw" | "blackWin" | "whiteWin" | "canceledGame" | null;
     reason: string | null;
-}
+  }
   /**
    * Расположение фигур на доске
    */
@@ -22,9 +22,9 @@ export const useGameStore = defineStore("game", () => {
    * @property {string|null} from - начальная клетка хода (например "e2")
    * @property {string|null} to - конечная клетка хода (например "e4")
    */
-  const lastMove = ref({ 
-    from: null, 
-    to: null 
+  const lastMove = ref({
+    from: null,
+    to: null,
   });
   /**
    * Клетка, доступная для взятия на проходе (en passant).
@@ -128,9 +128,9 @@ export const useGameStore = defineStore("game", () => {
    * Устанавливает начальную позицию фигур на шахматной доске.
    */
   function setInitialPosition() {
-    result.value = { 
-      type: null, 
-      reason: null 
+    result.value = {
+      type: null,
+      reason: null,
     };
 
     pieces.value = {
@@ -479,8 +479,8 @@ export const useGameStore = defineStore("game", () => {
       console.log("Ничья по правилу 50 ходов");
       result.value = {
         type: "draw",
-        reason: "fifty-move-rule"
-      }
+        reason: "fifty-move-rule",
+      };
       return "fifty-move-rule";
     }
 
@@ -488,17 +488,17 @@ export const useGameStore = defineStore("game", () => {
       console.log("Ничья по правилу троекратного повторения");
       result.value = {
         type: "draw",
-        reason: "threefold-repetition"
-      }
+        reason: "threefold-repetition",
+      };
       return "threefold-repetition";
     }
 
     if (isInsufficientMaterial(pieces.value)) {
       console.log("Ничья, недостаточно материала для постановки мата");
-        result.value = {
-          type: "draw",
-          reason: "insufficient-material"
-      }
+      result.value = {
+        type: "draw",
+        reason: "insufficient-material",
+      };
       return "insufficient-material";
     }
     if (state === "checkmate") {
@@ -506,21 +506,20 @@ export const useGameStore = defineStore("game", () => {
         `Мат! Победил игрок ${color === "w" ? "черными" : "белыми"}.`
       );
 
-      if(color === "w") {
-        console.log("Победа черных")
+      if (color === "w") {
+        console.log("Победа черных");
         result.value = {
           type: "blackWin",
-          reason: "insufficient-material"
+          reason: "insufficient-material",
+        };
       }
-    }
 
-      if(color === "b") {
-        console.log("Победа белых")
+      if (color === "b") {
+        console.log("Победа белых");
         result.value = {
           type: "whiteWin",
-          reason: "insufficient-material"
-      }
-        
+          reason: "insufficient-material",
+        };
       }
       return "checkmate";
     }
@@ -529,8 +528,8 @@ export const useGameStore = defineStore("game", () => {
       console.log("Пат! Ничья.");
       result.value = {
         type: "draw",
-        reason: "stalemate"
-      }
+        reason: "stalemate",
+      };
       return "stalemate";
     }
 
@@ -589,8 +588,7 @@ export const useGameStore = defineStore("game", () => {
               break;
             case "K":
               valid =
-                isValidKingMove(from, to) ||
-                isCastlingMove(from, to, piece);
+                isValidKingMove(from, to) || isCastlingMove(from, to, piece);
               break;
           }
           if (!valid) continue;
@@ -692,7 +690,6 @@ export const useGameStore = defineStore("game", () => {
     if (square === "h8") castlingRights.blackKingSide = false;
     if (square === "a8") castlingRights.blackQueenSide = false;
   }
-
 
   /**
    * Проверяет, является ли ход короля рокировкой, и разрешена ли она в текущей позиции.
@@ -1047,8 +1044,7 @@ export const useGameStore = defineStore("game", () => {
         valid = isValidKnightMove(from, to);
         break;
       case "K":
-        valid =
-          isValidKingMove(from, to) || isCastlingMove(from, to, piece);
+        valid = isValidKingMove(from, to) || isCastlingMove(from, to, piece);
         break;
     }
 
@@ -1239,4 +1235,3 @@ export const useGameStore = defineStore("game", () => {
     setOpponent,
   };
 });
-

@@ -92,7 +92,9 @@ watch(() => game.playerColor, (newColor, oldColor) => {
 .board_chess {
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  /* justify-content: center; */
+  max-width: 1800px;
+  /* width: 100%; */
 }
 
 .board-section {
@@ -101,23 +103,20 @@ watch(() => game.playerColor, (newColor, oldColor) => {
   align-items: center;
   gap: 12px;
   width: 100%;
-  /* max-width оставляет место для десктопных часов. при желании подправь */
-  max-width: calc(100% - 480px);
+  /* max-width: calc(100% - 480px); */
   box-sizing: border-box;
 }
 
-/* Desktop clock: фиксируем ширину, чтобы она выглядела как панель */
 .desktop-clock {
+  margin: auto 0;
   width: min(430px, 30%);
   max-width: 430px;
 }
 
-/* Mobile clocks по умолчанию скрыты */
 .mobile-clock {
   display: none;
 }
 
-/* ===== Mobile rules ===== */
 @media (max-width: 768px) {
   .board_chess {
     flex-direction: column;
@@ -126,7 +125,6 @@ watch(() => game.playerColor, (newColor, oldColor) => {
     gap: 10px;
   }
 
-  /* скрываем десктоп-таймер на мобильных */
   .desktop-clock {
     display: none;
   }
@@ -137,7 +135,6 @@ watch(() => game.playerColor, (newColor, oldColor) => {
     padding: 0 8px;
   }
 
-  /* Показываем мобильные часы */
   .mobile-clock {
     display: block;
     width: 100%;
