@@ -175,6 +175,18 @@ export const useTimerStore = defineStore("timer", () => {
     preSeconds.value = 0;
   }
 
+  function updateFromServer(data) {
+  stop();
+  cancelPreStart();
+  
+  whiteSeconds.value = Math.max(0, Math.floor(data.whiteTime));
+  blackSeconds.value = Math.max(0, Math.floor(data.blackTime));
+  
+  activeColor.value = data.currentTurn;
+  
+  isRunning.value = data.isRunning;
+}
+
   return {
     whiteSeconds,
     blackSeconds,
@@ -193,5 +205,6 @@ export const useTimerStore = defineStore("timer", () => {
     startPreStart,
     cancelPreStart,
     formatTime,
+    updateFromServer,
   };
 });

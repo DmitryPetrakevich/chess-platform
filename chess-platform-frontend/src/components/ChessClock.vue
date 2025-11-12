@@ -91,7 +91,7 @@ const timerStore = useTimerStore();
 const props = defineProps({
   mode: { 
     type: String,
-    default: "both", //  "top" | "bottom" | "both"
+    default: "both",
   },
   managePrestart: { 
     type: Boolean,
@@ -100,9 +100,7 @@ const props = defineProps({
 });
 
 /**
- * Определяет данные верхнего игрока (оппонента):
- * - имя, рейтинг и цвет фигур.
- * Если данных оппонента нет, используется fallback-значение ("Opponent", рейтинг 1200).
+ * Определяет данные верхнего игрока (оппонента)
  */
 const topPlayer = computed(() => {
   if (gameStore.opponent && Object.keys(gameStore.opponent).length) {
@@ -117,8 +115,7 @@ const topPlayer = computed(() => {
 });
 
 /**
- * Данные нижнего игрока (пользователь):
- * - берётся из userStore.
+ * Данные нижнего игрока (пользователь)
  */
 const bottomPlayer = computed(() => ({
   username: userStore.username || "You",
@@ -127,100 +124,82 @@ const bottomPlayer = computed(() => ({
 }));
 
 /**
- * Первая буква имени игрока для аватара.
+ * Первая буква имени игрока для аватара
  */
 const topInitial = computed(() => (topPlayer.value.username?.[0] || "O").toUpperCase());
-/**
- * Первая буква имени игрока для аватара.
- */
 const bottomInitial = computed(() => (bottomPlayer.value.username?.[0] || "Y").toUpperCase());
+
 /**
- * Определяет, чей сейчас ход (чей таймер должен идти).
+ * Активность игроков теперь определяется по currentTurn с сервера
  */
-const topActive = computed(() => topPlayer.value.color === gameStore.currentTurn);
+const topActive = computed(() => topPlayer.value.color === timerStore.activeColor);
+const bottomActive = computed(() => bottomPlayer.value.color === timerStore.activeColor);
+
 /**
- * Определяет, чей сейчас ход (чей таймер должен идти).
- */
-const bottomActive = computed(() => bottomPlayer.value.color === gameStore.currentTurn);
-/**
- * Сырое значение секунд для из timerStore.
+ * Время берем из timerStore который синхронизируется с сервера
  */
 const topTimeRaw = computed(() =>
   topPlayer.value.color === "w" ? timerStore.whiteSeconds : timerStore.blackSeconds
 );
-/**
- * Сырое значение секунд для из timerStore.
- */
 const bottomTimeRaw = computed(() =>
   bottomPlayer.value.color === "w" ? timerStore.whiteSeconds : timerStore.blackSeconds
 );
+
 /**
- * Отформатированное отображение времени (в виде 05:00 и т.д.).
+ * Отформатированное время
  */
 const topTimeDisplay = computed(() =>
   topPlayer.value.color === "w" ? timerStore.formattedWhite : timerStore.formattedBlack
 );
-/**
- * Отформатированное отображение времени (в виде 05:00 и т.д.).
- */
 const bottomTimeDisplay = computed(() =>
   bottomPlayer.value.color === "w" ? timerStore.formattedWhite : timerStore.formattedBlack
 );
+
 /**
- * Преобразует историю ходов в формат:
- * 1. e4
- * 2. e5
- * и т.д.
+ * История ходов
  */
 const formattedMoves = computed(() =>
   gameStore.moveHistory?.map((m, i) => `${i + 1}. ${m}`) || []
 );
+
 /**
- * Формирует текстовое описание текущего состояния партии:
- * - "Ничья", "Победа белых", "Ожидание первого хода", "Ход белых" и т.д.
+ * Статус игры
  */
 const gameStatusText = computed(() => {
   if (gameStore.result && gameStore.result.type) {
     if (gameStore.result.type === "draw") {
-      console.log("Результат игры", gameStore.result.type )
       return "Ничья";
     }
     if (gameStore.result.type === "whiteWin") {
-      return "Победа белых"
+      return "Победа белых";
     }
-
     if (gameStore.result.type === "blackWin") {
-      return "Победа черных"
+      return "Победа черных";
     }
-
     if (gameStore.result.type === "canceledGame") {
-       return "Игра отменена";
+      return "Игра отменена";
     }
   }
   
-  if (gameStore.currentTurn) {
-    return `Ход ${gameStore.currentTurn === "w" ? "белых" : "чёрных"}`;
+  if (timerStore.activeColor) {
+    return `Ход ${timerStore.activeColor === "w" ? "белых" : "чёрных"}`;
   } else {
     return "Ожидание игроков";
   }
 });
 
 /**
- * Проверяет, осталось ли менее 30 секунд.
- * Используется для визуального предупреждения игрока (красный цвет, анимация).
- * @param {number} sec - оставшееся время в секундах
- * @returns {boolean}
+ * Проверка на малое время
  */
 function isLowTime(sec) {
   return Number(sec) <= 30;
 }
 
 /**
- * При монтировании компонента запускается pre-start таймер (если игра ещё не началась).
- * Если по истечении 15 секунд никто не сделал первый ход — партия завершается вничью.
+ * Предстартовый таймер
  */
 onMounted(() => {
-  if (!gameStore.result.type && !gameStore.gameStarted) {
+  if (props.managePrestart && !gameStore.result.type && !gameStore.gameStarted) {
     timerStore.startPreStart(10, () => {
       gameStore.result = {
         type: "canceledGame",
@@ -231,42 +210,7 @@ onMounted(() => {
 });
 
 /**
- * Реакция на смену хода:
- * - если текущий ход есть → запускаем соответствующий таймер (черных или белых);
- * - если хода нет (или есть результат) → останавливаем таймер.
- */
-watch(
-  () => gameStore.currentTurn,
-  (newTurn) => {
-    if (!newTurn || gameStore.result.type) {
-      timerStore.stop();
-      return;
-    }
-    timerStore.start(newTurn);
-  }
-);
-
-/**
- * При завершении партии — останавливаем таймер.
- */
-watch(
-  () => gameStore.result,
-  (res) => {
-    if (res) timerStore.stop();
-  }
-);
-
-/**
- * При размонтировании компонента останавливаем все таймеры,
- * чтобы избежать утечек памяти или дублирования интервалов.
- */
-onBeforeUnmount(() => {
-  //  if (props.managePrestart) timerStore.stop();
-});
-
-
-/**
- * Как только кто-то сделал первый ход — отменяем pre-start таймер.
+ * Отменяем предстарт при первом ходе
  */
 watch(
   () => gameStore.currentTurn,

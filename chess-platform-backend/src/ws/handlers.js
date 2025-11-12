@@ -6,9 +6,30 @@ const {
   broadcastToRoom,
 } = require("./rooms");
 
+const timerIntervals = new Map();
+
 function handleConnection(ws) {
   ws.id = generateClientId();
   console.log(`🟢 WS connected: ${ws.id}`);
+
+  function sendTimerUpdate(roomId) {
+    const room = rooms.get(roomId);
+    if (!room || !room.timer) return;
+
+    const timerData = room.timer.getCurrentTime();
+    
+    const simpleTimerData = {
+      whiteTime: timerData.whiteTime,
+      blackTime: timerData.blackTime,
+      currentTurn: timerData.currentTurn,
+      isRunning: timerData.isRunning
+    };
+    
+    broadcastToRoom(roomId, {
+      type: "timerUpdate",
+      ...simpleTimerData
+    });
+  }
 
   ws.on("message", (message) => {
     try {
@@ -34,6 +55,21 @@ function handleConnection(ws) {
         );
 
         const room = rooms.get(roomId);
+
+        if (room && room.timer) {
+          const timerData = room.timer.getCurrentTime();
+
+          const simpleTimerData = {
+            whiteTime: timerData.whiteTime,
+            blackTime: timerData.blackTime,
+            currentTurn: timerData.currentTurn,
+            isRunning: timerData.isRunning
+          };
+          ws.send(JSON.stringify({
+            type: "timerUpdate",
+            ...simpleTimerData
+          }));
+        }
 
         // Если в комнате уже есть другой игрок — отправляем новому его данные
         if (room) {
@@ -66,7 +102,7 @@ function handleConnection(ws) {
               id: ws.id,
               username: ws.name,
               color: ws.color,
-              rating: Math.floor(1000 + Math.random() * 500), // временный рейтинг
+              rating: Math.floor(1000 + Math.random() * 500),
             },
           },
           ws
@@ -74,6 +110,17 @@ function handleConnection(ws) {
 
         if (room.white && room.black) {
           room.turn = "w";
+
+          if (room.timer) {
+            room.timer.start();
+
+            if (!timerIntervals.has(roomId)) {
+              const interval = setInterval(() => {
+                sendTimerUpdate(roomId);
+              }, 1000);
+              timerIntervals.set(roomId, interval);
+            }
+          }
           broadcastToRoom(roomId, {
             type: "start_game",
             roomId,
@@ -95,7 +142,26 @@ function handleConnection(ws) {
           return;
         }
 
-        room.turn = room.turn === "w" ? "b" : "w";
+        const newTurn = room.turn === "w" ? "b" : "w";
+        room.turn = newTurn;
+
+        if (room.timer) {
+          room.timer.switchTurn(newTurn);
+          
+          const timeCheck = room.timer.tick();
+          if (timeCheck && timeCheck.timeOut) {
+            broadcastToRoom(roomId, {
+              type: "gameOver",
+              reason: "timeOut",
+              winner: timeCheck.winner
+            });
+            room.timer.stop();
+            if (timerIntervals.has(roomId)) {
+              clearInterval(timerIntervals.get(roomId));
+              timerIntervals.delete(roomId);
+            }
+          }
+        }
 
         ws.send(
           JSON.stringify({
@@ -127,6 +193,19 @@ function handleConnection(ws) {
   ws.on("close", () => {
     console.log(`🔴 WS disconnected: ${ws.id}`);
     if (ws.roomId) {
+      const room = rooms.get(ws.roomId);
+      
+      // Останавливаем таймер если комната пустая
+      if (room && room.players.size === 1) { // этот игрок последний
+        if (room.timer) {
+          room.timer.stop();
+        }
+        if (timerIntervals.has(ws.roomId)) {
+          clearInterval(timerIntervals.get(ws.roomId));
+          timerIntervals.delete(ws.roomId);
+        }
+      }
+      
       removeClientFromRoom(ws.roomId, ws);
       broadcastToRoom(ws.roomId, { type: "player_left", clientId: ws.id });
     }

@@ -1166,6 +1166,23 @@ export const useGameStore = defineStore("game", () => {
           playersCount.value = Math.max(0, playersCount.value - 1);
           break;
 
+        case "timerUpdate":
+          console.log("⏰ Обновление таймера с сервера:", data);
+          if (timerStore) {
+            timerStore.updateFromServer(data);
+          }
+          break;
+
+        case "gameOver":
+          console.log("🏁 Конец игры по времени:", data);
+          if (data.reason === "timeOut") {
+            result.value = {
+              type: data.winner === "w" ? "whiteWin" : "blackWin",
+              reason: "timeOut"
+            };
+          }
+          break;
+
         default:
           console.warn("⚙️ Неизвестный тип сообщения:", data.type);
       }
