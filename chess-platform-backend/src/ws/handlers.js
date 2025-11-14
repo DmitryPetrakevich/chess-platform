@@ -112,14 +112,20 @@ function handleConnection(ws) {
           room.turn = "w";
 
           if (room.timer) {
-            room.timer.start();
-
-            if (!timerIntervals.has(roomId)) {
-              const interval = setInterval(() => {
-                sendTimerUpdate(roomId);
-              }, 1000);
-              timerIntervals.set(roomId, interval);
-            }
+            room.timer.startPreStart(() => {
+              broadcastToRoom(roomId, {
+                type: "gameOver", 
+                reason: "no_first_move"
+              });
+            });
+            
+            room.timer.broadcastPreStartUpdate = () => {
+              const preStartData = room.timer.getPreStartData();
+              broadcastToRoom(roomId, {
+                type: "preStartUpdate",
+                ...preStartData
+              });
+            };
           }
           broadcastToRoom(roomId, {
             type: "start_game",
@@ -144,6 +150,19 @@ function handleConnection(ws) {
 
         const newTurn = room.turn === "w" ? "b" : "w";
         room.turn = newTurn;
+
+        if (room.timer && !room.timer.gameStarted) {
+          room.timer.stopPreStart();
+          
+          room.timer.start();
+          
+          if (!timerIntervals.has(roomId)) {
+            const interval = setInterval(() => {
+              sendTimerUpdate(roomId);
+            }, 1000);
+            timerIntervals.set(roomId, interval);
+          }
+        }
 
         if (room.timer) {
           room.timer.switchTurn(newTurn);

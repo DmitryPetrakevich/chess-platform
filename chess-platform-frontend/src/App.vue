@@ -10,7 +10,7 @@
 </template>
 
 <script setup>
-import PageHeader from '@/components/PageHeader.vue';
+import PageHeader from '@/layout/PageHeader.vue';
 import Play from '@/pages/PlayPage.vue';
 import RegistrationForm from './components/RegistrationForm.vue';
 import LogInPage from './components/LogInPage.vue';
@@ -24,6 +24,5 @@ import MainPage from './pages/MainPage.vue';
   width: 100%;
   height: 100%;
 }
-
 </style>
 

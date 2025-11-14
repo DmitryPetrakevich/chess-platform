@@ -1,8 +1,8 @@
 const rooms = new Map();
 
-
 /**
- * Таймер сервис для управления временем
+ * Класс для управления шахматным таймером в игровой комнате.
+ * Обеспечивает синхронизированный отсчет времени для обоих игроков.
  */
 class RoomTimer {
   constructor(initialTime = 300) { // 10 минут по умолчанию
@@ -12,8 +12,52 @@ class RoomTimer {
     this.currentTurn = 'w';
     this.isRunning = false;
     this.intervalId = null;
+    this.preStartTime = 15; 
+    this.preStartIntervalId = null;
+    this.gameStarted = false;
+    this.broadcastPreStartUpdate = null;
   }
 
+  startPreStart(onExpired) {
+    this.preStartIntervalId = setInterval(() => {
+      this.preStartTime -= 1;
+      
+      if (this.broadcastPreStartUpdate) {
+        this.broadcastPreStartUpdate();
+      }
+      
+      if (this.preStartTime <= 0) {
+        this.stopPreStart();
+        onExpired?.(); 
+      }
+    }, 1000);
+  }
+
+  /**
+   * Останавливает претаймер (когда сделан первый ход)
+   */
+  stopPreStart() {
+    if (this.preStartIntervalId) {
+      clearInterval(this.preStartIntervalId);
+      this.preStartIntervalId = null;
+    }
+    this.gameStarted = true;
+  }
+
+  /**
+   * Возвращает данные претаймера
+   */
+  getPreStartData() {
+    return {
+      preStartTime: this.preStartTime,
+      gameStarted: this.gameStarted
+    };
+  }
+
+  /**
+   * Запускает таймер и начинает отсчет времени для активного игрока.
+   * Если таймер уже запущен, метод ничего не делает.
+   */
   start() {
     if (this.isRunning) return;
     
@@ -25,6 +69,13 @@ class RoomTimer {
     }, 1000);
   }
 
+    /**
+   * Основной метод обновления времени. Вызывается каждую секунду.
+   * Уменьшает время активного игрока и проверяет окончание времени.
+   * @returns {Object|null} Объект с информацией об окончании времени или null, если время еще есть.
+   * @property {boolean} timeOut - true, если время у кого-то закончилось.
+   * @property {string} winner - Цвет победителя ('w' или 'b').
+   */
   tick() {
     if (!this.isRunning) return;
 
@@ -40,7 +91,6 @@ class RoomTimer {
       
       this.lastUpdate = now;
 
-      // Проверка на окончание времени
       if (this.whiteTime <= 0 || this.blackTime <= 0) {
         this.stop();
         return { timeOut: true, winner: this.whiteTime <= 0 ? 'b' : 'w' };
@@ -50,11 +100,18 @@ class RoomTimer {
     return null;
   }
 
+  /**
+   * Переключает активного игрока и сбрасывает отсчет времени для нового хода.
+   * @param {string} newTurn - Новый активный игрок ('w' или 'b').
+   */
   switchTurn(newTurn) {
     this.currentTurn = newTurn;
     this.lastUpdate = Date.now();
   }
 
+  /**
+   * Останавливает таймер и очищает интервал.
+   */
   stop() {
     this.isRunning = false;
     if (this.intervalId) {
@@ -63,8 +120,15 @@ class RoomTimer {
     }
   }
 
+  /**
+   * Возвращает текущее состояние времени с учетом прошедшего времени с последнего обновления.
+   * @returns {Object} Объект с актуальным временем игроков и состоянием таймера.
+   * @property {number} whiteTime - Оставшееся время белых в секундах.
+   * @property {number} blackTime - Оставшееся время черных в секундах.
+   * @property {string} currentTurn - Текущий активный игрок ('w' или 'b').
+   * @property {boolean} isRunning - Запущен ли таймер.
+   */
   getCurrentTime() {
-    // Рассчитываем актуальное время
     const now = Date.now();
     const elapsedSeconds = Math.floor((now - this.lastUpdate) / 1000);
     
@@ -98,7 +162,7 @@ function addClientToRoom(roomId, ws, preferredColor = "random") {
       white: null,
       black: null,
       turn: "w",
-      timer: new RoomTimer(60) // 10 минут на игрока 
+      timer: new RoomTimer(60) 
     });
   }
 
@@ -134,7 +198,6 @@ function addClientToRoom(roomId, ws, preferredColor = "random") {
   console.log(`🎨 Игроку ${ws.id} назначен цвет: ${ws.color} (room: ${roomId})`);
   return room.players.size;
 }
-
 
 /**
  * Удаляет клиента из комнаты

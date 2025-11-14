@@ -4,11 +4,26 @@ import { useTimerStore } from "./timerStore";
 
 export const useGameStore = defineStore("game", () => {
   const timerStore = useTimerStore();
+  type GameReason = 
+  | "checkMate"
+  | "stalemate"
+  | "50-move-rule" 
+  | "threefold-repetition"
+  | "insufficient-material"
+  | "timeOut"
+  | "no_move";
+
+  type GameType = 
+  | "draw"
+  | "blackWin"
+  | "whiteWin"
+  | "canceledGame"
 
   interface GameResult {
-    type: "draw" | "blackWin" | "whiteWin" | "canceledGame" | null;
-    reason: string | null;
+    type: GameType | null;
+    reason: GameReason | null;
   }
+
   /**
    * Расположение фигур на доске
    */
@@ -449,11 +464,11 @@ export const useGameStore = defineStore("game", () => {
     positionHistory.value.push(getPositionHash());
 
     if (moveCountWithoutAction.value >= 100) {
-      result.value = { type: "draw", reason: "50-move rule" };
+      result.value = { type: "draw", reason: "50-move-rule" };
     }
 
     if (isThreefoldRepetition()) {
-      result.value = { type: "draw", reason: "threefold repetition" };
+      result.value = { type: "draw", reason: "threefold-repetition" };
     }
 
     checkGameState(currentTurn.value);
@@ -479,9 +494,9 @@ export const useGameStore = defineStore("game", () => {
       console.log("Ничья по правилу 50 ходов");
       result.value = {
         type: "draw",
-        reason: "fifty-move-rule",
+        reason: "50-move-rule",
       };
-      return "fifty-move-rule";
+      return "50-move rule";
     }
 
     if (isThreefoldRepetition()) {
@@ -510,7 +525,7 @@ export const useGameStore = defineStore("game", () => {
         console.log("Победа черных");
         result.value = {
           type: "blackWin",
-          reason: "insufficient-material",
+          reason: "checkMate",
         };
       }
 
@@ -518,7 +533,7 @@ export const useGameStore = defineStore("game", () => {
         console.log("Победа белых");
         result.value = {
           type: "whiteWin",
-          reason: "insufficient-material",
+          reason: "checkMate",
         };
       }
       return "checkmate";
@@ -1105,7 +1120,7 @@ export const useGameStore = defineStore("game", () => {
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log("📩 Сообщение от сервера:", data);
+      // console.log("📩 Сообщение от сервера:", data);
 
       switch (data.type) {
         case "joined":
@@ -1167,18 +1182,30 @@ export const useGameStore = defineStore("game", () => {
           break;
 
         case "timerUpdate":
-          console.log("⏰ Обновление таймера с сервера:", data);
           if (timerStore) {
             timerStore.updateFromServer(data);
           }
           break;
 
+        case "preStartUpdate":
+          console.log("⏳ Обновление претаймера:", data);
+          gameStarted.value = data.gameStarted;
+          if (timerStore) {
+            timerStore.preSeconds = data.preStartTime;
+          }
+          break;
+
         case "gameOver":
-          console.log("🏁 Конец игры по времени:", data);
+          console.log("🏁 Конец игры:", data);
           if (data.reason === "timeOut") {
             result.value = {
               type: data.winner === "w" ? "whiteWin" : "blackWin",
               reason: "timeOut"
+            };
+          } else if (data.reason === "no_first_move") {
+            result.value = {
+              type: "canceledGame",
+              reason: "no_move"
             };
           }
           break;

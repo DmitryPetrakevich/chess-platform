@@ -195,16 +195,22 @@ function isLowTime(sec) {
   return Number(sec) <= 30;
 }
 
-/**
- * Предстартовый таймер
- */
 onMounted(() => {
-  if (props.managePrestart && !gameStore.result.type && !gameStore.gameStarted) {
-    timerStore.startPreStart(10, () => {
-      gameStore.result = {
-        type: "canceledGame",
-        reason: "no_move",
-      };
+  if (gameStore.ws) {
+    gameStore.ws.addEventListener('message', (event) => {
+      const data = JSON.parse(event.data);
+      
+      if (data.type === "preStartUpdate") {
+        timerStore.preSeconds = data.preStartTime;
+        gameStore.gameStarted = data.gameStarted;
+      }
+      
+      if (data.type === "gameOver" && data.reason === "no_first_move") {
+        gameStore.result = {
+          type: "canceledGame",
+          reason: "no_move"
+        };
+      }
     });
   }
 });
