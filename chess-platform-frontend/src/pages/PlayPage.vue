@@ -109,7 +109,8 @@ watch(() => game.playerColor, (newColor, oldColor) => {
 
 .desktop-clock {
   margin: auto 0;
-  width: min(430px, 30%);
+  /* width: min(430px, 30%); */
+  width:  min(800px, 60%);
   max-width: 430px;
 }
 

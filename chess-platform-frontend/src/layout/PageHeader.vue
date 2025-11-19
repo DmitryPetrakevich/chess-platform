@@ -44,8 +44,8 @@
         </div>
 
         <div class="page-header__user-name" @click="toggleMenu">
-          <img :src="profileNameIcon" alt="Профиль" class="profile-icon" />
           {{ userStore.username }}
+          <img :src="profileNameIcon" alt="Профиль" class="profile-icon" />
         </div>
 
         <div v-if="isMenuOpen" class="page-header__overlay" @click="closeMenu"></div>
@@ -421,6 +421,21 @@ watch(() => userStore.isLoggedIn, closeMenu);
     font-size: 14px;
   }
 
+  .page-header__user-menu {
+    gap: 10px;
+  }
+
+  .profile-icon,
+  .notification-icon,
+  .search-icon {
+    width: 25px;
+    height: 25px;
+  }
+
+  .page-header__user-name {
+    gap: 10px;
+    font-size: 16px;
+  }
 }
 
 .burger {
@@ -496,6 +511,24 @@ watch(() => userStore.isLoggedIn, closeMenu);
 }
 
 @media (max-width: 990px) {
+  .page-header__user-menu {
+    gap: 10px;
+  }
+
+  .profile-icon,
+  .notification-icon,
+  .search-icon {
+    width: 25px;
+    height: 25px;
+  }
+
+  .page-header__user-name {
+    gap: 10px;
+    font-size: 16px;
+  }
+
+
+
   .burger {
     display: flex;
   }

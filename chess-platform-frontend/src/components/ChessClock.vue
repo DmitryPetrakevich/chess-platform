@@ -7,9 +7,13 @@
       aria-live="polite"
     >
       <div class="player-left">
-        <div class="player-avatar" :title="topPlayer.username">{{ topInitial }}</div>
+        <div class="player-avatar" :title="topPlayer.username">
+          {{ topInitial }}
+        </div>
         <div class="player-details">
-          <div class="player-name" :title="topPlayer.username">{{ topPlayer.username }}</div>
+          <div class="player-name" :title="topPlayer.username">
+            {{ topPlayer.username }}
+          </div>
           <div class="player-rating">⟡ {{ topPlayer.blitzRating }}</div>
         </div>
       </div>
@@ -26,9 +30,12 @@
     </div>
 
     <div class="middle">
-
       <!-- Moves -->
-      <div v-if="mode === 'both'" class="moves-history" aria-label="Moves history">
+      <div
+        v-if="mode === 'both'"
+        class="moves-history"
+        aria-label="Moves history"
+      >
         <div class="moves-title">История ходов</div>
         <div class="moves-placeholder">
           <template v-if="gameStore.moveHistory?.length">
@@ -38,7 +45,12 @@
         </div>
       </div>
 
-      <div v-if="mode === 'both'" class="game-status" role="status" aria-live="polite">
+      <div
+        v-if="mode === 'both' && gameStore.result.type"
+        class="game-status"
+        role="status"
+        aria-live="polite"
+      >
         {{ gameStatusText }}
       </div>
 
@@ -58,9 +70,13 @@
       :class="{ active: bottomActive }"
     >
       <div class="player-left">
-        <div class="player-avatar" :title="bottomPlayer.username">{{ bottomInitial }}</div>
+        <div class="player-avatar" :title="bottomPlayer.username">
+          {{ bottomInitial }}
+        </div>
         <div class="player-details">
-          <div class="player-name" :title="bottomPlayer.username">{{ bottomPlayer.username }}</div>
+          <div class="player-name" :title="bottomPlayer.username">
+            {{ bottomPlayer.username }}
+          </div>
           <div class="player-rating">⟡ {{ bottomPlayer.blitzRating }}</div>
         </div>
       </div>
@@ -74,6 +90,24 @@
           {{ bottomTimeDisplay }}
         </div>
       </div>
+    </div>
+
+      <div
+        v-if="mode === 'bottom' && gameStore.result.type"
+        class="game-status"
+        role="status"
+        aria-live="polite"
+      >
+        {{ gameStatusText }}
+      </div>
+
+    <div
+      v-if="mode === 'top' && timerStore.preSeconds > 0"
+      class="prestart-countdown"
+      aria-live="assertive"
+    >
+      <div class="prestart-label">Ожидание первого хода</div>
+      <div class="prestart-value">{{ timerStore.formattedPre }}</div>
     </div>
   </div>
 </template>
@@ -89,11 +123,11 @@ const gameStore = useGameStore();
 const timerStore = useTimerStore();
 
 const props = defineProps({
-  mode: { 
+  mode: {
     type: String,
     default: "both",
   },
-  managePrestart: { 
+  managePrestart: {
     type: Boolean,
     default: true,
   },
@@ -107,7 +141,8 @@ const topPlayer = computed(() => {
     return {
       username: gameStore.opponent.username || "Opponent",
       blitzRating: gameStore.opponent.blitzRating ?? 1200,
-      color: gameStore.opponent.color || (gameStore.playerColor === "w" ? "b" : "w"),
+      color:
+        gameStore.opponent.color || (gameStore.playerColor === "w" ? "b" : "w"),
     };
   }
   const fallbackColor = gameStore.playerColor === "b" ? "w" : "b";
@@ -126,40 +161,56 @@ const bottomPlayer = computed(() => ({
 /**
  * Первая буква имени игрока для аватара
  */
-const topInitial = computed(() => (topPlayer.value.username?.[0] || "O").toUpperCase());
-const bottomInitial = computed(() => (bottomPlayer.value.username?.[0] || "Y").toUpperCase());
+const topInitial = computed(() =>
+  (topPlayer.value.username?.[0] || "O").toUpperCase()
+);
+const bottomInitial = computed(() =>
+  (bottomPlayer.value.username?.[0] || "Y").toUpperCase()
+);
 
 /**
  * Активность игроков теперь определяется по currentTurn с сервера
  */
-const topActive = computed(() => topPlayer.value.color === timerStore.activeColor);
-const bottomActive = computed(() => bottomPlayer.value.color === timerStore.activeColor);
+const topActive = computed(
+  () => topPlayer.value.color === timerStore.activeColor
+);
+const bottomActive = computed(
+  () => bottomPlayer.value.color === timerStore.activeColor
+);
 
 /**
  * Время берем из timerStore который синхронизируется с сервера
  */
 const topTimeRaw = computed(() =>
-  topPlayer.value.color === "w" ? timerStore.whiteSeconds : timerStore.blackSeconds
+  topPlayer.value.color === "w"
+    ? timerStore.whiteSeconds
+    : timerStore.blackSeconds
 );
 const bottomTimeRaw = computed(() =>
-  bottomPlayer.value.color === "w" ? timerStore.whiteSeconds : timerStore.blackSeconds
+  bottomPlayer.value.color === "w"
+    ? timerStore.whiteSeconds
+    : timerStore.blackSeconds
 );
 
 /**
  * Отформатированное время
  */
 const topTimeDisplay = computed(() =>
-  topPlayer.value.color === "w" ? timerStore.formattedWhite : timerStore.formattedBlack
+  topPlayer.value.color === "w"
+    ? timerStore.formattedWhite
+    : timerStore.formattedBlack
 );
 const bottomTimeDisplay = computed(() =>
-  bottomPlayer.value.color === "w" ? timerStore.formattedWhite : timerStore.formattedBlack
+  bottomPlayer.value.color === "w"
+    ? timerStore.formattedWhite
+    : timerStore.formattedBlack
 );
 
 /**
  * История ходов
  */
-const formattedMoves = computed(() =>
-  gameStore.moveHistory?.map((m, i) => `${i + 1}. ${m}`) || []
+const formattedMoves = computed(
+  () => gameStore.moveHistory?.map((m, i) => `${i + 1}. ${m}`) || []
 );
 
 /**
@@ -180,12 +231,6 @@ const gameStatusText = computed(() => {
       return "Игра отменена";
     }
   }
-  
-  if (timerStore.activeColor) {
-    return `Ход ${timerStore.activeColor === "w" ? "белых" : "чёрных"}`;
-  } else {
-    return "Ожидание игроков";
-  }
 });
 
 /**
@@ -194,26 +239,6 @@ const gameStatusText = computed(() => {
 function isLowTime(sec) {
   return Number(sec) <= 30;
 }
-
-onMounted(() => {
-  if (gameStore.ws) {
-    gameStore.ws.addEventListener('message', (event) => {
-      const data = JSON.parse(event.data);
-      
-      if (data.type === "preStartUpdate") {
-        timerStore.preSeconds = data.preStartTime;
-        gameStore.gameStarted = data.gameStarted;
-      }
-      
-      if (data.type === "gameOver" && data.reason === "no_first_move") {
-        gameStore.result = {
-          type: "canceledGame",
-          reason: "no_move"
-        };
-      }
-    });
-  }
-});
 
 /**
  * Отменяем предстарт при первом ходе
@@ -250,7 +275,8 @@ watch(
   flex-direction: column;
   gap: 12px;
   box-shadow: var(--shadow);
-  font-family: Inter, "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial;
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, "Helvetica Neue",
+    Arial;
   color: #0f172a;
 }
 
@@ -267,15 +293,19 @@ watch(
   border: 1px solid #e6eefb;
 }
 .player-info.active {
-  background: linear-gradient(90deg, rgba(37,99,235,0.06), rgba(245,158,11,0.03));
-  box-shadow: 0 6px 18px rgba(37,99,235,0.08);
+  background: linear-gradient(
+    90deg,
+    rgba(37, 99, 235, 0.06),
+    rgba(245, 158, 11, 0.03)
+  );
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
   transform: translateY(-2px);
 }
 
 .player-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 7px;
   min-width: 0;
 }
 .player-avatar {
@@ -372,7 +402,6 @@ watch(
   font-size: 13px;
 }
 
-/* Prestart countdown */
 .prestart {
   display: flex;
   flex-direction: column;
@@ -390,7 +419,6 @@ watch(
   align-items: center;
   justify-content: center;
   gap: 10px;
-
 }
 
 .prestart-label {
@@ -405,18 +433,22 @@ watch(
 }
 
 @media (max-width: 990px) {
-  /* .chess-timer {
-  width: 500px;
-  padding: 14px;
-  gap: 12px;
-} */
+  .player-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 7px;
+    font-weight: 500;
+    font-size: 16px;
+  }
+
+  .player-name {
+    font-size: 14px;
+  }
 
   .timer {
     padding: 4px 8px;
     font-weight: 600;
-}
-  
-
+  }
 }
 
 @media (max-width: 768px) {
@@ -428,19 +460,30 @@ watch(
     padding: 0;
     gap: 10px;
   }
-
 }
 
 @media (max-width: 480px) {
-
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.75; transform: scale(1.05); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.05);
+  }
 }
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
