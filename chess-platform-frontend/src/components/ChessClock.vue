@@ -222,9 +222,16 @@ const gameStatusText = computed(() => {
       return "Ничья";
     }
     if (gameStore.result.type === "whiteWin") {
+      if(gameStore.result.reason === "timeOut") {
+        return "Время истекло, победа белых"
+
+      }
       return "Победа белых";
     }
     if (gameStore.result.type === "blackWin") {
+      if(gameStore.result.reason === "timeOut") {
+        return "Время истекло, победа черных"
+      }
       return "Победа черных";
     }
     if (gameStore.result.type === "canceledGame") {

@@ -1120,7 +1120,7 @@ export const useGameStore = defineStore("game", () => {
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      // console.log("📩 Сообщение от сервера:", data);
+      console.log("📩 Сообщение от сервера:", data);
 
       switch (data.type) {
         case "joined":
@@ -1154,7 +1154,7 @@ export const useGameStore = defineStore("game", () => {
             timerStore.cancelPreStart();
           }
 
-          makeMove(data.from, data.to); // теперь только после подтверждения
+          makeMove(data.from, data.to); 
           if (data.turn) setCurrentTurn(data.turn);
           gameStarted.value = true;
           break;

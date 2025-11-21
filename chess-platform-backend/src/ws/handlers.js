@@ -17,17 +17,17 @@ function handleConnection(ws) {
     if (!room || !room.timer) return;
 
     const timerData = room.timer.getCurrentTime();
-    
+
     const simpleTimerData = {
       whiteTime: timerData.whiteTime,
       blackTime: timerData.blackTime,
       currentTurn: timerData.currentTurn,
-      isRunning: timerData.isRunning
+      isRunning: timerData.isRunning,
     };
-    
+
     broadcastToRoom(roomId, {
       type: "timerUpdate",
-      ...simpleTimerData
+      ...simpleTimerData,
     });
   }
 
@@ -63,12 +63,14 @@ function handleConnection(ws) {
             whiteTime: timerData.whiteTime,
             blackTime: timerData.blackTime,
             currentTurn: timerData.currentTurn,
-            isRunning: timerData.isRunning
+            isRunning: timerData.isRunning,
           };
-          ws.send(JSON.stringify({
-            type: "timerUpdate",
-            ...simpleTimerData
-          }));
+          ws.send(
+            JSON.stringify({
+              type: "timerUpdate",
+              ...simpleTimerData,
+            })
+          );
         }
 
         // Если в комнате уже есть другой игрок — отправляем новому его данные
@@ -114,16 +116,16 @@ function handleConnection(ws) {
           if (room.timer) {
             room.timer.startPreStart(() => {
               broadcastToRoom(roomId, {
-                type: "gameOver", 
-                reason: "no_first_move"
+                type: "gameOver",
+                reason: "no_first_move",
               });
             });
-            
+
             room.timer.broadcastPreStartUpdate = () => {
               const preStartData = room.timer.getPreStartData();
               broadcastToRoom(roomId, {
                 type: "preStartUpdate",
-                ...preStartData
+                ...preStartData,
               });
             };
           }
@@ -151,35 +153,38 @@ function handleConnection(ws) {
         const newTurn = room.turn === "w" ? "b" : "w";
         room.turn = newTurn;
 
-        if (room.timer && !room.timer.gameStarted) {
-          room.timer.stopPreStart();
-          
-          room.timer.start();
-          
-          if (!timerIntervals.has(roomId)) {
-            const interval = setInterval(() => {
-              sendTimerUpdate(roomId);
-            }, 1000);
-            timerIntervals.set(roomId, interval);
-          }
+      if (room.timer) {
+        room.timer.stopPreStart();
+        room.timer.start();
+
+        if (!timerIntervals.has(roomId)) {
+          const interval = setInterval(() => {
+            if (!room.timer) return;
+
+            const timeCheck = room.timer.tick();
+            sendTimerUpdate(roomId);
+
+            if (timeCheck?.timeOut) {
+              console.log(`⏰ [${roomId}] Игра завершена по таймеру, победитель: ${timeCheck.winner}`);
+
+              broadcastToRoom(roomId, {
+                type: "gameOver",
+                reason: "timeOut",
+                winner: timeCheck.winner,
+              });
+
+              room.timer.stop();
+              clearInterval(interval);
+              timerIntervals.delete(roomId);
+            }
+          }, 1000);
+
+          timerIntervals.set(roomId, interval);
         }
+      }
 
         if (room.timer) {
           room.timer.switchTurn(newTurn);
-          
-          const timeCheck = room.timer.tick();
-          if (timeCheck && timeCheck.timeOut) {
-            broadcastToRoom(roomId, {
-              type: "gameOver",
-              reason: "timeOut",
-              winner: timeCheck.winner
-            });
-            room.timer.stop();
-            if (timerIntervals.has(roomId)) {
-              clearInterval(timerIntervals.get(roomId));
-              timerIntervals.delete(roomId);
-            }
-          }
         }
 
         ws.send(
@@ -213,9 +218,10 @@ function handleConnection(ws) {
     console.log(`🔴 WS disconnected: ${ws.id}`);
     if (ws.roomId) {
       const room = rooms.get(ws.roomId);
-      
+
       // Останавливаем таймер если комната пустая
-      if (room && room.players.size === 1) { // этот игрок последний
+      if (room && room.players.size === 1) {
+        // этот игрок последний
         if (room.timer) {
           room.timer.stop();
         }
@@ -224,7 +230,7 @@ function handleConnection(ws) {
           timerIntervals.delete(ws.roomId);
         }
       }
-      
+
       removeClientFromRoom(ws.roomId, ws);
       broadcastToRoom(ws.roomId, { type: "player_left", clientId: ws.id });
     }

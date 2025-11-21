@@ -69,7 +69,7 @@ class RoomTimer {
     }, 1000);
   }
 
-    /**
+  /**
    * Основной метод обновления времени. Вызывается каждую секунду.
    * Уменьшает время активного игрока и проверяет окончание времени.
    * @returns {Object|null} Объект с информацией об окончании времени или null, если время еще есть.
@@ -77,28 +77,33 @@ class RoomTimer {
    * @property {string} winner - Цвет победителя ('w' или 'b').
    */
   tick() {
-    if (!this.isRunning) return;
+  if (!this.isRunning) {
+      const winner = this.whiteTime <= 0 ? 'b' : 'w';
+      this.stop();
+      return { timeOut: true, winner };
+  }
 
-    const now = Date.now();
-    const elapsedSeconds = Math.floor((now - this.lastUpdate) / 1000);
-    
-    if (elapsedSeconds > 0) {
-      if (this.currentTurn === 'w') {
-        this.whiteTime = Math.max(0, this.whiteTime - elapsedSeconds);
-      } else {
-        this.blackTime = Math.max(0, this.blackTime - elapsedSeconds);
-      }
-      
-      this.lastUpdate = now;
+  const now = Date.now();
+  const elapsedSeconds = Math.floor((now - this.lastUpdate) / 1000);
 
-      if (this.whiteTime <= 0 || this.blackTime <= 0) {
-        this.stop();
-        return { timeOut: true, winner: this.whiteTime <= 0 ? 'b' : 'w' };
-      }
+  if (elapsedSeconds > 0) {
+    if (this.currentTurn === 'w') {
+      this.whiteTime = Math.max(0, this.whiteTime - elapsedSeconds);
+    } else {
+      this.blackTime = Math.max(0, this.blackTime - elapsedSeconds);
     }
 
-    return null;
+    this.lastUpdate = now;
+
+    if (this.whiteTime <= 0 || this.blackTime <= 0) {
+      const winner = this.whiteTime <= 0 ? 'b' : 'w';
+      this.stop();
+      return { timeOut: true, winner };
+    }
   }
+
+  return null;
+}
 
   /**
    * Переключает активного игрока и сбрасывает отсчет времени для нового хода.
