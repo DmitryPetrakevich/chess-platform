@@ -183,6 +183,7 @@ function handleConnection(ws) {
         }
       }
 
+
         if (room.timer) {
           room.timer.switchTurn(newTurn);
         }

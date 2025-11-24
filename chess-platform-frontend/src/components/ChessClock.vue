@@ -21,7 +21,10 @@
       <div class="timer-wrap">
         <div
           class="timer timer-top"
-          :class="{ 'low-time': isLowTime(topTimeRaw) }"
+          :class="{ 
+            active: topActive,
+            'low-time': isLowTime(topTimeRaw) 
+          }"
           aria-label="Top player time"
         >
           {{ topTimeDisplay }}
@@ -38,10 +41,26 @@
       >
         <div class="moves-title">История ходов</div>
         <div class="moves-placeholder">
-          <template v-if="gameStore.moveHistory?.length">
-            <div v-for="(m, i) in formattedMoves" :key="i">{{ m }}</div>
-          </template>
-          <template v-else>Нет ходов</template>
+          <div class="moves-row" v-for="(row, index) in formattedMoves" :key="index">
+            <div class="move-number">{{ index + 1 }}</div>
+
+            <div  class="move white"
+              :class="{ active: selectedMove === row.whiteIndex }"
+              @click="selectMove(row.whiteIndex)"
+              >
+              {{ row. white }}
+            </div>
+
+            <div v-if="row.black"
+              class="move black"
+              :class="{ active: selectedMove === row.blackIndex }"
+              @click="selectMove(row.blackIndex)"
+              >
+              {{ row.black }}
+            </div>
+
+          </div>
+
         </div>
       </div>
 
@@ -84,7 +103,10 @@
       <div class="timer-wrap">
         <div
           class="timer timer-bottom"
-          :class="{ 'low-time': isLowTime(bottomTimeRaw) }"
+          :class="{ 
+            active: bottomActive,
+            'low-time': isLowTime(bottomTimeRaw) 
+          }"
           aria-label="Bottom player time"
         >
           {{ bottomTimeDisplay }}
@@ -113,7 +135,7 @@
 </template>
 
 <script setup>
-import { computed, watch, onMounted, onBeforeUnmount, defineProps } from "vue";
+import { ref, computed, watch, onMounted, onBeforeUnmount, defineProps } from "vue";
 import { useUserStore } from "@/store/user";
 import { useGameStore } from "@/store/gameStore";
 import { useTimerStore } from "@/store/timerStore";
@@ -121,6 +143,8 @@ import { useTimerStore } from "@/store/timerStore";
 const userStore = useUserStore();
 const gameStore = useGameStore();
 const timerStore = useTimerStore();
+
+const selectedMove = ref(null);
 
 const props = defineProps({
   mode: {
@@ -206,12 +230,33 @@ const bottomTimeDisplay = computed(() =>
     : timerStore.formattedBlack
 );
 
+function selectMove(index) {
+  selectedMove.value = index;
+}
+
 /**
  * История ходов
  */
-const formattedMoves = computed(
-  () => gameStore.moveHistory?.map((m, i) => `${i + 1}. ${m}`) || []
-);
+const formattedMoves = computed(() => {
+  const moves = [];
+  const list = gameStore.moveHistory || [];
+
+  for(let i = 0; i < list.length; i += 2) {
+    moves.push({
+      white: formatMove(list[i]),
+      black: list[i + 1] ? formatMove(list[i + 1]) : "",
+      whiteIndex: i,
+      blackIndex: i + 1,
+    })
+  }
+
+  return moves;
+})
+
+function formatMove(m) {
+  const pieceLetter = m.piece[1] !== "P" ? m.piece[1] : "";
+  return pieceLetter + m.to;
+}
 
 /**
  * Статус игры
@@ -219,20 +264,40 @@ const formattedMoves = computed(
 const gameStatusText = computed(() => {
   if (gameStore.result && gameStore.result.type) {
     if (gameStore.result.type === "draw") {
-      return "Ничья";
+      if(gameStore.result.reason === "stalemate") {
+        return "Пат, ничья"
+      }
+
+      if(gameStore.result.reason === "50-move-rule") {
+        return "Ничья по правилу 50 ходов"
+      }
+
+      if(gameStore.result.reason === "threefold-repetition") {
+        return "Ничья, троекратное повторение"
+      }
+
+      if(gameStore.result.reason === "insufficient-material") {
+        return "Ничья, недостаточно материала"
+      }
     }
+
     if (gameStore.result.type === "whiteWin") {
       if(gameStore.result.reason === "timeOut") {
         return "Время истекло, победа белых"
-
       }
-      return "Победа белых";
+
+      if(gameStore.result.reason === "checkMate") {
+        return "Мат, победа белых"
+      }
     }
     if (gameStore.result.type === "blackWin") {
       if(gameStore.result.reason === "timeOut") {
         return "Время истекло, победа черных"
       }
-      return "Победа черных";
+
+      if(gameStore.result.reason === "checkMate") {
+        return "Мат, победа черных"
+      }
     }
     if (gameStore.result.type === "canceledGame") {
       return "Игра отменена";
@@ -260,7 +325,7 @@ watch(
 );
 </script>
 
-<style scoped>
+<style scoped lang="less">
 :root {
   --card-bg: #fbfdff;
   --panel-bg: #ffffff;
@@ -361,6 +426,10 @@ watch(
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   text-align: center;
+
+  &.active {
+    color: rgb(5, 141, 5);
+  }
 }
 .timer-top {
   font-size: clamp(24px, 5vw, 54px);
@@ -371,23 +440,14 @@ watch(
   color: var(--accent);
 }
 .timer.low-time {
-  color: #dc2626;
-  animation: pulse 1s infinite;
+  color: #e54c4c;
   background: rgba(220, 38, 38, 0.04);
 }
 
-/* Middle section */
 .middle {
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-.moves-history {
-  background: #f8fbff;
-  border-radius: 8px;
-  padding: 10px;
-  border: 1px dashed #e8f0ff;
-  font-size: 13px;
 }
 .moves-title {
   font-weight: 700;
@@ -398,6 +458,55 @@ watch(
   color: var(--muted);
   font-size: 12px;
 }
+
+.moves-history {
+  background: #f8fbff;
+  border-radius: 8px;
+  max-height: 100px;
+  padding: 10px;
+  border: 1px dashed #e8f0ff;
+  font-size: 13px;
+  overflow-y: auto;
+}
+
+.moves-row {
+  display: grid;
+  grid-template-columns: 24px 1fr 1fr;
+  gap: 6px;
+  padding: 3px 4px;
+  align-items: center;
+  font-family: "Roboto Mono", monospace;
+  cursor: default;
+}
+
+.move-number {
+  color: #6b7280;
+  text-align: left;
+  padding-right: 4px;
+  user-select: none;
+}
+
+.move {
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
+}
+
+.move:hover {
+  background: #e8f0ff;
+}
+
+.move.active {
+  background: #3b82f6;
+  color: white;
+}
+
+.move.empty {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
 .game-status {
   text-align: center;
   padding: 8px;

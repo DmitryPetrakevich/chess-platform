@@ -87,6 +87,8 @@ export const useGameStore = defineStore("game", () => {
    */
   const currentRoomId = ref(null);
 
+  const moveHistory = ref([]);
+
   const opponent = ref({
     id: null,
     username: "Opponent",
@@ -121,6 +123,68 @@ export const useGameStore = defineStore("game", () => {
   function resetBoard() {
     console.log("♻️ Сброс доски (реализуй, если нужно)");
   }
+
+  function generateFEN() {
+  const boardRows = [];
+
+  // Генерация строк доски (с 8-й до 1-й)
+  for (let rank of ranks) {
+    let row = "";
+    let empty = 0;
+
+    for (let file of files) {
+      const square = `${file}${rank}`;
+      const piece = pieces.value[square];
+
+      if (!piece) {
+        empty++;
+      } else {
+        if (empty > 0) {
+          row += empty;
+          empty = 0;
+        }
+
+        // piece = "wK" → "K", "bQ" → "q"
+        const letter = piece[1];
+        row += piece[0] === "w" ? letter : letter.toLowerCase();
+      }
+    }
+
+    if (empty > 0) row += empty;
+
+    boardRows.push(row);
+  }
+
+  // Чей ход
+  const activeColor = currentTurn.value || "w";
+
+  // Права на рокировку
+  let castling = "";
+  if (castlingRights.whiteKingSide) castling += "K";
+  if (castlingRights.whiteQueenSide) castling += "Q";
+  if (castlingRights.blackKingSide) castling += "k";
+  if (castlingRights.blackQueenSide) castling += "q";
+  if (castling === "") castling = "-";
+
+  // en passant или "-"
+  const enPassant = enPassantTarget.value || "-";
+
+  // 50-move rule
+  const halfmove = moveCountWithoutAction.value;
+
+  // Полные ходы — каждые 2 полухода + 1
+  const fullmove = Math.floor(totalMoveCount.value / 2) + 1;
+
+  return [
+    boardRows.join("/"),
+    activeColor,
+    castling,
+    enPassant,
+    halfmove,
+    fullmove,
+  ].join(" ");
+}
+
 
   const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
   const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
@@ -404,6 +468,15 @@ export const useGameStore = defineStore("game", () => {
 
       positionHistory.value.push(getPositionHash());
       checkGameState(currentTurn.value);
+
+      moveHistory.value.push({
+      from,
+      to,
+      piece: movingPiece,
+      fen: generateFEN(),
+      turn: currentTurn.value === "w" ? "b" : "w"
+    });
+
       return true;
     }
 
@@ -472,6 +545,15 @@ export const useGameStore = defineStore("game", () => {
     }
 
     checkGameState(currentTurn.value);
+
+    moveHistory.value.push({
+      from,
+      to,
+      piece: movingPiece,
+      fen: generateFEN(),
+      turn: currentTurn.value === "w" ? "b" : "w"
+    });
+
     return true;
   }
 
@@ -1268,6 +1350,7 @@ export const useGameStore = defineStore("game", () => {
     playerColor,
     opponent,
     gameStarted,
+    moveHistory,
     setInitialPosition,
     makeMove,
     checkGameState,

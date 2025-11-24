@@ -73,7 +73,7 @@ onBeforeUnmount(() => {
 });
 
 watch(() => game.playerColor, (newColor, oldColor) => {
-  console.log("🔴 playerColor ИЗМЕНИЛСЯ:", { 
+  console.log(" playerColor ИЗМЕНИЛСЯ:", { 
     from: oldColor, 
     to: newColor,
     timestamp: new Date().toISOString()
