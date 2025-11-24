@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { router } from './router/router'
+import "@/assets/styles/globals.less";
 import App from './App.vue'
 
 const app = createApp(App)

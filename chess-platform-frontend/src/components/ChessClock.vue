@@ -326,27 +326,17 @@ watch(
 </script>
 
 <style scoped lang="less">
-:root {
-  --card-bg: #fbfdff;
-  --panel-bg: #ffffff;
-  --muted: #6b7280;
-  --accent: #2563eb;
-  --accent-2: #f59e0b;
-  --shadow: 0 6px 18px rgba(30, 41, 59, 0.08);
-  --radius: 12px;
-}
-
 .chess-timer {
   /* width: min(430px, 96%); */
   min-width: 280px;
   width: 100%;
-  background: linear-gradient(180deg, var(--card-bg), #f6fbff);
-  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(#fbfdff), #f6fbff);
+  border-radius: 12px;
   /* padding: 14px; */
   display: flex;
   flex-direction: column;
   gap: 12px;
-  box-shadow: var(--shadow);
+  box-shadow: var(0 6px 18px rgba(30, 41, 59, 0.08));
   font-family: Inter, "Segoe UI", system-ui, -apple-system, "Helvetica Neue",
     Arial;
   color: #0f172a;
@@ -359,7 +349,7 @@ watch(
   justify-content: space-between;
   gap: 12px;
   padding: 10px;
-  background: var(--panel-bg);
+  background: var(#ffffff);
   border-radius: 10px;
   transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
   border: 1px solid #e6eefb;
@@ -390,7 +380,7 @@ watch(
   justify-content: center;
   font-weight: 700;
   font-size: 20px;
-  color: #1e293b;
+  color: @gray-700;
   flex-shrink: 0;
 }
 .player-details {
@@ -401,18 +391,17 @@ watch(
 .player-name {
   font-size: 15px;
   font-weight: 700;
-  color: #0f172a;
+  color: @gray-900;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .player-rating {
   font-size: 12px;
-  color: var(--muted);
+  color: @gray-700;
   margin-top: 4px;
 }
 
-/* Timer */
 .timer-wrap {
   display: flex;
   align-items: center;
@@ -428,20 +417,16 @@ watch(
   text-align: center;
 
   &.active {
-    color: rgb(5, 141, 5);
+    color: @green-600;
   }
 }
-.timer-top {
-  font-size: clamp(24px, 5vw, 54px);
-  color: var(--accent-2);
-}
+.timer-top,
 .timer-bottom {
   font-size: clamp(24px, 5vw, 54px);
-  color: var(--accent);
 }
+
 .timer.low-time {
-  color: #e54c4c;
-  background: rgba(220, 38, 38, 0.04);
+  color: @red-600;
 }
 
 .middle {
@@ -455,16 +440,16 @@ watch(
   margin-bottom: 6px;
 }
 .moves-placeholder {
-  color: var(--muted);
-  font-size: 12px;
+  color: @gray-700;
+  font-size: 14px;
 }
 
 .moves-history {
-  background: #f8fbff;
+  background: @gray-50;
   border-radius: 8px;
   max-height: 100px;
   padding: 10px;
-  border: 1px dashed #e8f0ff;
+  border: 1px solid @gray-200;
   font-size: 13px;
   overflow-y: auto;
 }
@@ -480,7 +465,7 @@ watch(
 }
 
 .move-number {
-  color: #6b7280;
+  color: @gray-700;
   text-align: left;
   padding-right: 4px;
   user-select: none;
@@ -494,12 +479,11 @@ watch(
 }
 
 .move:hover {
-  background: #e8f0ff;
+  background: @blue-100;
 }
 
 .move.active {
-  background: #3b82f6;
-  color: white;
+  background: @blue-200;
 }
 
 .move.empty {
@@ -512,9 +496,9 @@ watch(
   padding: 8px;
   font-weight: 700;
   border-radius: 8px;
-  color: #0f172a;
+  color: @gray-900;
   background: rgba(236, 249, 255, 0.6);
-  border: 1px solid #e3f6ff;
+  border: 1px solid @gray-200;
   font-size: 13px;
 }
 
@@ -540,12 +524,12 @@ watch(
 .prestart-label {
   font-size: 13px;
   font-weight: 600;
-  color: #92400e;
+  color: @red-600;
 }
 .prestart-timer {
   font-size: 26px;
   font-weight: 800;
-  color: #b45309;
+  color: @red-600;
 }
 
 @media (max-width: 990px) {

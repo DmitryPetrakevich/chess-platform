@@ -15,4 +15,16 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+
+  css: {
+    preprocessorOptions: {
+      less: {
+        javascriptEnabled: true,
+        additionalData: `
+          @import "@/assets/styles/variables.less";
+          @import "@/assets/styles/mixins.less";
+        `
+      }
+    }
+  }
 })

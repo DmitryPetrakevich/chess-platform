@@ -18,7 +18,7 @@
 
 <style scoped>
 .coordinates {
-    background: #2c2c2c; 
+    background-color: #2c2c2c; 
     width: 100%;
     min-height: 100vh;
     display: flex;

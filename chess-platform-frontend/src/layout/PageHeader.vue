@@ -169,8 +169,8 @@ watch(() => userStore.isLoggedIn, closeMenu);
   box-sizing: border-box;
   height: 60px;
   width: 100%;
-  background: #1a1a1a;
-  border-bottom: 1px solid #333;
+  background: @gray-900;
+  border-bottom: 1px solid @gray-200;
   z-index: 1000;
 }
 
@@ -227,14 +227,13 @@ watch(() => userStore.isLoggedIn, closeMenu);
   font-weight: 400;
   font-family: "Manrope", sans-serif;
   border-radius: 5px;
+  padding: 5px;
   cursor: pointer;
   user-select: none;
-  // padding: 10px;
   transition: all ease 0.3s;
-  // z-index: 1000;
 
   &:hover {
-    background: #3b3b3b;
+    background: @gray-700;
   }
 }
 
@@ -252,29 +251,20 @@ watch(() => userStore.isLoggedIn, closeMenu);
   display: flex;
   flex-direction: column;
   position: fixed;
-  top: 70px;
+  box-sizing: border-box;
+  top: 60px;
   right: 10px;
   width: 200px;
   border-radius: 5px;
-  padding: 10px;
-  min-height: 300px;
-  background: #2b2b2b;
-  border-left: 3px solid #444;
-  border-top: 1px solid #444;
+  padding: 5px 0;
+  min-height: 250px;
+  background: @gray-900;
+  border-left: 3px solid @gray-200;
+  border-top: 1px solid @gray-200;
   z-index: 999;
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
   transform: translateX(0);
   animation: slideIn 0.2s ease-out;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-  }
-
-  to {
-    transform: translateX(0);
-  }
 }
 
 .page-header__dropdown-item {
@@ -295,7 +285,7 @@ watch(() => userStore.isLoggedIn, closeMenu);
 }
 
 .page-header__dropdown-item:hover {
-  background: #3b3b3b;
+  background: @gray-700;
 }
 
 .page-header__logo {
@@ -340,7 +330,7 @@ watch(() => userStore.isLoggedIn, closeMenu);
 }
 
 .page-header__nav-link:hover {
-  color: #e74c3c;
+  color: @secondary-dark;
 }
 
 .page-header__nav-link:hover::after {
@@ -597,5 +587,15 @@ watch(() => userStore.isLoggedIn, closeMenu);
   border: none;
   border-top: 1px solid #444;
   margin: 10px 0;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
 }
 </style>
