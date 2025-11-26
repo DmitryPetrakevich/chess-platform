@@ -206,7 +206,27 @@ function handleConnection(ws) {
           },
           ws
         );
-      } else {
+      } else if (data.type === "game_over") {
+          const { roomId } = data;
+          const room = rooms.get(roomId);
+          if (!room) return;
+
+          if (room.timer) {
+            room.timer.stop();
+            room.timer.isRunning = false;
+          }
+
+          if (timerIntervals.has(roomId)) {
+            clearInterval(timerIntervals.get(roomId));
+            timerIntervals.delete(roomId);
+          }
+
+          broadcastToRoom(roomId, {
+            type: "gameOver",
+            reason: data.reason,
+            winner: data.winner || null,
+          });
+        } else {
         ws.send(JSON.stringify({ type: "error", message: "Unknown type" }));
       }
     } catch (err) {

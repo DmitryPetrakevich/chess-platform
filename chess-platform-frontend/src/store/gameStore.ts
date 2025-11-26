@@ -597,6 +597,8 @@ export const useGameStore = defineStore("game", () => {
         type: "draw",
         reason: "50-move-rule",
       };
+
+      endGame("50-move-rule");
       return "50-move rule";
     }
 
@@ -606,6 +608,8 @@ export const useGameStore = defineStore("game", () => {
         type: "draw",
         reason: "threefold-repetition",
       };
+
+      endGame("threefold-repetition");
       return "threefold-repetition";
     }
 
@@ -615,12 +619,14 @@ export const useGameStore = defineStore("game", () => {
         type: "draw",
         reason: "insufficient-material",
       };
+
+      endGame("insufficient-material");
       return "insufficient-material";
     }
     if (state === "checkmate") {
-      console.log(
-        `Мат! Победил игрок ${color === "w" ? "черными" : "белыми"}.`
-      );
+      console.log(`Мат! Победил игрок ${color === "w" ? "черными" : "белыми"}.`);
+
+      const winner = color === "w" ? "b" : "w"; // кто поставил мат
 
       if (color === "w") {
         console.log("Победа черных");
@@ -637,6 +643,8 @@ export const useGameStore = defineStore("game", () => {
           reason: "checkMate",
         };
       }
+
+      endGame("checkMate", winner);
       return "checkmate";
     }
 
@@ -646,6 +654,8 @@ export const useGameStore = defineStore("game", () => {
         type: "draw",
         reason: "stalemate",
       };
+
+      endGame("stalemate");
       return "stalemate";
     }
 
@@ -1356,6 +1366,36 @@ export const useGameStore = defineStore("game", () => {
     }
     ws = null;
   }
+
+/**
+ * Завершает игру и ОТПРАВЛЯЕТ СООБЩЕНИЕ НА СЕРВЕР
+ */
+function endGame(reason: GameReason, winner: "w" | "b" | null = null) {
+  if (reason === "checkMate") {
+    result.value = {
+      type: winner === "w" ? "whiteWin" : "blackWin",
+      reason: "checkMate",
+    };
+  } else if (["stalemate", "50-move-rule", "threefold-repetition", "insufficient-material"].includes(reason)) {
+    result.value = { type: "draw", reason };
+  } else if (reason === "timeOut") {
+    result.value = {
+      type: winner === "w" ? "whiteWin" : "blackWin",
+      reason: "timeOut",
+    };
+  }
+
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({
+      type: "game_over",
+      roomId: currentRoomId.value,
+      reason,
+      winner, 
+    }));
+  }
+
+  console.log("Игра окончена:", reason, winner ? `победитель ${winner}` : "ничья");
+}
 
   return {
     pieces,

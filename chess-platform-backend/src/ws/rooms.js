@@ -63,10 +63,6 @@ class RoomTimer {
     
     this.isRunning = true;
     this.lastUpdate = Date.now();
-    
-    this.intervalId = setInterval(() => {
-      this.tick();
-    }, 1000);
   }
 
   /**
@@ -120,7 +116,6 @@ class RoomTimer {
   stop() {
     this.isRunning = false;
     if (this.intervalId) {
-      clearInterval(this.intervalId);
       this.intervalId = null;
     }
   }
