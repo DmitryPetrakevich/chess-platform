@@ -185,7 +185,6 @@ export const useGameStore = defineStore("game", () => {
   ].join(" ");
 }
 
-
   const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
   const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
 
@@ -403,6 +402,11 @@ export const useGameStore = defineStore("game", () => {
     return false;
   }
 
+  function generateSAN(from, to, piece, isCapture) {
+    const letter = piece[1] !== "P" ? piece[1] : "";
+    return letter + (isCapture ? "x" : "") + to;
+  }
+
   /**
    * Выполняет ход фигуры с одной клетки на другую.
    * Проверяет валидность хода, обрабатывает специальные правила (рокировка, en passant, превращение пешки),
@@ -469,12 +473,15 @@ export const useGameStore = defineStore("game", () => {
       positionHistory.value.push(getPositionHash());
       checkGameState(currentTurn.value);
 
+      const sanMove = (to === "g1" || to === "g8") ? "0-0" : "0-0-0";
+
       moveHistory.value.push({
       from,
       to,
       piece: movingPiece,
       fen: generateFEN(),
-      turn: currentTurn.value === "w" ? "b" : "w"
+      turn: currentTurn.value === "w" ? "b" : "w",
+      san: sanMove
     });
 
       return true;
@@ -487,7 +494,6 @@ export const useGameStore = defineStore("game", () => {
       const capturedPawnSquare = `${files[fileIndex]}${
         parseSquare(to).rank - dir
       }`;
-      // удаляем захваченную пешку
       delete pieces.value[capturedPawnSquare];
     }
 
@@ -546,16 +552,29 @@ export const useGameStore = defineStore("game", () => {
 
     checkGameState(currentTurn.value);
 
+    const sanMoveBase  = generateSAN(from, to, movingPiece, isCapture);
+    let sendMove = sanMoveBase;
+
+    const state = checkGameState(currentTurn.value);
+
+    if (state === "checkmate") {
+      sendMove += "#";
+    } else if (state === "check") {
+      sendMove += "+";
+    }
+            
     moveHistory.value.push({
       from,
       to,
       piece: movingPiece,
       fen: generateFEN(),
-      turn: currentTurn.value === "w" ? "b" : "w"
+      turn: currentTurn.value === "w" ? "b" : "w",
+      san: sendMove
     });
 
     return true;
   }
+  
 
   /**
    * Проверяет текущее состояние игры для указанного цвета.
@@ -628,6 +647,10 @@ export const useGameStore = defineStore("game", () => {
         reason: "stalemate",
       };
       return "stalemate";
+    }
+
+    if(isKingInCheck(color)) {
+      return "check";
     }
 
     return null;

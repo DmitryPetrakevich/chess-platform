@@ -254,8 +254,7 @@ const formattedMoves = computed(() => {
 })
 
 function formatMove(m) {
-  const pieceLetter = m.piece[1] !== "P" ? m.piece[1] : "";
-  return pieceLetter + m.to;
+  return m.san;
 }
 
 /**
