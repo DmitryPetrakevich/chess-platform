@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import { useUserStore } from '@/store/user';
+import { useUserStore } from '@/store/userStore';
 
 const userStore = useUserStore();
 </script>

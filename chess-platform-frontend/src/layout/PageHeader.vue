@@ -123,7 +123,7 @@
 <script setup>
 import { ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { useUserStore } from "@/store/user";
+import { useUserStore } from "@/store/userStore";
 
 import logoIcon from "@/assets/icons/logo.svg";
 import profileNameIcon from "@/assets/icons/profile-name.svg";

@@ -38,7 +38,7 @@ import { useRoute } from "vue-router";
 import { useGameStore } from "@/store/gameStore";
 import ChessBoard from "@/components/ChessBoard.vue";
 import ChessClock from "@/components/ChessClock.vue";
-import { useUserStore } from "@/store/user";
+import { useUserStore } from "@/store/userStore";
 
 const game = useGameStore();
 const user = useUserStore();

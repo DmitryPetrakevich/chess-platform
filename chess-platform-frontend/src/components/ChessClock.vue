@@ -107,10 +107,10 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount, defineProps } from "vue";
-import { useUserStore } from "@/store/user";
+import { useUserStore } from "@/store/userStore";
 import { useGameStore } from "@/store/gameStore";
 import { useTimerStore } from "@/store/timerStore";
-import MoveHistory from './MoveHistory.vue';  // Импорт нового компонента
+import MoveHistory from './MoveHistory.vue';  
 
 const userStore = useUserStore();
 const gameStore = useGameStore();

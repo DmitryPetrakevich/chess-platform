@@ -51,7 +51,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useGameStore } from "@/store/gameStore";
-import { useUserStore } from "@/store/user";
+import { useUserStore } from "@/store/userStore";
 
 import whiteIcon from "@/assets/inviteModel/choice-white.svg";
 import blackIcon from "@/assets/inviteModel/choice-black.svg";
@@ -283,8 +283,8 @@ onBeforeUnmount(() => {
 }
 
 .color-icon {
-  width: 35px;
-  height: 35px;
+  width: 30px;
+  height: 30px;
   object-fit: contain;
 }
 
