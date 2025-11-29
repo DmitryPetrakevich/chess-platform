@@ -162,7 +162,7 @@ function addClientToRoom(roomId, ws, preferredColor = "random") {
       white: null,
       black: null,
       turn: "w",
-      timer: new RoomTimer(300) 
+      timer: new RoomTimer(40) 
     });
   }
 

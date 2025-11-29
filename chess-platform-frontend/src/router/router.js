@@ -4,8 +4,8 @@ import LogInPage from '@/components/LogInPage.vue'
 import RegistrationForm from '@/components/RegistrationForm.vue'
 import MainPage from '@/pages/MainPage.vue'
 import Play from '@/pages/PlayPage.vue'
-import CoordinatesTraining from '@/components/CoordinatesTraining.vue'
-import ChessPuzzles from '@/components/ChessPuzzles.vue'
+import CoordinatesTraining from '@/pages/CoordinatesTraining.vue'
+import ChessPuzzles from '@/pages/ChessPuzzles.vue'
 import Profile from '@/pages/ProfilePage.vue'
 
 const routes = [
