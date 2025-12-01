@@ -1,4 +1,5 @@
 const rooms = new Map();
+const { Chess } = require("chess.js");
 
 /**
  * Класс для управления шахматным таймером в игровой комнате.
@@ -162,7 +163,10 @@ function addClientToRoom(roomId, ws, preferredColor = "random") {
       white: null,
       black: null,
       turn: "w",
-      timer: new RoomTimer(40) 
+      timer: new RoomTimer(40),
+      game: new Chess(),
+      history: [],
+      fen: new Chess().fen(),
     });
   }
 

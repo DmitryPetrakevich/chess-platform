@@ -1,4 +1,6 @@
 const { generateClientId } = require("../utils/id");
+const { Chess } = require("chess.js");
+
 const {
   rooms,
   addClientToRoom,
@@ -44,6 +46,8 @@ function handleConnection(ws) {
 
         const playersCount = addClientToRoom(roomId, ws, preferredColor);
 
+        const room = rooms.get(roomId);
+
         ws.send(
           JSON.stringify({
             type: "joined",
@@ -54,7 +58,16 @@ function handleConnection(ws) {
           })
         );
 
-        const room = rooms.get(roomId);
+        ws.send(JSON.stringify({
+          type: "history",
+          history: room.history
+      }));
+
+        ws.send(JSON.stringify({
+          type: "position",
+          fen: room.game.fen(),
+          turn: room.turn
+        }));
 
         if (room && room.timer) {
           const timerData = room.timer.getCurrentTime();
@@ -65,6 +78,7 @@ function handleConnection(ws) {
             currentTurn: timerData.currentTurn,
             isRunning: timerData.isRunning,
           };
+
           ws.send(
             JSON.stringify({
               type: "timerUpdate",
@@ -111,9 +125,11 @@ function handleConnection(ws) {
         );
 
         if (room.white && room.black) {
-          room.turn = "w";
+          // room.turn = "w";
 
-          if (room.timer) {
+          const hasMoves = room.game.history().length > 0;
+
+          if (room.timer && !hasMoves) {
             room.timer.startPreStart(() => {
               broadcastToRoom(roomId, {
                 type: "gameOver",
@@ -147,6 +163,29 @@ function handleConnection(ws) {
           (room.turn === "b" && ws !== room.black)
         ) {
           ws.send(JSON.stringify({ type: "error", message: "Not your turn" }));
+          return;
+        }
+
+      if (room.game.isGameOver()) {
+        ws.send(JSON.stringify({ type: "error", message: "Game is over" }));
+        return;
+      }
+
+        const chessMove = room.game.move({
+          from: move.from,
+          to: move.to,
+          promotion: move.promotion || "q" // авто-промо в ферзя
+        });
+
+        room.history.push({
+          from: chessMove.from,
+          to: chessMove.to,
+          san: chessMove.san,
+          fen: room.game.fen()
+      });
+
+        if (!chessMove) {
+          ws.send(JSON.stringify({ type: "error", message: "Illegal move" }));
           return;
         }
 
@@ -206,6 +245,13 @@ function handleConnection(ws) {
           },
           ws
         );
+
+        broadcastToRoom(roomId, {
+          type: "position",
+          fen: room.game.fen(),
+          turn: room.turn,
+          history: room.history
+        });
       } else if (data.type === "game_over") {
           const { roomId } = data;
           const room = rooms.get(roomId);

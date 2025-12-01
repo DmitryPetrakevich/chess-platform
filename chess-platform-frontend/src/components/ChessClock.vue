@@ -269,12 +269,10 @@ watch(
 
 <style scoped lang="less">
 .chess-timer {
-  /* width: min(430px, 96%); */
   min-width: 280px;
   width: 100%;
   background: linear-gradient(180deg, var(#fbfdff), #f6fbff);
   border-radius: 12px;
-  /* padding: 14px; */
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -350,7 +348,7 @@ watch(
   min-width: 140px;
 }
 .timer {
-  padding: 4px 8px;
+  padding: 6px 10px;
   border-radius: 8px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -364,10 +362,11 @@ watch(
 .timer-top,
 .timer-bottom {
   font-size: clamp(24px, 5vw, 54px);
+  color: @gray-700;
 }
 
 .timer.low-time {
-  color: @red-600;
+  background-color: @red-100;
 }
 
 .middle {
