@@ -124,6 +124,7 @@ function pieceImage(squareId) {
  * @param {string} id - id клетки, по которой кликнули (например "e2").
  */
 function onSquareClick(id) {
+  if (game.result.type) return;
   const clickedPiece = game.pieces[id];
 
   if (clickedPiece && clickedPiece[0] === game.currentTurn) {
@@ -161,6 +162,11 @@ function onSquareClick(id) {
  * @param {DragEvent} event - объект события dragstart.
  */
 function onDragStart(id, event) {
+  if (game.result.type) {
+  event.preventDefault();
+  return; 
+}
+
   const piece = game.pieces[id];
   
   if (!piece) {
@@ -206,6 +212,11 @@ function onDragEnd() {
  */
 function onDrop(to, event) {
   event.preventDefault();
+
+  if (game.result.type) {
+  draggedFrom.value = null;
+  return; 
+}
 
   let from = null;
   try {
@@ -257,6 +268,14 @@ function onDrop(to, event) {
   highlightedSquares.value.clear();
   draggedFrom.value = null;
 }
+
+watch(() => game.result.type, (newResult) => {
+  if (newResult) {
+    selectedSquare.value = null;
+    highlightedSquares.value.clear();
+    draggedFrom.value = null;
+  }
+})
 </script>
 
 <style>
