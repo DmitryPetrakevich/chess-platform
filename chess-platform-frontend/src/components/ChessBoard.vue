@@ -241,7 +241,7 @@ function onDrop(to, event) {
     draggedFrom.value = null;
     return;
   }
-  if (piece[0] !== game.playerColor) { // защита: игрок пытается двигать чужую фигуру
+  if (piece[0] !== game.playerColor) { // игрок пытается двигать чужую фигуру
     console.warn("onDrop: пытаются двигать не свою фигуру:", from);
     draggedFrom.value = null;
     return;

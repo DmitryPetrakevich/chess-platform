@@ -163,7 +163,7 @@ function addClientToRoom(roomId, ws, preferredColor = "random") {
       white: null,
       black: null,
       turn: "w",
-      timer: new RoomTimer(40),
+      timer: new RoomTimer(1000),
       game: new Chess(),
       history: [],
       fen: new Chess().fen(),

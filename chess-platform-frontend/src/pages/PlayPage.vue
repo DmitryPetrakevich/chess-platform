@@ -92,9 +92,7 @@ watch(() => game.playerColor, (newColor, oldColor) => {
 .board_chess {
   display: flex;
   flex-direction: row;
-  /* justify-content: center; */
   max-width: 1800px;
-  /* width: 100%; */
 }
 
 .board-section {
@@ -103,13 +101,11 @@ watch(() => game.playerColor, (newColor, oldColor) => {
   align-items: center;
   gap: 12px;
   width: 100%;
-  /* max-width: calc(100% - 480px); */
   box-sizing: border-box;
 }
 
 .desktop-clock {
   margin: auto 0;
-  /* width: min(430px, 30%); */
   width:  min(800px, 60%);
   max-width: 430px;
 }

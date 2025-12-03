@@ -52,12 +52,12 @@
 
         <div v-if="isMenuOpen" class="page-header__dropdown">
           <router-link to="/profile" class="page-header__dropdown-item" @click="closeMenu">
-            <img :src="profileIcon" alt="Профиль" class="profile-menu-icon" />
+            <img :src="profileIcon" alt="Профиль" class="profile-menu-icon"  />
             Профиль
           </router-link>
 
           <router-link to="/profile" class="page-header__dropdown-item" @click="closeMenu">
-            <img :src="messageIcon" alt="Входящие" class="profile-menu-icon" />
+            <img :src="messageIcon" alt="Входящие" class="profile-menu-icon"/>
             Входящие
           </router-link>
 

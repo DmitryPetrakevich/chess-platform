@@ -21,9 +21,9 @@
       <div class="timer-wrap">
         <div
           class="timer timer-top"
-          :class="{ 
+          :class="{
             active: topActive,
-            'low-time': isLowTime(topTimeRaw) 
+            'low-time': isLowTime(topTimeRaw),
           }"
           aria-label="Top player time"
         >
@@ -43,6 +43,27 @@
       >
         {{ gameStatusText }}
       </div>
+
+      <div v-if="gameStore.offerDraw && mode === 'both'" class="offer-draw">
+        <p>Ваш соперник предлагает ничью, принять?</p>
+        <div class="offer-draw-btns">
+          <button 
+          @click="onClickAccceptDraw()" 
+          class="offer-draw-btn accept"
+          >
+          Принять
+        </button>
+
+          <button 
+          @click="onClickCancelDraw()"
+          class="offer-draw-btn cancel"
+          >
+          Отклонить
+        </button>
+        </div>
+      </div>
+
+      <GameActions v-if="mode == 'both' && !gameStore.result.type" />
 
       <div
         v-if="mode === 'both' && timerStore.preSeconds > 0"
@@ -74,9 +95,9 @@
       <div class="timer-wrap">
         <div
           class="timer timer-bottom"
-          :class="{ 
+          :class="{
             active: bottomActive,
-            'low-time': isLowTime(bottomTimeRaw) 
+            'low-time': isLowTime(bottomTimeRaw),
           }"
           aria-label="Bottom player time"
         >
@@ -94,6 +115,8 @@
       {{ gameStatusText }}
     </div>
 
+    <GameActions v-if="mode == 'bottom' && !gameStore.result.type" />
+
     <div
       v-if="mode === 'top' && timerStore.preSeconds > 0"
       class="prestart-countdown"
@@ -102,15 +125,43 @@
       <div class="prestart-label">Ожидание первого хода</div>
       <div class="prestart-value">{{ timerStore.formattedPre }}</div>
     </div>
+
+      <div v-if="gameStore.offerDraw && mode === 'bottom'" class="offer-draw">
+        <p>Ваш соперник предлагает ничью, принять?</p>
+        <div class="offer-draw-btns">
+          <button 
+          @click="onClickAccceptDraw()" 
+          class="offer-draw-btn accept"
+          >
+          Принять
+        </button>
+
+          <button 
+          @click="onClickCancelDraw()"
+          class="offer-draw-btn cancel"
+          >
+          Отклонить
+        </button>
+        </div>
+      </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount, defineProps } from "vue";
+import {
+  ref,
+  computed,
+  watch,
+  onMounted,
+  onBeforeUnmount,
+  defineProps,
+} from "vue";
 import { useUserStore } from "@/store/userStore";
 import { useGameStore } from "@/store/gameStore";
 import { useTimerStore } from "@/store/timerStore";
-import MoveHistory from './MoveHistory.vue';  
+
+import MoveHistory from "./MoveHistory.vue";
+import GameActions from "./GameActions.vue";
 
 const userStore = useUserStore();
 const gameStore = useGameStore();
@@ -206,39 +257,51 @@ const bottomTimeDisplay = computed(() =>
 const gameStatusText = computed(() => {
   if (gameStore.result && gameStore.result.type) {
     if (gameStore.result.type === "draw") {
-      if(gameStore.result.reason === "stalemate") {
-        return "Пат, ничья"
+      if (gameStore.result.reason === "stalemate") {
+        return "Пат, ничья";
       }
 
-      if(gameStore.result.reason === "50-move-rule") {
-        return "Ничья по правилу 50 ходов"
+      if (gameStore.result.reason === "50-move-rule") {
+        return "Ничья по правилу 50 ходов";
       }
 
-      if(gameStore.result.reason === "threefold-repetition") {
-        return "Ничья, троекратное повторение"
+      if (gameStore.result.reason === "threefold-repetition") {
+        return "Ничья, троекратное повторение";
       }
 
-      if(gameStore.result.reason === "insufficient-material") {
-        return "Ничья, недостаточно материала"
+      if (gameStore.result.reason === "insufficient-material") {
+        return "Ничья, недостаточно материала";
+      }
+
+      if (gameStore.result.reason === "agreed-draw") {
+        return "Ничья, сопернки согласилсь на ничью ";
       }
     }
 
     if (gameStore.result.type === "whiteWin") {
-      if(gameStore.result.reason === "timeOut") {
-        return "Время истекло, победа белых"
+      if (gameStore.result.reason === "timeOut") {
+        return "Время истекло, победа белых";
       }
 
-      if(gameStore.result.reason === "checkMate") {
-        return "Мат, победа белых"
+      if (gameStore.result.reason === "checkMate") {
+        return "Мат, победа белых";
+      }
+
+      if (gameStore.result.reason === "give-up") {
+        return "Черные сдались, победа белых";
       }
     }
     if (gameStore.result.type === "blackWin") {
-      if(gameStore.result.reason === "timeOut") {
-        return "Время истекло, победа черных"
+      if (gameStore.result.reason === "timeOut") {
+        return "Время истекло, победа черных";
       }
 
-      if(gameStore.result.reason === "checkMate") {
-        return "Мат, победа черных"
+      if (gameStore.result.reason === "checkMate") {
+        return "Мат, победа черных";
+      }
+
+      if (gameStore.result.reason === "give-up") {
+        return "Белые сдались, победа черных";
       }
     }
     if (gameStore.result.type === "canceledGame") {
@@ -246,6 +309,15 @@ const gameStatusText = computed(() => {
     }
   }
 });
+
+function onClickAccceptDraw() {
+  gameStore.endGame("agreed-draw")
+  gameStore.offerDraw = false;
+}
+
+function onClickCancelDraw() {
+  gameStore.offerDraw = false;
+}
 
 /**
  * Проверка на малое время
@@ -372,18 +444,61 @@ watch(
 .middle {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 5px;
 }
 
 .game-status {
   text-align: center;
   padding: 8px;
+  margin-bottom: 10px;
   font-weight: 700;
   border-radius: 8px;
   color: @gray-900;
-  background: rgba(236, 249, 255, 0.6);
+  background: @gray-50;
   border: 1px solid @gray-200;
   font-size: 13px;
+}
+
+.offer-draw {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+
+  &-btns {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+  }
+
+  &-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #cadef2;
+    border: none;
+    padding: 8px 25px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+  }
+}
+
+.cancel {
+  background-color: @red-200;
+
+  &:hover {
+      background-color: @red-300;
+  }
+}
+
+.accept {
+  background-color: @green-200;
+
+  &:hover {
+      background-color:  @green-300;
+  }
 }
 
 .prestart-countdown {

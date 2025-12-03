@@ -252,7 +252,15 @@ function handleConnection(ws) {
           turn: room.turn,
           history: room.history
         });
-      } else if (data.type === "game_over") {
+      } else if (data.type === "offer-draw") {
+          const { roomId } = data;
+          const room = rooms.get(roomId);
+          if (!room) return;
+
+          broadcastToRoom(roomId, {
+            type: "offer-draw",
+          }, ws);
+        } else if (data.type === "game_over") {
           const { roomId } = data;
           const room = rooms.get(roomId);
           if (!room) return;

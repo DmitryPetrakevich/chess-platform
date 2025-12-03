@@ -13,7 +13,9 @@ export const useGameStore = defineStore("game", () => {
   | "threefold-repetition"
   | "insufficient-material"
   | "timeOut"
-  | "no_move";
+  | "give-up"
+  | "no_move"
+  | "agreed-draw";
 
   type GameType = 
   | "draw"
@@ -63,8 +65,9 @@ export const useGameStore = defineStore("game", () => {
    * Идентификатор текущей игровой комнаты
    */
   const currentRoomId = ref(null);
-
   const moveHistory = ref([]);
+
+  const offerDraw = ref(false);
 
   const opponent = ref({
     id: null,
@@ -245,6 +248,8 @@ export const useGameStore = defineStore("game", () => {
       ws = null;
     }
 
+    
+
     ws = new WebSocket("ws://localhost:3000");
     ws.roomId = roomId;
 
@@ -356,6 +361,11 @@ export const useGameStore = defineStore("game", () => {
           }
           break;
 
+        case "offer-draw":
+          console.log("Поступило предложение ничьи")
+          offerDraw.value = true;
+          break;
+
         case "preStartUpdate":
           console.log("⏳ Обновление претаймера:", data);
           gameStarted.value = data.gameStarted;
@@ -375,6 +385,11 @@ export const useGameStore = defineStore("game", () => {
             result.value = {
               type: "canceledGame",
               reason: "no_move"
+            };
+          } else if (data.reason === "give-up") {
+            result.value = {
+              type: data.winner === "w" ? "whiteWin" : "blackWin",
+              reason: "give-up"
             };
           }
           break;
@@ -422,7 +437,7 @@ export const useGameStore = defineStore("game", () => {
   }
 
   /**
-   * Завершает игру и ОТПРАВЛЯЕТ СООБЩЕНИЕ НА СЕРВЕР
+   * Завершает игру и отправляет сообщение на сервре
    */
   function endGame(reason: GameReason, winner: "w" | "b" | null = null) {
     if (reason === "checkMate") {
@@ -430,12 +445,17 @@ export const useGameStore = defineStore("game", () => {
         type: winner === "w" ? "whiteWin" : "blackWin",
         reason: "checkMate",
       };
-    } else if (["stalemate", "50-move-rule", "threefold-repetition", "insufficient-material"].includes(reason)) {
+    } else if (["stalemate", "50-move-rule", "threefold-repetition", "insufficient-material", "agreed-draw"].includes(reason)) {
       result.value = { type: "draw", reason };
     } else if (reason === "timeOut") {
       result.value = {
         type: winner === "w" ? "whiteWin" : "blackWin",
         reason: "timeOut",
+      };
+    } else if (reason === "give-up") {
+      result.value = {
+        type: winner === "w" ? "whiteWin" : "blackWin",
+        reason: "give-up",
       };
     }
 
@@ -451,6 +471,15 @@ export const useGameStore = defineStore("game", () => {
     console.log("Игра окончена:", reason, winner ? `победитель ${winner}` : "ничья");
   }
 
+  function sendToServer(msessage, color: "w" | 'b' = null) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: msessage,
+        roomId: currentRoomId.value,
+      }));
+    }
+  }
+
   return {
     pieces,
     currentTurn,
@@ -463,6 +492,7 @@ export const useGameStore = defineStore("game", () => {
     opponent,
     gameStarted,
     moveHistory,
+    offerDraw,
     setInitialPosition: resetBoard,  
     makeMove,
     checkGameState,
@@ -472,5 +502,7 @@ export const useGameStore = defineStore("game", () => {
     disconnect,
     setPlayerColor,
     setOpponent,
+    endGame,
+    sendToServer,
   };
 });

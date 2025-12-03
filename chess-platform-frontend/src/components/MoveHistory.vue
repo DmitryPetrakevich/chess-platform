@@ -6,7 +6,7 @@
     <div class="moves-title">История ходов</div>
     <div class="moves-placeholder">
       <div class="moves-row" v-for="(row, index) in formattedMoves" :key="index">
-        <div class="move-number">{{ index + 1 }}</div>
+        <div class="move-number">{{ index + 1 + "." }}</div>
 
         <div  class="move white"
           :class="{ active: selectedMove === row.whiteIndex }"
@@ -69,7 +69,7 @@ function formatMove(m) {
   background: @gray-50;
   border-radius: 8px;
   max-height: 80px;
-  padding: 10px;
+  padding: 5px;
   border: 1px solid @gray-200;
   font-size: 13px;
   overflow-y: auto;
@@ -98,6 +98,7 @@ function formatMove(m) {
 .move-number {
   color: @gray-700;
   text-align: left;
+  font-weight: 700;
   padding-right: 4px;
   user-select: none;
 }
