@@ -222,7 +222,6 @@ function handleConnection(ws) {
         }
       }
 
-
         if (room.timer) {
           room.timer.switchTurn(newTurn);
         }
@@ -260,6 +259,72 @@ function handleConnection(ws) {
           broadcastToRoom(roomId, {
             type: "offer-draw",
           }, ws);
+        } else if (data.type === "offer-undo") {  
+          const { roomId } = data;
+          const room = rooms.get(roomId);
+          if (!room) return;
+
+          broadcastToRoom(roomId, {
+            type: "offer-undo",
+          }, ws);  
+        } else if (data.type === "accept-undo") {
+          const { roomId } = data; // Только roomId, без fen/history/turn
+          const room = rooms.get(roomId);
+          if (!room) return;
+
+          console.log("🔄 Запрос на отмену хода в комнате:", roomId);
+          console.log("История ходов на сервере:", room.game.history());
+          console.log("Длина истории:", room.game.history().length);
+
+          // Проверяем, есть ли ходы для отмены на СЕРВЕРЕ
+          if (room.game.history().length === 0) {
+            console.warn("❌ Нет ходов для отмены на сервере");
+            ws.send(JSON.stringify({ 
+              type: "error", 
+              message: "No moves to undo" 
+            }));
+            return;
+          }
+
+          // Отменяем ход в chess.js на сервере
+          const undoneMove = room.game.undo();
+          if (!undoneMove) {
+            console.warn("❌ Не удалось отменить ход на сервере");
+            ws.send(JSON.stringify({ 
+              type: "error", 
+              message: "Failed to undo move" 
+            }));
+            return;
+          }
+
+          console.log("✅ Ход отменен на сервере:", undoneMove);
+
+          // Удаляем последний ход из истории комнаты
+          if (room.history.length > 0) {
+            room.history.pop();
+          }
+
+          // Обновляем очередь хода в соответствии с chess.js
+          room.turn = room.game.turn();
+
+          if (room.timer) {
+            room.timer.switchTurn(room.turn);
+          }
+
+          // Рассылаем новое состояние ВСЕМ игрокам в комнате
+          broadcastToRoom(roomId, {
+            type: "position",
+            fen: room.game.fen(),
+            turn: room.turn,
+            history: room.history,
+          });
+
+          // Можно отправить подтверждение
+          broadcastToRoom(roomId, {
+            type: "undo-accepted",
+          });
+          
+          console.log("📢 Разослано обновление позиции после отмены хода");
         } else if (data.type === "game_over") {
           const { roomId } = data;
           const room = rooms.get(roomId);

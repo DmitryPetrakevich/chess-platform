@@ -1,9 +1,12 @@
 <template>
     <div class="game-actions">
         <div class="game-actions__container">
-            <div class="action action-return">
+            <div
+            @click="onUndoClick()" 
+            class="action action-return"
+            :class="{active: clickCountUndo === 1}"
+            >
                 <img :src="undoMoveIcon" class="action-img" />
-
             </div>
 
             <div 
@@ -38,6 +41,7 @@ const gameStore = useGameStore();
 
 const clickCountResign = ref(0);
 const clickCountDraw = ref(0);
+const clickCountUndo = ref(0);
 
 function onDrawClick(playerColor) {
     if(gameStore.result.type) return;
@@ -61,13 +65,33 @@ function onResignClick(playerColor) {
     }
 }
 
+function onUndoClick() {
+  if (gameStore.result?.type) return;
+  
+  if (!gameStore.moveHistory || gameStore.moveHistory.length === 0) {
+    console.warn("moveHistory пустой — игнорируем клик");
+    clickCountUndo.value = 0;
+    return;
+  }
+  
+  clickCountUndo.value += 1;
+  
+  if (!gameStore.result.type && clickCountUndo.value === 2) {
+    gameStore.sendToServer("offer-undo");
+    clickCountUndo.value = 0;
+  }
+}
+
 function resetCounts() {
     clickCountResign.value = 0;
     clickCountDraw.value = 0;
+    clickCountUndo.value = 0;
 }
 
 function onGlobalClick(event) {
-    if(!event.target.closest(".action-draw") && !event.target.closest(".action-resign")) {
+    if (!event.target.closest(".action-draw") && 
+        !event.target.closest(".action-resign") && 
+        !event.target.closest(".action-return")) {  
         resetCounts();
     }
 }
@@ -83,6 +107,7 @@ onBeforeUnmount(() => {
 watch(() => gameStore.result.type, () => {
   clickCountResign.value = 0;
   clickCountDraw.value = 0;
+  clickCountUndo.value = 0;
 })
 </script>
 
@@ -124,7 +149,8 @@ watch(() => gameStore.result.type, () => {
 }
 
 .action-resign.active,
-.action-draw.active {
+.action-draw.active,
+.action-return.active {
     background-color: @red-200;
 }
 </style>

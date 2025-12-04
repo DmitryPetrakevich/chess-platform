@@ -37,12 +37,10 @@ function onRoomCreated(roomData) {
 
 <style scoped>
 .main {
-  background: #2c2c2c;
+  background: #1c1c1c; 
   width: 100%;
   height: 100vh;
   padding-top: 100px;
-  /* padding-left: 40px;
-  padding-right: 40px; */
   color: #ecf0f1;
 }
 
@@ -57,7 +55,7 @@ function onRoomCreated(roomData) {
   min-width: 200px;
   max-width: 300px;
   margin: 0 auto;
-  background-color: #353535;
+  background-color: #121212; 
 }
 
 .play-friends-btn {

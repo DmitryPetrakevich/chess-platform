@@ -47,19 +47,26 @@
       <div v-if="gameStore.offerDraw && mode === 'both'" class="offer-draw">
         <p>Ваш соперник предлагает ничью, принять?</p>
         <div class="offer-draw-btns">
-          <button 
-          @click="onClickAccceptDraw()" 
-          class="offer-draw-btn accept"
-          >
-          Принять
-        </button>
+          <button @click="onClickAccceptDraw()" class="offer-draw-btn accept">
+            Принять
+          </button>
 
-          <button 
-          @click="onClickCancelDraw()"
-          class="offer-draw-btn cancel"
-          >
-          Отклонить
-        </button>
+          <button @click="onClickCancelDraw()" class="offer-draw-btn cancel">
+            Отклонить
+          </button>
+        </div>
+      </div>
+
+      <div v-if="gameStore.offerUndo && mode === 'both'" class="offer-undo">
+        <p>Ваш соперник предлагает вернуть ход назад, принять?</p>
+        <div class="offer-undo-btns">
+          <button @click="onClickAcceptUndo()" class="offer-undo-btn accept">
+            Принять
+          </button>
+
+          <button @click="onClickRejectUndo()" class="offer-undo-btn cancel">
+            Отклонить
+          </button>
         </div>
       </div>
 
@@ -126,24 +133,37 @@
       <div class="prestart-value">{{ timerStore.formattedPre }}</div>
     </div>
 
-      <div v-if="gameStore.offerDraw && mode === 'bottom'" class="offer-draw">
-        <p>Ваш соперник предлагает ничью, принять?</p>
-        <div class="offer-draw-btns">
-          <button 
-          @click="onClickAccceptDraw()" 
-          class="offer-draw-btn accept"
-          >
+    <div v-if="gameStore.offerDraw && mode === 'bottom'" class="offer-draw">
+      <p>Ваш соперник предлагает ничью, принять?</p>
+      <div class="offer-draw-btns">
+        <button @click="onClickAccceptDraw()" class="offer-draw-btn accept">
           Принять
         </button>
 
-          <button 
-          @click="onClickCancelDraw()"
-          class="offer-draw-btn cancel"
-          >
+        <button @click="onClickCancelDraw()" class="offer-draw-btn cancel">
           Отклонить
         </button>
-        </div>
       </div>
+    </div>
+
+    <div v-if="gameStore.offerUndo && mode === 'bottom'" class="offer-undo">  <!-- NEW (для mode bottom) -->
+    <p>Ваш соперник предлагает вернуть ход назад, принять?</p>
+    <div class="offer-undo-btns">
+      <button 
+        @click="onClickAcceptUndo()" 
+        class="offer-undo-btn accept"
+      >
+        Принять
+      </button>
+
+      <button 
+        @click="onClickRejectUndo()"
+        class="offer-undo-btn cancel"
+      >
+        Отклонить
+      </button>
+    </div>
+  </div>
   </div>
 </template>
 
@@ -311,12 +331,20 @@ const gameStatusText = computed(() => {
 });
 
 function onClickAccceptDraw() {
-  gameStore.endGame("agreed-draw")
+  gameStore.endGame("agreed-draw");
   gameStore.offerDraw = false;
 }
 
 function onClickCancelDraw() {
   gameStore.offerDraw = false;
+}
+
+function onClickAcceptUndo() {  
+  gameStore.acceptUndo();
+}
+
+function onClickRejectUndo() {  
+  gameStore.rejectUndo();
 }
 
 /**
@@ -459,7 +487,8 @@ watch(
   font-size: 13px;
 }
 
-.offer-draw {
+.offer-draw,
+.offer-undo {
   text-align: center;
   font-size: 13px;
   font-weight: 700;
@@ -489,7 +518,7 @@ watch(
   background-color: @red-200;
 
   &:hover {
-      background-color: @red-300;
+    background-color: @red-300;
   }
 }
 
@@ -497,7 +526,7 @@ watch(
   background-color: @green-200;
 
   &:hover {
-      background-color:  @green-300;
+    background-color: @green-300;
   }
 }
 

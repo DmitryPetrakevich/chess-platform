@@ -68,6 +68,7 @@ export const useGameStore = defineStore("game", () => {
   const moveHistory = ref([]);
 
   const offerDraw = ref(false);
+  const offerUndo = ref(false);
 
   const opponent = ref({
     id: null,
@@ -248,8 +249,6 @@ export const useGameStore = defineStore("game", () => {
       ws = null;
     }
 
-    
-
     ws = new WebSocket("ws://localhost:3000");
     ws.roomId = roomId;
 
@@ -285,11 +284,13 @@ export const useGameStore = defineStore("game", () => {
             parseFEN(data.fen);          
           }
 
-          if (data.history && data.history.length > 0) {
-            gameStarted.value = true;
-
-            timerStore.cancelPreStart();
-            timerStore.preSeconds = 0;
+          if (data.history) {
+            moveHistory.value = data.history;
+            if (data.history.length > 0) {  
+              gameStarted.value = true;
+              timerStore.cancelPreStart();
+              timerStore.preSeconds = 0;
+            }
           }
 
           if (data.turn) {
@@ -364,6 +365,15 @@ export const useGameStore = defineStore("game", () => {
         case "offer-draw":
           console.log("Поступило предложение ничьи")
           offerDraw.value = true;
+          break;
+
+        case "offer-undo":  
+          console.log("Поступило предложение undo");
+          offerUndo.value = true;
+          break;
+
+        case "undo-accepted":  
+          console.log("Undo принято оппонентом");
           break;
 
         case "preStartUpdate":
@@ -480,6 +490,24 @@ export const useGameStore = defineStore("game", () => {
     }
   }
 
+function acceptUndo() {
+  offerUndo.value = false;
+  
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({
+      type: "accept-undo",
+      roomId: currentRoomId.value,
+    }));
+    console.log("📤 Отправил accept-undo на сервер");
+  } else {
+    console.error("WebSocket не подключен");
+  }
+};
+
+  function rejectUndo() {
+    offerUndo.value = false;
+  };
+
   return {
     pieces,
     currentTurn,
@@ -493,6 +521,7 @@ export const useGameStore = defineStore("game", () => {
     gameStarted,
     moveHistory,
     offerDraw,
+    offerUndo,
     setInitialPosition: resetBoard,  
     makeMove,
     checkGameState,
@@ -504,5 +533,7 @@ export const useGameStore = defineStore("game", () => {
     setOpponent,
     endGame,
     sendToServer,
+    acceptUndo,  
+    rejectUndo, 
   };
 });

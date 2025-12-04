@@ -169,8 +169,7 @@ watch(() => userStore.isLoggedIn, closeMenu);
   box-sizing: border-box;
   height: 60px;
   width: 100%;
-  background: @gray-900;
-  border-bottom: 1px solid @gray-200;
+  background-color: #1c1c1c; 
   z-index: 1000;
 }
 
@@ -258,9 +257,9 @@ watch(() => userStore.isLoggedIn, closeMenu);
   border-radius: 5px;
   padding: 5px 0;
   min-height: 250px;
-  background: @gray-900;
+  background: #1a1a1a;
   border-left: 3px solid @gray-200;
-  border-top: 1px solid @gray-200;
+  // border-top: 1px solid @gray-200;
   z-index: 999;
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
   transform: translateX(0);
