@@ -67,8 +67,7 @@ function formatMove(m) {
 <style scoped lang="less">
 .moves-history {
   background: @gray-50;
-  border-radius: 8px;
-  max-height: 80px;
+  max-height: 70px;
   padding: 5px;
   border: 1px solid @gray-200;
   font-size: 13px;

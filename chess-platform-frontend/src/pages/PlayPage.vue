@@ -1,7 +1,7 @@
 <template>
   <div class="play">
-      <div class="board_chess">
-        <div class="board-section">
+    <div class="play-content">
+      <div class="board-section">
         <ChessClock
           v-if="isMobile"
           class="mobile-clock mobile-clock-top"
@@ -20,15 +20,15 @@
           mode="bottom"
           :managePrestart="false"
         />
-        </div>
-        
-        <ChessClock 
-          v-if="!isMobile"
-          class="desktop-clock"
-          mode="both"
-          :managePrestart="true"
-        />
       </div>
+
+      <ChessClock 
+        v-if="!isMobile"
+        class="desktop-clock"
+        mode="both"
+        :managePrestart="true"
+      />
+    </div>
   </div>
 </template>
 
@@ -87,8 +87,20 @@ watch(() => game.playerColor, (newColor, oldColor) => {
   display: flex;
   justify-content: center;
   width: 100%;
+  padding: 10px;
+  min-height: calc(100vh - 60px);
   box-sizing: border-box;
+  background-color: rgb(236, 236, 236);
 }
+
+.play-content {
+  display: flex;
+  align-items: center;     
+  justify-content: center; 
+  width: 100%;
+  max-width: 1200px;
+}
+
 .board_chess {
   display: flex;
   flex-direction: row;
@@ -122,6 +134,12 @@ watch(() => game.playerColor, (newColor, oldColor) => {
     gap: 10px;
   }
 
+  .play-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
   .desktop-clock {
     display: none;
   }
@@ -130,6 +148,7 @@ watch(() => game.playerColor, (newColor, oldColor) => {
     max-width: 100%;
     width: 100%;
     padding: 0 8px;
+    gap: 0;
   }
 
   .mobile-clock {

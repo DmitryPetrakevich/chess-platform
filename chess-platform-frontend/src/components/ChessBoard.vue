@@ -291,8 +291,8 @@ watch(() => game.result.type, (newResult) => {
 .board {
   display: inline-block;
   user-select: none;
-  max-width: min(80vh, 1000px);
-  max-height: min(80vh, 1000px);
+  max-width: min(80vh, 1500px);
+  max-height: min(80vh, 1500px);
   width: 100%;
   height: auto;
   aspect-ratio: 1 / 1; 
@@ -405,8 +405,8 @@ watch(() => game.result.type, (newResult) => {
   }
 
   .board {
-    max-width: min(70vh, 1000px);
-    max-height: min(70vh, 1000px);
+    max-width: min(60vh, 600px);
+    max-height: min(60vh, 600px);
 }
 }
 </style>

@@ -252,7 +252,7 @@ watch(() => userStore.isLoggedIn, closeMenu);
   position: fixed;
   box-sizing: border-box;
   top: 60px;
-  right: 10px;
+  right: 0;
   width: 200px;
   border-radius: 5px;
   padding: 5px 0;

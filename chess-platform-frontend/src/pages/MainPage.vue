@@ -55,7 +55,7 @@ function onRoomCreated(roomData) {
   min-width: 200px;
   max-width: 300px;
   margin: 0 auto;
-  background-color: #121212; 
+  background-color: #202020; 
 }
 
 .play-friends-btn {

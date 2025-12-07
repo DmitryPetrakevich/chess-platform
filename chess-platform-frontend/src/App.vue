@@ -18,6 +18,10 @@ import MainPage from './pages/MainPage.vue';
 </script>
 
 <style scoped>
+.app {
+  background-color: red;
+}  
+
 .no-scroll {
   overflow: hidden !important;
   position: fixed;

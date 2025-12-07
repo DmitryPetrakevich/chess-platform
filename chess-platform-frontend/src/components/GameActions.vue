@@ -118,8 +118,8 @@ watch(() => gameStore.result.type, () => {
     align-self: center;
     border: 1px solid @gray-200;
     background-color: @gray-50; 
-    border-radius: 5px;
-    margin-top: 20px;
+    // border-radius: 5px;
+    // margin-top: 20px;
     width: 100%;
 }
 
