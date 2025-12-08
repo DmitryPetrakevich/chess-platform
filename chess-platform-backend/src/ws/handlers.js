@@ -346,6 +346,30 @@ function handleConnection(ws) {
     });
   }
 
+  function handleAcceptDraw(data, ws) {
+    const { roomId } = data;
+    const room = rooms.get(roomId);
+    if (!room) return;
+
+    console.log("Ничья принята — завершаем игру");
+
+    if (room.timer) {
+      room.timer.stop();
+      room.timer.isRunning = false;
+    }
+
+    if (timerIntervals.has(roomId)) {
+      clearInterval(timerIntervals.get(roomId));
+      timerIntervals.delete(roomId);
+    }
+
+    broadcastToRoom(roomId, {
+      type: "gameOver",
+      reason: "agreed-draw",
+      winner: null,
+    });
+  }
+
   ws.on("message", (message) => {
     try {
       const data = JSON.parse(message.toString());
@@ -376,6 +400,11 @@ function handleConnection(ws) {
         case "game_over":
           handleGameOver(data, ws);
           break;
+        
+        case "accept-draw": {
+          handleAcceptDraw(data,ws)
+          break;
+        }
 
         default:
           console.warn(`⚠️ Неизвестный тип сообщения: ${data.type}`);

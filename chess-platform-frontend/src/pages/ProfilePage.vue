@@ -1,49 +1,43 @@
 <template>
-  <div class="profile-container">
-    <aside class="sidebar">
-      <h2 class="sidebar-title">Рейтинги</h2>
-      <ul class="ratings-list">
-        <li class="rating-item">
-          <span class="rating-type">Пуля:</span>
-          <span class="rating-value">{{ userStore.bulletRating }}</span>
-        </li>
-        <li class="rating-item">
-          <span class="rating-type">Блиц:</span>
-          <span class="rating-value">{{ userStore.blitzRating }}</span>
-        </li>
-        <li class="rating-item">
-          <span class="rating-type">Рапид:</span>
-          <span class="rating-value">{{ userStore.rapidRating }}</span>
-        </li>
-      </ul>
-    </aside>
+  <div class="profile">
+    <div class="profile-container">
 
-    <main class="main-content">
-      <h1 class="title">Профиль игрока {{ userStore.username }}</h1>
-    </main>
+      <ProfileRatings />
+
+      <main class="main-content">
+        <h1 class="title">Профиль игрока {{ userStore.username }}</h1>
+
+      
+      </main>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { useUserStore } from '@/store/userStore';
+import { useUserStore } from "@/store/userStore";
+import ProfileRatings from "@/components/profile/ProfileRatings.vue";
 
 const userStore = useUserStore();
 </script>
 
 <style scoped>
+.profile {
+  padding: 0 60px;
+
+}
+
 .profile-container {
-  background: #2c2c2c;
+  background: #1c1c1c; 
   width: 100%;
   min-height: 100vh;
   display: flex;
-  padding: 20px;
-  color: #fff; 
+  color: #fff;
 }
 
 .sidebar {
-  width: 250px; 
+  width: 250px;
   padding: 20px;
-  background: #3a3a3a; 
+  background: #3a3a3a;
   border-right: 1px solid #555;
   display: flex;
   flex-direction: column;
@@ -53,7 +47,7 @@ const userStore = useUserStore();
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 15px;
-  color: #e74c3c; 
+  color: #e74c3c;
 }
 
 .ratings-list {
@@ -67,7 +61,7 @@ const userStore = useUserStore();
   justify-content: space-between;
   margin-bottom: 10px;
   padding: 8px;
-  background: #4a4a4a; 
+  background: #4a4a4a;
   border-radius: 4px;
 }
 
@@ -77,16 +71,16 @@ const userStore = useUserStore();
 
 .rating-value {
   font-weight: 700;
-  color: #e74c3c; 
+  color: #e74c3c;
 }
 
 .main-content {
-  flex: 1; 
+  flex: 1;
   padding: 20px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  /* align-items: center;
+  justify-content: center; */
 }
 
 .title {

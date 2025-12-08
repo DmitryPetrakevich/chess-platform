@@ -401,6 +401,11 @@ export const useGameStore = defineStore("game", () => {
               type: data.winner === "w" ? "whiteWin" : "blackWin",
               reason: "give-up"
             };
+          } else if (data.reason === "agreed-draw") {  
+            result.value = {
+              type: "draw",
+              reason: "agreed-draw"
+            };
           }
           break;
 

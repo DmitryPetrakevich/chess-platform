@@ -1,7 +1,7 @@
 import { createWebHistory, createRouter } from 'vue-router'
 
-import LogInPage from '@/components/LogInPage.vue'
-import RegistrationForm from '@/components/RegistrationForm.vue'
+import LogInPage from '@/components/auth/LogInPage.vue'
+import RegistrationForm from '@/components/auth/RegistrationForm.vue'
 import MainPage from '@/pages/MainPage.vue'
 import Play from '@/pages/PlayPage.vue'
 import CoordinatesTraining from '@/pages/CoordinatesTraining.vue'

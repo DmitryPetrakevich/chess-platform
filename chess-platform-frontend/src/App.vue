@@ -12,14 +12,14 @@
 <script setup>
 import PageHeader from '@/layout/PageHeader.vue';
 import Play from '@/pages/PlayPage.vue';
-import RegistrationForm from './components/RegistrationForm.vue';
-import LogInPage from './components/LogInPage.vue';
+import RegistrationForm from './components/auth/RegistrationForm.vue';
+import LogInPage from './components/auth/LogInPage.vue';
 import MainPage from './pages/MainPage.vue';
 </script>
 
 <style scoped>
 .app {
-  background-color: red;
+  background-color: #1c1c1c;;
 }  
 
 .no-scroll {

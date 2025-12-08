@@ -112,7 +112,7 @@ function pieceImage(squareId) {
   const code = game.pieces[squareId] // например "wP" или "bK"
   if (!code) return null;
 
-  return new URL(`../assets/chess-pieces/${code}.svg`, import.meta.url).href;
+  return new URL(`../../assets/chess-pieces/${code}.svg`, import.meta.url).href;
 }
 
 /**

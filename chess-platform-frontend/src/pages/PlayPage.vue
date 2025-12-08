@@ -36,8 +36,8 @@
 import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useGameStore } from "@/store/gameStore";
-import ChessBoard from "@/components/ChessBoard.vue";
-import ChessClock from "@/components/ChessClock.vue";
+import ChessBoard from "@/components/game/ChessBoard.vue";
+import ChessClock from "@/components/game/ChessClock.vue";
 import { useUserStore } from "@/store/userStore";
 
 const game = useGameStore();
