@@ -132,7 +132,7 @@ export const useGameStore = defineStore("game", () => {
       rank--;
     }
     pieces.value = newPieces;
-    currentTurn.value = chess.value.turn();  // Синхронизируем turn
+    currentTurn.value = chess.value.turn();  
   }
 
   /**
@@ -173,51 +173,47 @@ export const useGameStore = defineStore("game", () => {
     }
   }
 
-  /**
-   * Проверяет текущее состояние игры через chess.js
-   */
-  function checkGameState() {
-    if (chess.value.isCheckmate()) {
-      const loserColor = chess.value.turn();
-      const winner = loserColor === 'w' ? 'b' : 'w';
-      result.value = { 
-        type: winner === 'w' ? 'whiteWin' : 'blackWin', 
-        reason: 'checkMate' 
-      };
-      endGame('checkMate', winner);
-      return 'checkmate';
-    }
 
-    if (chess.value.isStalemate()) {
-      result.value = { type: 'draw', reason: 'stalemate' };
-      endGame('stalemate');
-      return 'stalemate';
-    }
-
-    if (chess.value.isThreefoldRepetition()) {
-      result.value = { type: 'draw', reason: 'threefold-repetition' };
-      endGame('threefold-repetition');
-      return 'threefold-repetition';
-    }
-
-    if (chess.value.isInsufficientMaterial()) {
-      result.value = { type: 'draw', reason: 'insufficient-material' };
-      endGame('insufficient-material');
-      return 'insufficient-material';
-    }
-
-    if (chess.value.isDraw()) {  
-      result.value = { type: 'draw', reason: '50-move-rule' };
-      endGame('50-move-rule');
-      return '50-move rule';
-    }
-
-    if (chess.value.inCheck()) {
-      return 'check';
-    }
-
-    return null;
+/**
+ * Проверяет текущее состояние игры через chess.js
+ */
+function checkGameState() {
+  if (chess.value.isCheckmate()) {
+    const loserColor = chess.value.turn();
+    const winner = loserColor === 'w' ? 'b' : 'w';
+    result.value = { 
+      type: winner === 'w' ? 'whiteWin' : 'blackWin', 
+      reason: 'checkMate' 
+    };
+    return 'checkmate';
   }
+
+  if (chess.value.isStalemate()) {
+    result.value = { type: 'draw', reason: 'stalemate' };
+    return 'stalemate';
+  }
+
+  if (chess.value.isThreefoldRepetition()) {
+    result.value = { type: 'draw', reason: 'threefold-repetition' };
+    return 'threefold-repetition';
+  }
+
+  if (chess.value.isInsufficientMaterial()) {
+    result.value = { type: 'draw', reason: 'insufficient-material' };
+    return 'insufficient-material';
+  }
+
+  if (chess.value.isDraw()) {  
+    result.value = { type: 'draw', reason: '50-move-rule' };
+    return '50-move rule';
+  }
+
+  if (chess.value.inCheck()) {
+    return 'check';
+  }
+
+  return null;
+}
 
   /**
    * Возвращает доступные ходы через chess.js
@@ -409,8 +405,23 @@ export const useGameStore = defineStore("game", () => {
               type: "draw",
               reason: "agreed-draw"
             };
+          } else if (data.reason === "checkMate") {
+            result.value = {
+              type: data.winner === "w" ? "whiteWin" : "blackWin",
+              reason: "checkMate"
+            };
+          } else if (["stalemate", "50-move-rule", "threefold-repetition", "insufficient-material"].includes(data.reason)) {
+            result.value = {
+              type: "draw",
+              reason: data.reason
+            };
+          } else {
+            console.warn("Неизвестная причина окончания игры:", data.reason);
+            result.value = {
+              type: data.winner === "w" ? "whiteWin" : data.winner === "b" ? "blackWin" : "draw",
+              reason: data.reason || "unknown"
+            };
           }
-        
           break;
 
         default:
@@ -455,40 +466,49 @@ export const useGameStore = defineStore("game", () => {
     ws = null;
   }
 
-  /**
-   * Завершает игру и отправляет сообщение на сервре
-   */
-  function endGame(reason: GameReason, winner: "w" | "b" | null = null) {
-    if (reason === "checkMate") {
-      result.value = {
-        type: winner === "w" ? "whiteWin" : "blackWin",
-        reason: "checkMate",
-      };
-    } else if (["stalemate", "50-move-rule", "threefold-repetition", "insufficient-material", "agreed-draw"].includes(reason)) {
-      result.value = { type: "draw", reason };
-    } else if (reason === "timeOut") {
-      result.value = {
-        type: winner === "w" ? "whiteWin" : "blackWin",
-        reason: "timeOut",
-      };
-    } else if (reason === "give-up") {
-      result.value = {
-        type: winner === "w" ? "whiteWin" : "blackWin",
-        reason: "give-up",
-      };
-    }
-
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: "game_over",
-        roomId: currentRoomId.value,
-        reason,
-        winner, 
-      }));
-    }
-
-    console.log("Игра окончена:", reason, winner ? `победитель ${winner}` : "ничья");
+/**
+ * Завершает игру и отправляет сообщение на сервер
+ */
+function endGame(reason: GameReason, winner: "w" | "b" | null = null) {
+  if (reason === "checkMate") {
+    result.value = {
+      type: winner === "w" ? "whiteWin" : "blackWin",
+      reason: "checkMate",
+    };
+  } else if (["stalemate", "50-move-rule", "threefold-repetition", "insufficient-material", "agreed-draw"].includes(reason)) {
+    result.value = { type: "draw", reason };
+  } else if (reason === "timeOut") {
+    result.value = {
+      type: winner === "w" ? "whiteWin" : "blackWin",
+      reason: "timeOut",
+    };
+  } else if (reason === "give-up") {
+    result.value = {
+      type: winner === "w" ? "whiteWin" : "blackWin",
+      reason: "give-up",
+    };
   }
+
+  const isChessEnding = [
+    "checkMate", 
+    "stalemate", 
+    "50-move-rule", 
+    "threefold-repetition", 
+    "insufficient-material"
+  ].includes(reason);
+
+  if (!isChessEnding && ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({
+      type: "game_over",
+      roomId: currentRoomId.value,
+      reason,
+      winner, 
+    }));
+    console.log("📤 Отправил game_over на сервер для нешахматного окончания:", reason);
+  }
+
+  console.log("Игра окончена:", reason, winner ? `победитель ${winner}` : "ничья");
+}
 
 function sendToServer(messageType, extraData = {}) {
   if (!ws || ws.readyState !== WebSocket.OPEN || !currentRoomId.value) {
@@ -521,8 +541,6 @@ function acceptUndo() {
   function rejectUndo() {
     offerUndo.value = false;
   };
-
-
 
   return {
     pieces,

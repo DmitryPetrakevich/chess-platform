@@ -11,6 +11,56 @@ const {
 
 const timerIntervals = new Map();
 
+async function saveGameAndCleanup(roomId, reason, winner = null) {
+  const room = rooms.get(roomId);
+  if (!room) {
+    console.log(`Комната ${roomId} не найдена для сохранения`);
+    return;
+  }
+
+  console.log(`💾 Сохраняем партию ${roomId}, причина: ${reason}, победитель: ${winner}`);
+
+  if (room.timer) {
+    room.timer.stop();
+    room.timer.isRunning = false;
+  }
+
+  if (timerIntervals.has(roomId)) {
+    clearInterval(timerIntervals.get(roomId));
+    timerIntervals.delete(roomId);
+  }
+
+  const white = room.white;
+  const black = room.black;
+
+  if (white && black) {
+    const gameData = {
+      roomId,
+      whiteUserId: white.id || null,
+      whiteRating: white.rating || 1200,
+      blackUserId: black.id || null,
+      blackRating: black.rating || 1200,
+      result: 
+        reason === "agreed-draw" ? "draw" :
+        winner === "w" ? "whiteWin" :
+        winner === "b" ? "blackWin" : "draw",
+      reason: reason || "unknown",
+      moves: room.history.map(h => h.san).join(" ") || "",
+      finalFen: room.game.fen(),
+      duration: 0,
+    };
+
+    try {
+      await saveGameToDB(gameData);
+      console.log(`✅ Партия сохранена в БД: ${white.name || 'White'} vs ${black.name || 'Black'}`);
+    } catch (err) {
+      console.error("❌ Не удалось сохранить партию:", err);
+    }
+  } else {
+    console.log("⚠️ Не могу сохранить: один из игроков отсутствует");
+  }
+}
+
 function handleConnection(ws) {
   ws.id = generateClientId();
   console.log(`🟢 WS connected: ${ws.id}`);
@@ -152,103 +202,161 @@ function handleConnection(ws) {
     }
   }
 
-  function handleMove(data, ws) {
-    const { roomId, move } = data;
-    const room = rooms.get(roomId);
-    if (!room) return;
+function handleMove(data, ws) {
+  const { roomId, move } = data;
+  const room = rooms.get(roomId);
+  if (!room) return;
 
-    if (
-      (room.turn === "w" && ws !== room.white) ||
-      (room.turn === "b" && ws !== room.black)
-    ) {
-      ws.send(JSON.stringify({ type: "error", message: "Not your turn" }));
-      return;
-    }
+  if (
+    (room.turn === "w" && ws !== room.white) ||
+    (room.turn === "b" && ws !== room.black)
+  ) {
+    ws.send(JSON.stringify({ type: "error", message: "Not your turn" }));
+    return;
+  }
 
-    if (room.game.isGameOver()) {
-      ws.send(JSON.stringify({ type: "error", message: "Game is over" }));
-      return;
-    }
+  if (room.game.isGameOver()) {
+    ws.send(JSON.stringify({ type: "error", message: "Game is over" }));
+    return;
+  }
 
-    const chessMove = room.game.move({
+  const chessMove = room.game.move({
+    from: move.from,
+    to: move.to,
+    promotion: move.promotion || "q"
+  });
+
+  if (!chessMove) {
+    ws.send(JSON.stringify({ type: "error", message: "Illegal move" }));
+    return;
+  }
+
+  room.history.push({
+    from: chessMove.from,
+    to: chessMove.to,
+    san: chessMove.san,
+    fen: room.game.fen()
+  });
+
+  const newTurn = room.turn === "w" ? "b" : "w";
+  room.turn = newTurn;
+
+  ws.send(
+    JSON.stringify({
+      type: "moveMade",
       from: move.from,
       to: move.to,
-      promotion: move.promotion || "q"
-    });
-
-    if (!chessMove) {
-      ws.send(JSON.stringify({ type: "error", message: "Illegal move" }));
-      return;
-    }
-
-    room.history.push({
-      from: chessMove.from,
-      to: chessMove.to,
-      san: chessMove.san,
-      fen: room.game.fen()
-    });
-
-    const newTurn = room.turn === "w" ? "b" : "w";
-    room.turn = newTurn;
-
-    if (room.timer) {
-      room.timer.stopPreStart();
-      room.timer.start();
-      room.timer.switchTurn(newTurn);
-
-      // Запускаем интервал таймера, если ещё не запущен
-      if (!timerIntervals.has(roomId)) {
-        const interval = setInterval(() => {
-          if (!room.timer) return;
-
-          const timeCheck = room.timer.tick();
-          sendTimerUpdate(roomId);
-
-          if (timeCheck?.timeOut) {
-            console.log(`⏰ [${roomId}] Игра завершена по таймеру, победитель: ${timeCheck.winner}`);
-
-            broadcastToRoom(roomId, {
-              type: "gameOver",
-              reason: "timeOut",
-              winner: timeCheck.winner,
-            });
-
-            room.timer.stop();
-            clearInterval(interval);
-            timerIntervals.delete(roomId);
-          }
-        }, 1000);
-
-        timerIntervals.set(roomId, interval);
-      }
-    }
-
-    ws.send(
-      JSON.stringify({
-        type: "moveMade",
-        from: move.from,
-        to: move.to,
-        turn: room.turn,
-      })
-    );
-
-    broadcastToRoom(
-      roomId,
-      {
-        type: "move",
-        move,
-        turn: room.turn,
-      },
-      ws
-    );
-
-    broadcastToRoom(roomId, {
-      type: "position",
-      fen: room.game.fen(),
       turn: room.turn,
-      history: room.history
+    })
+  );
+
+  broadcastToRoom(
+    roomId,
+    {
+      type: "move",
+      move,
+      turn: room.turn,
+    },
+    ws
+  );
+
+  broadcastToRoom(roomId, {
+    type: "position",
+    fen: room.game.fen(),
+    turn: room.turn,
+    history: room.history
+  });
+
+  if (room.game.isGameOver()) {
+    console.log(`🎮 Игра завершена после хода ${move.from}-${move.to}`);
+    
+    let reason, winner = null;
+    
+    switch (true) {
+      case room.game.isCheckmate():
+        reason = "checkMate";
+        winner = room.turn === "w" ? "b" : "w";
+        break;
+        
+      case room.game.isStalemate():
+        reason = "stalemate";
+        break;
+        
+      case room.game.isThreefoldRepetition():
+        reason = "threefold-repetition";
+        break;
+        
+      case room.game.isInsufficientMaterial():
+        reason = "insufficient-material";
+        break;
+        
+      case room.game.isDraw():
+        reason = "50-move-rule";
+        break;
+        
+      default:
+        reason = "unknown";
+        break;
+    }
+    
+    console.log(`🏁 Причина окончания: ${reason}, победитель: ${winner}`);
+    
+    if (room.timer) {
+      room.timer.stop();
+    }
+    
+    if (timerIntervals.has(roomId)) {
+      clearInterval(timerIntervals.get(roomId));
+      timerIntervals.delete(roomId);
+    }
+    
+    saveGameAndCleanup(roomId, reason, winner);
+    
+    broadcastToRoom(roomId, {
+      type: "gameOver",
+      reason,
+      winner,
     });
+    
+    return; // Прекращаем дальнейшую обработку таймера
   }
+
+  // 3. Если игра не завершена, запускаем/обновляем таймер
+  if (room.timer) {
+    room.timer.stopPreStart();
+    room.timer.start();
+    room.timer.switchTurn(newTurn);
+
+    // Запускаем интервал таймера, если ещё не запущен
+    if (!timerIntervals.has(roomId)) {
+      const interval = setInterval(() => {
+        if (!room.timer) return;
+
+        const timeCheck = room.timer.tick();
+        sendTimerUpdate(roomId);
+
+        if (timeCheck?.timeOut) {
+          console.log(`⏰ [${roomId}] Игра завершена по таймеру, победитель: ${timeCheck.winner}`);
+
+          // Сохраняем партию при таймауте
+          saveGameAndCleanup(roomId, "timeOut", timeCheck.winner);
+          
+          broadcastToRoom(roomId, {
+            type: "gameOver",
+            reason: "timeOut",
+            winner: timeCheck.winner,
+          });
+
+          room.timer.stop();
+          clearInterval(interval);
+          timerIntervals.delete(roomId);
+        }
+      }, 1000);
+
+      timerIntervals.set(roomId, interval);
+    }
+  }
+}
 
   function handleOfferDraw(data, ws) {
     const { roomId } = data;
@@ -325,52 +433,24 @@ function handleConnection(ws) {
     console.log("📢 Разослано обновление позиции после отмены хода");
   }
 
-  function handleGameOver(data, ws) {
-    const { roomId } = data;
-    const room = rooms.get(roomId);
-    if (!room) return;
+function handleGameOver(data, ws) {
+  const { roomId, reason, winner } = data;
+  const room = rooms.get(roomId);
+  if (!room) return;
 
-    if (room.timer) {
-      room.timer.stop();
-      room.timer.isRunning = false;
-    }
+  console.log(`🏁 Получен game_over от клиента: ${reason}, winner: ${winner}`);
 
-    if (timerIntervals.has(roomId)) {
-      clearInterval(timerIntervals.get(roomId));
-      timerIntervals.delete(roomId);
-    }
+  // УБРАТЬ: весь код с saveGameToDB отсюда
+  
+  // Сохраняем и очищаем (эта функция уже содержит сохранение в БД)
+  saveGameAndCleanup(roomId, reason, winner);
 
-    broadcastToRoom(roomId, {
-      type: "gameOver",
-      reason: data.reason,
-      winner: data.winner || null,
-    });
-
-    // СОХРАНЯЕМ ПАРТИЮ В БД 
-  const white = room.white;
-  const black = room.black;
-
-  if (white && black) {
-    const gameData = {
-      roomId,
-      whiteUserId: white.id || null,
-      whiteRating: white.rating || 1200,
-      blackUserId: black.id || null,
-      blackRating: black.rating || 1200,
-      result: 
-        data.reason === "agreed-draw" ? "draw" :
-        data.winner === "w" ? "whiteWin" :
-        data.winner === "b" ? "blackWin" : "draw",
-      reason: data.reason || "unknown",
-      moves: room.history.map(h => h.san).join(" ") || "",
-      finalFen: room.game.fen(),
-      duration: 0, // можно посчитать, если нужно
-    };
-
-    saveGameToDB(gameData)
-      .then(() => console.log(`Партия сохранена: ${white.name || 'White'} vs ${black.name || 'Black'}`))
-      .catch(err => console.error("Не удалось сохранить партию:", err));
-  }
+  // Только broadcast (без сохранения - оно уже в saveGameAndCleanup)
+  broadcastToRoom(roomId, {
+    type: "gameOver",
+    reason: reason,
+    winner: winner || null,
+  });
 }
 
 function handleAcceptDraw(data, ws) {
@@ -378,45 +458,19 @@ function handleAcceptDraw(data, ws) {
   const room = rooms.get(roomId);
   if (!room) return;
 
-  console.log("Ничья принята — завершаем игру");
+  console.log("🤝 Ничья принята — завершаем игру");
 
-  if (room.timer) {
-    room.timer.stop();
-    room.timer.isRunning = false;
-  }
+  // УБРАТЬ: весь код с saveGameToDB отсюда
+  
+  // Сохраняем и очищаем
+  saveGameAndCleanup(roomId, "agreed-draw", null);
 
-  if (timerIntervals.has(roomId)) {
-    clearInterval(timerIntervals.get(roomId));
-    timerIntervals.delete(roomId);
-  }
-
+  // Только broadcast
   broadcastToRoom(roomId, {
     type: "gameOver",
     reason: "agreed-draw",
     winner: null,
   });
-
-  const white = room.white;
-  const black = room.black;
-
-  if (white && black) {
-    const gameData = {
-      roomId,
-      whiteUserId: white.id || null,
-      whiteRating: white.rating || 1200,
-      blackUserId: black.id || null,
-      blackRating: black.rating || 1200,
-      result: "draw",
-      reason: data.reason || "agreed-draw",
-      moves: room.history.map(h => h.san).join(" ") || "",
-      finalFen: room.game.fen(),
-      duration: 0,
-    };
-
-    saveGameToDB(gameData)
-      .then(() => console.log(`Партия сохранена: ${white.name || 'White'} vs ${black.name || 'Black'}`))
-      .catch(err => console.error("Не удалось сохранить партию:", err));
-  }
 }
 
   ws.on("message", (message) => {
