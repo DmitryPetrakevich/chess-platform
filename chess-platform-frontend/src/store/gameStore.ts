@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, reactive, computed } from "vue";
 import { useTimerStore } from "./timerStore";
+import { useUserStore } from "./userStore";
 import { Chess } from 'chess.js';  
 
 export const useGameStore = defineStore("game", () => {
@@ -69,6 +70,8 @@ export const useGameStore = defineStore("game", () => {
 
   const offerDraw = ref(false);
   const offerUndo = ref(false);
+
+  const userStore = useUserStore();       
 
   const opponent = ref({
     id: null,
@@ -407,6 +410,7 @@ export const useGameStore = defineStore("game", () => {
               reason: "agreed-draw"
             };
           }
+        
           break;
 
         default:
@@ -486,32 +490,39 @@ export const useGameStore = defineStore("game", () => {
     console.log("Игра окончена:", reason, winner ? `победитель ${winner}` : "ничья");
   }
 
-  function sendToServer(msessage, color: "w" | 'b' = null) {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: msessage,
-        roomId: currentRoomId.value,
-      }));
-    }
+function sendToServer(messageType, extraData = {}) {
+  if (!ws || ws.readyState !== WebSocket.OPEN || !currentRoomId.value) {
+    console.warn("WebSocket не подключён или нет roomId");
+    return;
   }
+
+  const payload = {
+    type: messageType,
+    roomId: currentRoomId.value,
+    ...extraData
+  };
+
+  ws.send(JSON.stringify(payload));
+  console.log("Отправлено на сервер:", payload);
+}
 
 function acceptUndo() {
   offerUndo.value = false;
-  
+
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({
       type: "accept-undo",
       roomId: currentRoomId.value,
     }));
-    console.log("📤 Отправил accept-undo на сервер");
-  } else {
-    console.error("WebSocket не подключен");
+    console.log("Отправил accept-undo на сервер");
   }
-};
+}
 
   function rejectUndo() {
     offerUndo.value = false;
   };
+
+
 
   return {
     pieces,

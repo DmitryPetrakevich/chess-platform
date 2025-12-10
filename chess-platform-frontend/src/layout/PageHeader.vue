@@ -259,7 +259,6 @@ watch(() => userStore.isLoggedIn, closeMenu);
   min-height: 250px;
   background: #1a1a1a;
   border-left: 3px solid @gray-200;
-  // border-top: 1px solid @gray-200;
   z-index: 999;
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
   transform: translateX(0);

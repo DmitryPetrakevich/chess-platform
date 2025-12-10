@@ -1,4 +1,5 @@
 const { generateClientId } = require("../utils/id");
+const { saveGameToDB } = require('../config/db');
 const { Chess } = require("chess.js");
 
 const {
@@ -344,31 +345,79 @@ function handleConnection(ws) {
       reason: data.reason,
       winner: data.winner || null,
     });
+
+    // СОХРАНЯЕМ ПАРТИЮ В БД 
+  const white = room.white;
+  const black = room.black;
+
+  if (white && black) {
+    const gameData = {
+      roomId,
+      whiteUserId: white.id || null,
+      whiteRating: white.rating || 1200,
+      blackUserId: black.id || null,
+      blackRating: black.rating || 1200,
+      result: 
+        data.reason === "agreed-draw" ? "draw" :
+        data.winner === "w" ? "whiteWin" :
+        data.winner === "b" ? "blackWin" : "draw",
+      reason: data.reason || "unknown",
+      moves: room.history.map(h => h.san).join(" ") || "",
+      finalFen: room.game.fen(),
+      duration: 0, // можно посчитать, если нужно
+    };
+
+    saveGameToDB(gameData)
+      .then(() => console.log(`Партия сохранена: ${white.name || 'White'} vs ${black.name || 'Black'}`))
+      .catch(err => console.error("Не удалось сохранить партию:", err));
+  }
+}
+
+function handleAcceptDraw(data, ws) {
+  const { roomId } = data;
+  const room = rooms.get(roomId);
+  if (!room) return;
+
+  console.log("Ничья принята — завершаем игру");
+
+  if (room.timer) {
+    room.timer.stop();
+    room.timer.isRunning = false;
   }
 
-  function handleAcceptDraw(data, ws) {
-    const { roomId } = data;
-    const room = rooms.get(roomId);
-    if (!room) return;
-
-    console.log("Ничья принята — завершаем игру");
-
-    if (room.timer) {
-      room.timer.stop();
-      room.timer.isRunning = false;
-    }
-
-    if (timerIntervals.has(roomId)) {
-      clearInterval(timerIntervals.get(roomId));
-      timerIntervals.delete(roomId);
-    }
-
-    broadcastToRoom(roomId, {
-      type: "gameOver",
-      reason: "agreed-draw",
-      winner: null,
-    });
+  if (timerIntervals.has(roomId)) {
+    clearInterval(timerIntervals.get(roomId));
+    timerIntervals.delete(roomId);
   }
+
+  broadcastToRoom(roomId, {
+    type: "gameOver",
+    reason: "agreed-draw",
+    winner: null,
+  });
+
+  const white = room.white;
+  const black = room.black;
+
+  if (white && black) {
+    const gameData = {
+      roomId,
+      whiteUserId: white.id || null,
+      whiteRating: white.rating || 1200,
+      blackUserId: black.id || null,
+      blackRating: black.rating || 1200,
+      result: "draw",
+      reason: data.reason || "agreed-draw",
+      moves: room.history.map(h => h.san).join(" ") || "",
+      finalFen: room.game.fen(),
+      duration: 0,
+    };
+
+    saveGameToDB(gameData)
+      .then(() => console.log(`Партия сохранена: ${white.name || 'White'} vs ${black.name || 'Black'}`))
+      .catch(err => console.error("Не удалось сохранить партию:", err));
+  }
+}
 
   ws.on("message", (message) => {
     try {
@@ -396,16 +445,15 @@ function handleConnection(ws) {
         case "accept-undo":
           handleAcceptUndo(data, ws);
           break;
+        
+        case "accept-draw":          
+          handleAcceptDraw(data, ws);
+          break;
 
         case "game_over":
           handleGameOver(data, ws);
           break;
-        
-        case "accept-draw": {
-          handleAcceptDraw(data,ws)
-          break;
-        }
-
+      
         default:
           console.warn(`⚠️ Неизвестный тип сообщения: ${data.type}`);
           ws.send(JSON.stringify({
