@@ -139,9 +139,13 @@ function genId() {
 function selectColor(color) {
   selectedColor.value = color;
   colorWasSelected.value = true;
-
-  if (!roomId.value) roomId.value = genId();
+  
+  roomId.value = genId();
   waiting.value = true;
+
+  game.shouldRedirect = null;
+  
+  game.disconnect();
 
   emit("created", { roomId: roomId.value, color: selectedColor.value });
 

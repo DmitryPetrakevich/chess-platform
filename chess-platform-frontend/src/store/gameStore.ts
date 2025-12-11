@@ -456,15 +456,32 @@ function checkGameState() {
     }
   }
 
-  function disconnect() {
-    if (!ws) return;
-    try {
-      ws.close();
-    } catch (e) {
-      /* ignore */
-    }
-    ws = null;
+function disconnect() {
+  if (!ws) return;
+  
+  // Удаляем обработчики событий
+  if (ws.onopen) ws.onopen = null;
+  if (ws.onmessage) ws.onmessage = null;
+  if (ws.onclose) ws.onclose = null;
+  if (ws.onerror) ws.onerror = null;
+  
+  try {
+    ws.close();
+  } catch (e) {
+    /* ignore */
   }
+  ws = null;
+  
+  currentRoomId.value = null;
+  playerColor.value = null;
+  result.value = { type: null, reason: null };
+  gameStarted.value = false;
+  moveHistory.value = [];
+  pieces.value = {};
+  resetBoard();
+  
+  console.log("🔌 Отключились от игры");
+}
 
 /**
  * Завершает игру и отправляет сообщение на сервер

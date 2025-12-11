@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../config/db");
+const { pool } = require('../config/db.js');
 const bcrypt = require('bcrypt'); 
 
 router.post("/register", async (req, res) => {

@@ -48,4 +48,4 @@ async function saveGameToDB(gameData) {
   }
 }
 
-module.exports = { saveGameToDB };
+module.exports = { pool, saveGameToDB };
