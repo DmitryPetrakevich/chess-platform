@@ -1,4 +1,3 @@
-// src/utils/db.js
 require('dotenv').config();
 const { Pool } = require('pg');
 
@@ -28,9 +27,9 @@ async function saveGameToDB(gameData) {
 
     const values = [
       gameData.roomId,
-      null, // white_user_id — пока не знаем настоящий ID
+      gameData.whiteUserId,
       gameData.whiteRating,
-      null, // black_user_id
+      gameData.blackUserId,
       gameData.blackRating,
       gameData.result,
       gameData.reason || null,

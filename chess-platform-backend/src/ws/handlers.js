@@ -36,9 +36,9 @@ async function saveGameAndCleanup(roomId, reason, winner = null) {
   if (white && black) {
     const gameData = {
       roomId,
-      whiteUserId: white.id || null,
+      whiteUserId: room.white?.userId || null,
       whiteRating: white.rating || 1200,
-      blackUserId: black.id || null,
+      blackUserId: room.black?.userId || null,
       blackRating: black.rating || 1200,
       result: 
         reason === "agreed-draw" ? "draw" :
@@ -85,10 +85,11 @@ function handleConnection(ws) {
   }
 
   function handleJoin(data, ws) {
-    const { roomId, name, color: preferredColor } = data;
+    const { roomId, name, color: preferredColor, userId  } = data;
 
     ws.name = name || "Player";
     ws.color = preferredColor;
+    ws.userId = userId || null;
 
     const playersCount = addClientToRoom(roomId, ws, preferredColor);
     const room = rooms.get(roomId);
@@ -459,13 +460,9 @@ function handleAcceptDraw(data, ws) {
   if (!room) return;
 
   console.log("🤝 Ничья принята — завершаем игру");
-
-  // УБРАТЬ: весь код с saveGameToDB отсюда
   
-  // Сохраняем и очищаем
   saveGameAndCleanup(roomId, "agreed-draw", null);
 
-  // Только broadcast
   broadcastToRoom(roomId, {
     type: "gameOver",
     reason: "agreed-draw",

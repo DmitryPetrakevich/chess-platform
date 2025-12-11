@@ -250,11 +250,18 @@ function checkGameState() {
 
     ws = new WebSocket("ws://localhost:3000");
     ws.roomId = roomId;
+    const userId = userStore.userId;
 
     ws.onopen = () => {
       console.log("✅ WebSocket подключен (client)");
-      console.log("🎨 Отправляю данные на сервер:", { roomId, color, name });
-      ws.send(JSON.stringify({ type: "join", roomId, name, color }));
+      console.log("🎨 Отправляю данные на сервер:", { roomId, color, name, userId   });
+      ws.send(JSON.stringify({ 
+        type: "join", 
+        roomId, 
+        color,
+        name, 
+        userId  
+      }));
     };
 
     ws.onmessage = (event) => {
