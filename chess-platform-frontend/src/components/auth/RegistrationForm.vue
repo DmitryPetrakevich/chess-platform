@@ -38,12 +38,12 @@
           />
           <label for="agreement" class="checkbox-label">
             Я соглашаюсь с
-            <a href="#" class="link">политикой конфиденциальности</a>
+            <router-link to="/privacy-policy" class="link">политикой конфиденциальности</router-link>
           </label>
         </div>
 
         <button class="submit-btn" type="submit">Зарегистрироваться</button>
-
+        <router-link to="login" class="footer-link">Есть аккаунт?</router-link>
         <div v-if="message" :class="['message', messageType]">
           {{ message }}
         </div>
@@ -183,17 +183,17 @@ const resetForm = () => {
   background: #343434;
   color: #fff;
   transition: all 0.3s ease;
-}
 
-.form-input::placeholder {
-  color: #aaa;
-}
+  &::placeholder {
+    color: #aaa;
+  }
 
-.form-input:focus {
-  outline: none;
-  border-color: #e74c3c;
-  background: #282828;
-  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+  &:focus {
+    outline: none;
+    border-color: #e74c3c;
+    background: #282828;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+  }
 }
 
 .checkbox-container {
@@ -221,10 +221,10 @@ const resetForm = () => {
 .link {
   color: #e74c3c;
   text-decoration: none;
-}
 
-.link:hover {
-  text-decoration: underline;
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .submit-btn {
@@ -240,19 +240,19 @@ const resetForm = () => {
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-top: 10px;
-}
 
-.submit-btn:hover:not(:disabled) {
-  background: #c0392b;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
-}
+  &:hover:not(:disabled) {
+    background: #c0392b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+  }
 
-.submit-btn:disabled {
-  background: #666;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+  &:disabled {
+    background: #666;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
 }
 
 .message {
@@ -261,24 +261,38 @@ const resetForm = () => {
   text-align: center;
   font-weight: 500;
   margin-top: 15px;
+
+  &.success {
+    background: rgba(46, 204, 113, 0.2);
+    border: 1px solid #2ecc71;
+    color: #2ecc71;
+  }
+
+  &.error {
+    background: rgba(231, 76, 60, 0.2);
+    border: 1px solid #e74c3c;
+    color: #e74c3c;
+  }
+
+  &.info {
+    background: rgba(52, 152, 219, 0.2);
+    border: 1px solid #3498db;
+    color: #3498db;
+  }
 }
 
-.message.success {
-  background: rgba(46, 204, 113, 0.2);
-  border: 1px solid #2ecc71;
-  color: #2ecc71;
-}
-
-.message.error {
-  background: rgba(231, 76, 60, 0.2);
-  border: 1px solid #e74c3c;
-  color: #e74c3c;
-}
-
-.message.info {
-  background: rgba(52, 152, 219, 0.2);
-  border: 1px solid #3498db;
+.footer-link {
   color: #3498db;
+  text-decoration: none;
+  font-size: 18px;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  text-align: center;
+
+  &:hover {
+    color: #2980b9;
+    text-decoration: underline;
+  }
 }
 
 @media (max-width: 768px) {

@@ -7,6 +7,7 @@ import Play from '@/pages/PlayPage.vue'
 import CoordinatesTraining from '@/pages/CoordinatesTraining.vue'
 import ChessPuzzles from '@/pages/ChessPuzzles.vue'
 import Profile from '@/pages/ProfilePage.vue'
+import PrivacyPolicy from '@/components/auth/PrivacyPolicy.vue'
 
 const routes = [
   { path: '/', component: MainPage },
@@ -17,6 +18,7 @@ const routes = [
   { path: '/coordinates', component: CoordinatesTraining },
   { path: '/puzzles', component: ChessPuzzles },
   { path: '/profile', component: Profile },
+  { path: '/privacy-policy', component: PrivacyPolicy },
 ]
 
 export const router = createRouter({

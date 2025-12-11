@@ -164,17 +164,17 @@ const showMessage = (text, type) => {
     background-color: #343434 !important;
     color: #fff !important;
   }
-}
 
-.form-input::placeholder {
-  color: #aaa;
-}
+  &::placeholder {
+    color: #aaa;
+  }
 
-.form-input:focus {
-  outline: none;
-  border-color: #e74c3c;
-  background: #282828;
-  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+  &:focus {
+    outline: none;
+    border-color: #e74c3c;
+    background: #282828;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+  }
 }
 
 .submit-btn {
@@ -190,19 +190,19 @@ const showMessage = (text, type) => {
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-top: 10px;
-}
 
-.submit-btn:hover:not(:disabled) {
-  background: #c0392b;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
-}
+  &:hover:not(:disabled) {
+    background: #c0392b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+  }
 
-.submit-btn:disabled {
-  background: #666;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+  &:disabled {
+    background: #666;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
 }
 
 .message {
@@ -211,24 +211,24 @@ const showMessage = (text, type) => {
   text-align: center;
   font-weight: 500;
   margin: 15px 0;
-}
 
-.message.success {
-  background: rgba(46, 204, 113, 0.2);
-  border: 1px solid #2ecc71;
-  color: #2ecc71;
-}
+  &.success {
+    background: rgba(46, 204, 113, 0.2);
+    border: 1px solid #2ecc71;
+    color: #2ecc71;
+  }
 
-.message.error {
-  background: rgba(231, 76, 60, 0.2);
-  border: 1px solid #e74c3c;
-  color: #e74c3c;
-}
+  &.error {
+    background: rgba(231, 76, 60, 0.2);
+    border: 1px solid #e74c3c;
+    color: #e74c3c;
+  }
 
-.message.info {
-  background: rgba(52, 152, 219, 0.2);
-  border: 1px solid #3498db;
-  color: #3498db;
+  &.info {
+    background: rgba(52, 152, 219, 0.2);
+    border: 1px solid #3498db;
+    color: #3498db;
+  }
 }
 
 .form-footer {
@@ -246,11 +246,11 @@ const showMessage = (text, type) => {
   font-size: 18px;
   transition: all 0.3s ease;
   border-radius: 4px;
-}
 
-.footer-link:hover {
-  color: #2980b9;
-  text-decoration: underline;
+  &:hover {
+    color: #2980b9;
+    text-decoration: underline;
+  }
 }
 
 @media (max-width: 768px) {
