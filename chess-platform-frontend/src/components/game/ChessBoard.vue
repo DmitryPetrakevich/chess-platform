@@ -34,12 +34,20 @@
         <div class="rank-label"></div>
       </div>
     </div>
+
+    <PromotionModal 
+      v-if="game.showPromotionModal && game.promotionMove"
+      :color="game.promotionMove.piece[0]"
+      @select="onPromotionSelect"
+      @cancel="onPromotionCancel"
+    />
   </div>
 </template>
 
 <script setup>
 import { useGameStore } from "@/store/gameStore";
 import { computed, ref, onMounted, nextTick , watch } from "vue"; 
+import PromotionModal from "./PromotionModal.vue";
 
 const game = useGameStore();
 
@@ -125,6 +133,8 @@ function pieceImage(squareId) {
  */
 function onSquareClick(id) {
   if (game.result.type) return;
+  if (game.showPromotionModal) return;
+
   const clickedPiece = game.pieces[id];
 
   if (clickedPiece && clickedPiece[0] === game.currentTurn) {
@@ -139,9 +149,28 @@ function onSquareClick(id) {
   }
 
   if (selectedSquare.value && highlightedSquares.value.has(id)) {
-    game.sendMove(selectedSquare.value, id);
-    selectedSquare.value = null;
-    highlightedSquares.value.clear();
+    const piece = game.pieces[selectedSquare.value];
+    const isPawn = piece && (piece[1] === 'P' || piece[1] === 'p'); 
+    const isPromotionSquare = (id[1] === '8' && piece[0] === 'w') || (id[1] === '1' && piece[0] === 'b');
+    
+    if (isPawn && isPromotionSquare) {
+      game.promotionMove = {
+        from: selectedSquare.value,
+        to: id,
+        piece: piece,
+        pending: true
+      };
+      game.showPromotionModal = true;
+      
+      // ждем выбор фигуры
+      selectedSquare.value = null;
+      highlightedSquares.value.clear();
+    } else {
+      // Обычный ход - отправляем сразу
+      game.sendMove(selectedSquare.value, id);
+      selectedSquare.value = null;
+      highlightedSquares.value.clear();
+    }
   } else {
     selectedSquare.value = null;
     highlightedSquares.value.clear();
@@ -241,7 +270,7 @@ function onDrop(to, event) {
     draggedFrom.value = null;
     return;
   }
-  if (piece[0] !== game.playerColor) { // игрок пытается двигать чужую фигуру
+  if (piece[0] !== game.playerColor) { 
     console.warn("onDrop: пытаются двигать не свою фигуру:", from);
     draggedFrom.value = null;
     return;
@@ -262,11 +291,36 @@ function onDrop(to, event) {
     return;
   }
 
-  game.sendMove(from, to);
+  const isPawn = piece && (piece[1] === 'P' || piece[1] === 'p');
+  const isPromotionSquare = (to[1] === '8' && piece[0] === 'w') || (to[1] === '1' && piece[0] === 'b');
+  
+  if (isPawn && isPromotionSquare) {
+    game.promotionMove = {
+      from: from,
+      to: to,
+      piece: piece,
+      pending: true
+    };
+    game.showPromotionModal = true;
+  } else {
+    // Обычный ход
+    game.sendMove(from, to);
+  }
 
   selectedSquare.value = null;
   highlightedSquares.value.clear();
   draggedFrom.value = null;
+}
+
+function onPromotionSelect(piece) {
+  game.completePromotion(piece);
+}
+
+function onPromotionCancel() {
+  game.cancelPromotion();
+  
+  selectedSquare.value = null;
+  highlightedSquares.value.clear();
 }
 
 watch(() => game.result.type, (newResult) => {

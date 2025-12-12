@@ -2,27 +2,23 @@ import { defineStore } from "pinia";
 import { ref, reactive, computed } from "vue";
 import { useTimerStore } from "./timerStore";
 import { useUserStore } from "./userStore";
-import { Chess } from 'chess.js';  
+import { Chess } from "chess.js";
 
 export const useGameStore = defineStore("game", () => {
   const timerStore = useTimerStore();
 
-  type GameReason = 
-  | "checkMate"
-  | "stalemate"
-  | "50-move-rule" 
-  | "threefold-repetition"
-  | "insufficient-material"
-  | "timeOut"
-  | "give-up"
-  | "no_move"
-  | "agreed-draw";
+  type GameReason =
+    | "checkMate"
+    | "stalemate"
+    | "50-move-rule"
+    | "threefold-repetition"
+    | "insufficient-material"
+    | "timeOut"
+    | "give-up"
+    | "no_move"
+    | "agreed-draw";
 
-  type GameType = 
-  | "draw"
-  | "blackWin"
-  | "whiteWin"
-  | "canceledGame"
+  type GameType = "draw" | "blackWin" | "whiteWin" | "canceledGame";
 
   interface GameResult {
     type: GameType | null;
@@ -71,7 +67,16 @@ export const useGameStore = defineStore("game", () => {
   const offerDraw = ref(false);
   const offerUndo = ref(false);
 
-  const userStore = useUserStore();       
+  const userStore = useUserStore();
+
+  const promotionMove = ref<{
+    from: string;
+    to: string;
+    piece: string;
+    pending: boolean;
+  } | null>(null);
+
+  const showPromotionModal = ref(false);
 
   const opponent = ref({
     id: null,
@@ -105,8 +110,8 @@ export const useGameStore = defineStore("game", () => {
   }
 
   function resetBoard() {
-    chess.value = new Chess();  
-    parseFEN(chess.value.fen());  // Обновляем pieces
+    chess.value = new Chess();
+    parseFEN(chess.value.fen()); // Обновляем pieces
   }
 
   /**
@@ -114,7 +119,7 @@ export const useGameStore = defineStore("game", () => {
    */
   function parseFEN(fen) {
     const newPieces = {};
-    const rows = fen.split(' ')[0].split('/');
+    const rows = fen.split(" ")[0].split("/");
     let rank = 8;
     for (const row of rows) {
       let fileIndex = 0;
@@ -122,9 +127,10 @@ export const useGameStore = defineStore("game", () => {
         if (/\d/.test(char)) {
           fileIndex += parseInt(char);
         } else {
-          const color = char === char.toUpperCase() ? 'w' : 'b';
+          const color = char === char.toUpperCase() ? "w" : "b";
           const type = char.toUpperCase();
-          const square = ['a','b','c','d','e','f','g','h'][fileIndex] + rank;
+          const square =
+            ["a", "b", "c", "d", "e", "f", "g", "h"][fileIndex] + rank;
           newPieces[square] = color + type;
           fileIndex++;
         }
@@ -132,20 +138,39 @@ export const useGameStore = defineStore("game", () => {
       rank--;
     }
     pieces.value = newPieces;
-    currentTurn.value = chess.value.turn();  
+    currentTurn.value = chess.value.turn();
   }
 
   /**
    * Выполняет ход через chess.js
    */
-  function makeMove(from, to) {
+  function makeMove(from, to, promotionPiece: string = "q") {
     if (result.value.type) {
       console.warn("Game finished:", result.value.type);
       return false;
     }
 
     try {
-      const move = chess.value.move({ from, to, promotion: 'q' });  // Авто-промоушен в ферзя (можно добавить выбор)
+      const piece = chess.value.get(from);
+      const isPawn = piece && piece.type === "p";
+      const isPromotionSquare =
+        (to[1] === "8" && piece?.color === "w") ||
+        (to[1] === "1" && piece?.color === "b");
+
+      // Если это превращение пешки, но фигура не выбрана - сохраняем ход для подтверждения
+      if (isPawn && isPromotionSquare && !promotionPiece) {
+        promotionMove.value = {
+          from,
+          to,
+          piece: piece.color + "p",
+          pending: true,
+        };
+        showPromotionModal.value = true;
+        return false; // Ход не выполнен, ждем выбор фигуры
+      }
+
+      const move = chess.value.move({ from, to, promotion: promotionPiece });
+
       if (!move) {
         console.warn(`🚫 Недопустимый ход: ${from} → ${to}`);
         return false;
@@ -156,13 +181,17 @@ export const useGameStore = defineStore("game", () => {
       moveHistory.value.push({
         from: move.from,
         to: move.to,
-        piece: move.piece.toUpperCase(),  
+        piece: move.piece.toUpperCase(),
         fen: chess.value.fen(),
-        turn: move.color === 'w' ? 'b' : 'w',  
-        san: move.san
+        turn: move.color === "w" ? "b" : "w",
+        san: move.san,
+        promotedTo: move.promotion
       });
 
       lastMove.value = { from, to };
+
+      promotionMove.value = null;
+      showPromotionModal.value = false;
 
       checkGameState();
 
@@ -173,47 +202,68 @@ export const useGameStore = defineStore("game", () => {
     }
   }
 
-
-/**
- * Проверяет текущее состояние игры через chess.js
- */
-function checkGameState() {
-  if (chess.value.isCheckmate()) {
-    const loserColor = chess.value.turn();
-    const winner = loserColor === 'w' ? 'b' : 'w';
-    result.value = { 
-      type: winner === 'w' ? 'whiteWin' : 'blackWin', 
-      reason: 'checkMate' 
-    };
-    return 'checkmate';
+function completePromotion(promotionPiece: string): boolean {
+  if (!promotionMove.value) return false;
+  
+  const { from, to } = promotionMove.value;
+  
+  const success = makeMove(from, to, promotionPiece);
+  
+  if (success) {
+    sendMove(from, to, promotionPiece); 
+    
+    promotionMove.value = null;
+    showPromotionModal.value = false;
   }
-
-  if (chess.value.isStalemate()) {
-    result.value = { type: 'draw', reason: 'stalemate' };
-    return 'stalemate';
-  }
-
-  if (chess.value.isThreefoldRepetition()) {
-    result.value = { type: 'draw', reason: 'threefold-repetition' };
-    return 'threefold-repetition';
-  }
-
-  if (chess.value.isInsufficientMaterial()) {
-    result.value = { type: 'draw', reason: 'insufficient-material' };
-    return 'insufficient-material';
-  }
-
-  if (chess.value.isDraw()) {  
-    result.value = { type: 'draw', reason: '50-move-rule' };
-    return '50-move rule';
-  }
-
-  if (chess.value.inCheck()) {
-    return 'check';
-  }
-
-  return null;
+  
+  return success;
 }
+
+function cancelPromotion(): void {
+  promotionMove.value = null;
+  showPromotionModal.value = false;
+}
+
+  /**
+   * Проверяет текущее состояние игры через chess.js
+   */
+  function checkGameState() {
+    if (chess.value.isCheckmate()) {
+      const loserColor = chess.value.turn();
+      const winner = loserColor === "w" ? "b" : "w";
+      result.value = {
+        type: winner === "w" ? "whiteWin" : "blackWin",
+        reason: "checkMate",
+      };
+      return "checkmate";
+    }
+
+    if (chess.value.isStalemate()) {
+      result.value = { type: "draw", reason: "stalemate" };
+      return "stalemate";
+    }
+
+    if (chess.value.isThreefoldRepetition()) {
+      result.value = { type: "draw", reason: "threefold-repetition" };
+      return "threefold-repetition";
+    }
+
+    if (chess.value.isInsufficientMaterial()) {
+      result.value = { type: "draw", reason: "insufficient-material" };
+      return "insufficient-material";
+    }
+
+    if (chess.value.isDraw()) {
+      result.value = { type: "draw", reason: "50-move-rule" };
+      return "50-move rule";
+    }
+
+    if (chess.value.inCheck()) {
+      return "check";
+    }
+
+    return null;
+  }
 
   /**
    * Возвращает доступные ходы через chess.js
@@ -254,14 +304,21 @@ function checkGameState() {
 
     ws.onopen = () => {
       console.log("✅ WebSocket подключен (client)");
-      console.log("🎨 Отправляю данные на сервер:", { roomId, color, name, userId   });
-      ws.send(JSON.stringify({ 
-        type: "join", 
-        roomId, 
+      console.log("🎨 Отправляю данные на сервер:", {
+        roomId,
         color,
-        name, 
-        userId  
-      }));
+        name,
+        userId,
+      });
+      ws.send(
+        JSON.stringify({
+          type: "join",
+          roomId,
+          color,
+          name,
+          userId,
+        })
+      );
     };
 
     ws.onmessage = (event) => {
@@ -269,30 +326,30 @@ function checkGameState() {
       console.log("📩 Сообщение от сервера:", data);
 
       switch (data.type) {
-      case "joined":
-        console.log("🎯 Игрок успешно присоединился:", data);
-        setPlayerColor(data.color);
-        currentRoomId.value = data.roomId;
-        playersCount.value = data.playersCount;
+        case "joined":
+          console.log("🎯 Игрок успешно присоединился:", data);
+          setPlayerColor(data.color);
+          currentRoomId.value = data.roomId;
+          playersCount.value = data.playersCount;
 
-        if (data.fen) {
-          chess.value.load(data.fen); 
-          parseFEN(data.fen);         
-        } else {
-          resetBoard();             
-        }
-        break;
+          if (data.fen) {
+            chess.value.load(data.fen);
+            parseFEN(data.fen);
+          } else {
+            resetBoard();
+          }
+          break;
 
         case "position":
           console.log("♟ Получена позиция от сервера:", data.fen);
           if (data.fen) {
-            chess.value.load(data.fen);  
-            parseFEN(data.fen);          
+            chess.value.load(data.fen);
+            parseFEN(data.fen);
           }
 
           if (data.history) {
             moveHistory.value = data.history;
-            if (data.history.length > 0) {  
+            if (data.history.length > 0) {
               gameStarted.value = true;
               timerStore.cancelPreStart();
               timerStore.preSeconds = 0;
@@ -300,7 +357,7 @@ function checkGameState() {
           }
 
           if (data.turn) {
-            currentTurn.value = data.turn;  
+            currentTurn.value = data.turn;
           }
           gameStarted.value = true;
           break;
@@ -334,7 +391,7 @@ function checkGameState() {
             timerStore.cancelPreStart();
           }
 
-          makeMove(data.from, data.to); 
+          makeMove(data.from, data.to);
           if (data.turn) setCurrentTurn(data.turn);
           gameStarted.value = true;
           break;
@@ -369,16 +426,16 @@ function checkGameState() {
           break;
 
         case "offer-draw":
-          console.log("Поступило предложение ничьи")
+          console.log("Поступило предложение ничьи");
           offerDraw.value = true;
           break;
 
-        case "offer-undo":  
+        case "offer-undo":
           console.log("Поступило предложение undo");
           offerUndo.value = true;
           break;
 
-        case "undo-accepted":  
+        case "undo-accepted":
           console.log("Undo принято оппонентом");
           break;
 
@@ -395,38 +452,50 @@ function checkGameState() {
           if (data.reason === "timeOut") {
             result.value = {
               type: data.winner === "w" ? "whiteWin" : "blackWin",
-              reason: "timeOut"
+              reason: "timeOut",
             };
           } else if (data.reason === "no_first_move") {
             result.value = {
               type: "canceledGame",
-              reason: "no_move"
+              reason: "no_move",
             };
           } else if (data.reason === "give-up") {
             result.value = {
               type: data.winner === "w" ? "whiteWin" : "blackWin",
-              reason: "give-up"
+              reason: "give-up",
             };
-          } else if (data.reason === "agreed-draw") {  
+          } else if (data.reason === "agreed-draw") {
             result.value = {
               type: "draw",
-              reason: "agreed-draw"
+              reason: "agreed-draw",
             };
           } else if (data.reason === "checkMate") {
             result.value = {
               type: data.winner === "w" ? "whiteWin" : "blackWin",
-              reason: "checkMate"
+              reason: "checkMate",
             };
-          } else if (["stalemate", "50-move-rule", "threefold-repetition", "insufficient-material"].includes(data.reason)) {
+          } else if (
+            [
+              "stalemate",
+              "50-move-rule",
+              "threefold-repetition",
+              "insufficient-material",
+            ].includes(data.reason)
+          ) {
             result.value = {
               type: "draw",
-              reason: data.reason
+              reason: data.reason,
             };
           } else {
             console.warn("Неизвестная причина окончания игры:", data.reason);
             result.value = {
-              type: data.winner === "w" ? "whiteWin" : data.winner === "b" ? "blackWin" : "draw",
-              reason: data.reason || "unknown"
+              type:
+                data.winner === "w"
+                  ? "whiteWin"
+                  : data.winner === "b"
+                  ? "blackWin"
+                  : "draw",
+              reason: data.reason || "unknown",
             };
           }
           break;
@@ -449,12 +518,18 @@ function checkGameState() {
   /**
    * Отправляет ход на сервер.
    */
-  function sendMove(from, to) {
+  function sendMove(from, to, promotion: string = 'q') {
     if (ws && ws.readyState === WebSocket.OPEN) {
       const moveData = {
         type: "make_move",
         roomId: currentRoomId.value,
-        move: { from, to, fen: chess.value.fen(), san: chess.value.history({ verbose: true }).pop()?.san || '' },
+        move: {
+          from,
+          to,
+          promotion,
+          fen: chess.value.fen(),
+          san: chess.value.history({ verbose: true }).pop()?.san || "",
+        },
       };
       ws.send(JSON.stringify(moveData));
       console.log("📤 Отправил на сервер ход:", moveData);
@@ -463,108 +538,127 @@ function checkGameState() {
     }
   }
 
-function disconnect() {
-  if (!ws) return;
-  
-  // Удаляем обработчики событий
-  if (ws.onopen) ws.onopen = null;
-  if (ws.onmessage) ws.onmessage = null;
-  if (ws.onclose) ws.onclose = null;
-  if (ws.onerror) ws.onerror = null;
-  
-  try {
-    ws.close();
-  } catch (e) {
-    /* ignore */
-  }
-  ws = null;
-  
-  currentRoomId.value = null;
-  playerColor.value = null;
-  result.value = { type: null, reason: null };
-  gameStarted.value = false;
-  moveHistory.value = [];
-  pieces.value = {};
-  resetBoard();
-  
-  console.log("🔌 Отключились от игры");
-}
+  function disconnect() {
+    if (!ws) return;
 
-/**
- * Завершает игру и отправляет сообщение на сервер
- */
-function endGame(reason: GameReason, winner: "w" | "b" | null = null) {
-  if (reason === "checkMate") {
-    result.value = {
-      type: winner === "w" ? "whiteWin" : "blackWin",
-      reason: "checkMate",
-    };
-  } else if (["stalemate", "50-move-rule", "threefold-repetition", "insufficient-material", "agreed-draw"].includes(reason)) {
-    result.value = { type: "draw", reason };
-  } else if (reason === "timeOut") {
-    result.value = {
-      type: winner === "w" ? "whiteWin" : "blackWin",
-      reason: "timeOut",
-    };
-  } else if (reason === "give-up") {
-    result.value = {
-      type: winner === "w" ? "whiteWin" : "blackWin",
-      reason: "give-up",
-    };
+    // Удаляем обработчики событий
+    if (ws.onopen) ws.onopen = null;
+    if (ws.onmessage) ws.onmessage = null;
+    if (ws.onclose) ws.onclose = null;
+    if (ws.onerror) ws.onerror = null;
+
+    try {
+      ws.close();
+    } catch (e) {
+      /* ignore */
+    }
+    ws = null;
+
+    currentRoomId.value = null;
+    playerColor.value = null;
+    result.value = { type: null, reason: null };
+    gameStarted.value = false;
+    moveHistory.value = [];
+    pieces.value = {};
+    resetBoard();
+
+    console.log("🔌 Отключились от игры");
   }
 
-  const isChessEnding = [
-    "checkMate", 
-    "stalemate", 
-    "50-move-rule", 
-    "threefold-repetition", 
-    "insufficient-material"
-  ].includes(reason);
+  /**
+   * Завершает игру и отправляет сообщение на сервер
+   */
+  function endGame(reason: GameReason, winner: "w" | "b" | null = null) {
+    if (reason === "checkMate") {
+      result.value = {
+        type: winner === "w" ? "whiteWin" : "blackWin",
+        reason: "checkMate",
+      };
+    } else if (
+      [
+        "stalemate",
+        "50-move-rule",
+        "threefold-repetition",
+        "insufficient-material",
+        "agreed-draw",
+      ].includes(reason)
+    ) {
+      result.value = { type: "draw", reason };
+    } else if (reason === "timeOut") {
+      result.value = {
+        type: winner === "w" ? "whiteWin" : "blackWin",
+        reason: "timeOut",
+      };
+    } else if (reason === "give-up") {
+      result.value = {
+        type: winner === "w" ? "whiteWin" : "blackWin",
+        reason: "give-up",
+      };
+    }
 
-  if (!isChessEnding && ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({
-      type: "game_over",
-      roomId: currentRoomId.value,
+    const isChessEnding = [
+      "checkMate",
+      "stalemate",
+      "50-move-rule",
+      "threefold-repetition",
+      "insufficient-material",
+    ].includes(reason);
+
+    if (!isChessEnding && ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(
+        JSON.stringify({
+          type: "game_over",
+          roomId: currentRoomId.value,
+          reason,
+          winner,
+        })
+      );
+      console.log(
+        "📤 Отправил game_over на сервер для нешахматного окончания:",
+        reason
+      );
+    }
+
+    console.log(
+      "Игра окончена:",
       reason,
-      winner, 
-    }));
-    console.log("📤 Отправил game_over на сервер для нешахматного окончания:", reason);
+      winner ? `победитель ${winner}` : "ничья"
+    );
   }
 
-  console.log("Игра окончена:", reason, winner ? `победитель ${winner}` : "ничья");
-}
+  function sendToServer(messageType, extraData = {}) {
+    if (!ws || ws.readyState !== WebSocket.OPEN || !currentRoomId.value) {
+      console.warn("WebSocket не подключён или нет roomId");
+      return;
+    }
 
-function sendToServer(messageType, extraData = {}) {
-  if (!ws || ws.readyState !== WebSocket.OPEN || !currentRoomId.value) {
-    console.warn("WebSocket не подключён или нет roomId");
-    return;
-  }
-
-  const payload = {
-    type: messageType,
-    roomId: currentRoomId.value,
-    ...extraData
-  };
-
-  ws.send(JSON.stringify(payload));
-  console.log("Отправлено на сервер:", payload);
-}
-
-function acceptUndo() {
-  offerUndo.value = false;
-
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({
-      type: "accept-undo",
+    const payload = {
+      type: messageType,
       roomId: currentRoomId.value,
-    }));
-    console.log("Отправил accept-undo на сервер");
+      ...extraData,
+    };
+
+    ws.send(JSON.stringify(payload));
+    console.log("Отправлено на сервер:", payload);
   }
-}
+
+  function acceptUndo() {
+    offerUndo.value = false;
+
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(
+        JSON.stringify({
+          type: "accept-undo",
+          roomId: currentRoomId.value,
+        })
+      );
+      console.log("Отправил accept-undo на сервер");
+    }
+  }
 
   function rejectUndo() {
     offerUndo.value = false;
-  };
+  }
 
   return {
     pieces,
@@ -580,7 +674,9 @@ function acceptUndo() {
     moveHistory,
     offerDraw,
     offerUndo,
-    setInitialPosition: resetBoard,  
+    promotionMove,        
+    showPromotionModal,   
+    setInitialPosition: resetBoard,
     makeMove,
     checkGameState,
     getAvailableMoves,
@@ -591,7 +687,9 @@ function acceptUndo() {
     setOpponent,
     endGame,
     sendToServer,
-    acceptUndo,  
-    rejectUndo, 
+    acceptUndo,
+    rejectUndo,
+    completePromotion,    
+    cancelPromotion,      
   };
 });
