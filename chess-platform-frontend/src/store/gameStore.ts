@@ -25,6 +25,8 @@ export const useGameStore = defineStore("game", () => {
     reason: GameReason | null;
   }
 
+  const userStore = useUserStore();
+
   const chess = ref(new Chess());
 
   /**
@@ -62,13 +64,24 @@ export const useGameStore = defineStore("game", () => {
    * Идентификатор текущей игровой комнаты
    */
   const currentRoomId = ref(null);
+  /**
+   * История всех ходов, выполненных в текущей партии.
+   */
   const moveHistory = ref([]);
-
+  /**
+   * Флаг, указывающий на активное предложение ничьи от соперника.
+   */
   const offerDraw = ref(false);
+  /**
+   * Флаг, указывающий на активное предложение отменить последний ход от соперника.
+   */
   const offerUndo = ref(false);
-
-  const userStore = useUserStore();
-
+  /**
+   * Объект, описывающий ожидающий ход превращения пешки.
+   * Содержит информацию о ходе пешки, достигшей последней горизонтали,
+   * для которого пользователь должен выбрать фигуру превращения.
+   * null - если в данный момент нет ожидающего превращения.
+   */
   const promotionMove = ref<{
     from: string;
     to: string;
@@ -76,6 +89,9 @@ export const useGameStore = defineStore("game", () => {
     pending: boolean;
   } | null>(null);
 
+  /**
+   * Флаг видимости модального окна выбора фигуры превращения.
+   */
   const showPromotionModal = ref(false);
 
   const opponent = ref({
@@ -111,7 +127,7 @@ export const useGameStore = defineStore("game", () => {
 
   function resetBoard() {
     chess.value = new Chess();
-    parseFEN(chess.value.fen()); // Обновляем pieces
+    parseFEN(chess.value.fen()); 
   }
 
   /**
@@ -185,7 +201,7 @@ export const useGameStore = defineStore("game", () => {
         fen: chess.value.fen(),
         turn: move.color === "w" ? "b" : "w",
         san: move.san,
-        promotedTo: move.promotion
+        promotedTo: move.promotion,
       });
 
       lastMove.value = { from, to };
@@ -202,27 +218,27 @@ export const useGameStore = defineStore("game", () => {
     }
   }
 
-function completePromotion(promotionPiece: string): boolean {
-  if (!promotionMove.value) return false;
-  
-  const { from, to } = promotionMove.value;
-  
-  const success = makeMove(from, to, promotionPiece);
-  
-  if (success) {
-    sendMove(from, to, promotionPiece); 
-    
+  function completePromotion(promotionPiece: string): boolean {
+    if (!promotionMove.value) return false;
+
+    const { from, to } = promotionMove.value;
+
+    const success = makeMove(from, to, promotionPiece);
+
+    if (success) {
+      sendMove(from, to, promotionPiece);
+
+      promotionMove.value = null;
+      showPromotionModal.value = false;
+    }
+
+    return success;
+  }
+
+  function cancelPromotion(): void {
     promotionMove.value = null;
     showPromotionModal.value = false;
   }
-  
-  return success;
-}
-
-function cancelPromotion(): void {
-  promotionMove.value = null;
-  showPromotionModal.value = false;
-}
 
   /**
    * Проверяет текущее состояние игры через chess.js
@@ -518,7 +534,7 @@ function cancelPromotion(): void {
   /**
    * Отправляет ход на сервер.
    */
-  function sendMove(from, to, promotion: string = 'q') {
+  function sendMove(from, to, promotion: string = "q") {
     if (ws && ws.readyState === WebSocket.OPEN) {
       const moveData = {
         type: "make_move",
@@ -674,8 +690,8 @@ function cancelPromotion(): void {
     moveHistory,
     offerDraw,
     offerUndo,
-    promotionMove,        
-    showPromotionModal,   
+    promotionMove,
+    showPromotionModal,
     setInitialPosition: resetBoard,
     makeMove,
     checkGameState,
@@ -689,7 +705,7 @@ function cancelPromotion(): void {
     sendToServer,
     acceptUndo,
     rejectUndo,
-    completePromotion,    
-    cancelPromotion,      
+    completePromotion,
+    cancelPromotion,
   };
 });

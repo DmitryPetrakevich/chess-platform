@@ -45,6 +45,15 @@
           {{ gameStatusText }}
         </div>
 
+        <div v-if="gameStore.result.type && mode === 'both'">
+          <router-link 
+          class="back-to-main"
+          to="/"
+          >
+            Вернуться на главную
+          </router-link>
+        </div>
+
         <div v-if="gameStore.offerDraw && !gameStore.result.type && mode === 'both'" class="offer-draw">
           <button @click="onClickAccceptDraw()" class="offer-draw-btn accept">
             &#10004;
@@ -125,6 +134,15 @@
       >
         {{ gameStatusText }}
       </div>
+
+      <div v-if="gameStore.result.type && mode === 'bottom'">
+          <router-link 
+          class="back-to-main"
+          to="/"
+          >
+            Вернуться на главную
+          </router-link>
+        </div>
 
       <GameActions v-if="mode == 'bottom' && !gameStore.result.type" />
 
@@ -487,12 +505,34 @@ watch(
 
 .game-status {
   text-align: center;
-  padding: 8px;
+  padding: 15px 8px;
   font-weight: 700;
   color: @gray-900;
   background: @gray-50;
   border: 1px solid @gray-200;
   font-size: 13px;
+}
+
+.back-to-main {
+  display: inline-block;
+  box-sizing: border-box;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 20px 30px;
+  width: 100%;
+  background-color: @green-200;
+  transition: all 0.3s ease;
+  font-size: 16px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-decoration: none;
+  text-align: center;
+  color: inherit;
+
+  &:hover {
+    background-color: @green-300;
+  }
+
 }
 
 .offer-draw,
@@ -578,6 +618,10 @@ watch(
     font-size: 16px;
   }
 
+  .back-to-main {
+    font-size: 14px;
+  }
+
   .player-name {
     font-size: 14px;
   }
@@ -616,6 +660,11 @@ watch(
 
   .game-status {
     margin-top: 5px;
+  }
+
+  .back-to-main {
+    font-size: 12px;
+    padding: 15px 30px;
   }
 }
 

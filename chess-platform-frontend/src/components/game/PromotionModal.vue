@@ -1,9 +1,6 @@
 <template>
   <div class="promotion-modal-overlay" @click="cancel">
     <div class="promotion-modal" @click.stop>
-      <div class="promotion-title">
-        Выберите фигуру превращения
-      </div>
       <div class="promotion-pieces">
         <button 
           v-for="piece in availablePieces" 
@@ -80,26 +77,16 @@ function cancel() {
 .promotion-modal {
   background: white;
   border-radius: 12px;
-  padding: 12px;
+  padding: 5px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   min-width: 200px;
   max-width: 400px;
-}
-
-.promotion-title {
-  text-align: center;
-  font-size: 16px;
-  font-weight: 600;
-  font-family: Arial, Helvetica, sans-serif;
-  margin-bottom: 20px;
-  color: #333;
 }
 
 .promotion-pieces {
   display: flex;
   flex-direction: row;
   gap: 16px;
-  margin-bottom: 20px;
 }
 
 .promotion-piece {
