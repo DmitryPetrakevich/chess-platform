@@ -8,6 +8,7 @@ const { handleConnection } = require("./src/ws/handlers");
 
 const authRoutes = require("./src/routes/authRoutes");
 const userRoutes = require("./src/routes/userRoutes");
+const gamesRoutes = require("./src/routes/gamesRoutes")
 
 const app = express();
 app.use(express.json());
@@ -15,6 +16,7 @@ app.use(corsMiddleware);
 
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
+app.use("/api/games", gamesRoutes)
 
 app.get("/", (req, res) => {
   res.json({ message: "Шахматный сервер работает!" });

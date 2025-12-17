@@ -47,4 +47,39 @@ async function saveGameToDB(gameData) {
   }
 }
 
-module.exports = { pool, saveGameToDB };
+async function getGamesForUser (userId) {
+  const query = `
+  SELECT 
+      room_id AS "roomId",
+      white_user_id AS "whiteUserId",
+      black_user_id AS "blackUserId",
+      white_username AS "whiteUsername",
+      black_username AS "blackUsername",
+      white_rating AS "whiteRating",
+      black_rating AS "blackRating",
+      result,
+      reason,
+      moves,
+      final_fen AS "finalFen",
+      created_at AS "createdAt",
+      time_control AS "timeControl"
+    FROM games
+    WHERE white_user_id = $1 OR black_user_id = $1
+    ORDER BY created_at DESC
+    LIMIT 30
+  `;
+
+  try {
+    const result = await pool.query(query, [userId]);
+    return result.rows;
+  } catch(err) {
+    console.error("Ошибка запроса партий из БД", err);
+    throw err;
+  }
+}
+
+module.exports = { 
+  pool, 
+  saveGameToDB,
+  getGamesForUser 
+};
