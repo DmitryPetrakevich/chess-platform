@@ -317,13 +317,17 @@ export const useGameStore = defineStore("game", () => {
     ws = new WebSocket("ws://localhost:3000");
     ws.roomId = roomId;
     const userId = userStore.userId;
+    
+    const usernameToSend = (name && name.trim() !== "") 
+    ? name 
+    : (userStore.username && userStore.username.trim() !== "" ? userStore.username : "Player");
 
     ws.onopen = () => {
       console.log("✅ WebSocket подключен (client)");
       console.log("🎨 Отправляю данные на сервер:", {
         roomId,
         color,
-        name,
+        name: usernameToSend,
         userId,
       });
       ws.send(
@@ -331,7 +335,7 @@ export const useGameStore = defineStore("game", () => {
           type: "join",
           roomId,
           color,
-          name,
+          name: usernameToSend,
           userId,
         })
       );

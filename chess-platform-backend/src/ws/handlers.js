@@ -37,8 +37,10 @@ async function saveGameAndCleanup(roomId, reason, winner = null) {
     const gameData = {
       roomId,
       whiteUserId: room.white?.userId || null,
+      whiteUsername: room.white?.name || "Anonymous",
       whiteRating: white.rating || 1200,
       blackUserId: room.black?.userId || null,
+      blackUsername: room.black?.name || "Anonymous",
       blackRating: black.rating || 1200,
       result: 
         reason === "agreed-draw" ? "draw" :
