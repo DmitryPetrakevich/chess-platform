@@ -94,7 +94,6 @@ function handleConnection(ws) {
     const playersCount = addClientToRoom(roomId, ws, preferredColor);
     const room = rooms.get(roomId);
 
-    // Отправляем игроку данные о его подключении
     ws.send(
       JSON.stringify({
         type: "joined",
@@ -157,7 +156,6 @@ function handleConnection(ws) {
       }
     }
 
-    // Уведомляем других игроков о новом участнике
     broadcastToRoom(
       roomId,
       {
@@ -172,12 +170,23 @@ function handleConnection(ws) {
       ws
     );
 
+    if (room.isGameOver) {
+      ws.send(JSON.stringify({
+        type: "gameOver",
+        reason: room.result.reason,
+        winner: room.result.winner
+      }));
+    }
+
     // Если оба игрока на месте — начинаем игру
-    if (room.white && room.black) {
+    if (room.white && room.black && !room.isGameOver) {
       const hasMoves = room.game.history().length > 0;
 
       if (room.timer && !hasMoves) {
         room.timer.startPreStart(() => {
+          room.isGameOver = true;
+          room.result = { reason: "no_first_move", winner: null };
+
           broadcastToRoom(roomId, {
             type: "gameOver",
             reason: "no_first_move",
@@ -207,6 +216,11 @@ function handleMove(data, ws) {
   const { roomId, move } = data;
   const room = rooms.get(roomId);
   if (!room) return;
+
+  if (room.isGameOver) {
+    ws.send(JSON.stringify({ type: "error", message: "Game is over" }));
+    return;
+  }
 
   if (
     (room.turn === "w" && ws !== room.white) ||
@@ -301,7 +315,10 @@ function handleMove(data, ws) {
     }
     
     console.log(`🏁 Причина окончания: ${reason}, победитель: ${winner}`);
-    
+
+    room.isGameOver = true;
+    room.result = { reason, winner };
+        
     if (room.timer) {
       room.timer.stop();
     }
@@ -322,7 +339,7 @@ function handleMove(data, ws) {
     return; // Прекращаем дальнейшую обработку таймера
   }
 
-  // 3. Если игра не завершена, запускаем/обновляем таймер
+  // Если игра не завершена, запускаем/обновляем таймер
   if (room.timer) {
     room.timer.stopPreStart();
     room.timer.start();
@@ -339,7 +356,9 @@ function handleMove(data, ws) {
         if (timeCheck?.timeOut) {
           console.log(`⏰ [${roomId}] Игра завершена по таймеру, победитель: ${timeCheck.winner}`);
 
-          // Сохраняем партию при таймауте
+          room.isGameOver = true;
+          room.result = { reason: "timeOut", winner: timeCheck.winner };
+
           saveGameAndCleanup(roomId, "timeOut", timeCheck.winner);
           
           broadcastToRoom(roomId, {
@@ -364,6 +383,11 @@ function handleMove(data, ws) {
     const room = rooms.get(roomId);
     if (!room) return;
 
+    if (room.isGameOver) {
+      ws.send(JSON.stringify({ type: "error", message: "Game is over" }));
+      return;
+    }
+
     broadcastToRoom(roomId, {
       type: "offer-draw",
     }, ws);
@@ -373,6 +397,11 @@ function handleMove(data, ws) {
     const { roomId } = data;
     const room = rooms.get(roomId);
     if (!room) return;
+
+    if (room.isGameOver) {
+      ws.send(JSON.stringify({ type: "error", message: "Game is over" }));
+      return;
+    }
 
     broadcastToRoom(roomId, {
       type: "offer-undo",
@@ -441,12 +470,11 @@ function handleGameOver(data, ws) {
 
   console.log(`🏁 Получен game_over от клиента: ${reason}, winner: ${winner}`);
 
-  // УБРАТЬ: весь код с saveGameToDB отсюда
-  
-  // Сохраняем и очищаем (эта функция уже содержит сохранение в БД)
+  room.isGameOver = true;
+  room.result = { reason, winner };
+
   saveGameAndCleanup(roomId, reason, winner);
 
-  // Только broadcast (без сохранения - оно уже в saveGameAndCleanup)
   broadcastToRoom(roomId, {
     type: "gameOver",
     reason: reason,
@@ -459,7 +487,15 @@ function handleAcceptDraw(data, ws) {
   const room = rooms.get(roomId);
   if (!room) return;
 
+  if (room.isGameOver) {
+    ws.send(JSON.stringify({ type: "error", message: "Game is over" }));
+    return;
+  }
+
   console.log("🤝 Ничья принята — завершаем игру");
+
+  room.isGameOver = true;
+  room.result = { reason: "agreed-draw", winner: null };
   
   saveGameAndCleanup(roomId, "agreed-draw", null);
 

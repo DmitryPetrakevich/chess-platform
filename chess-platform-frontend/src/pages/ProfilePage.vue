@@ -1,13 +1,14 @@
 <template>
-  <div class="profile">
+  <div class="profile-page">
     <div class="profile-container">
-
-      <ProfileRatings />
+      <aside class="sidebar">
+        <ProfileRatings />
+        <ProfileActivity class="activity-section" />
+      </aside>
 
       <main class="main-content">
-        <h1 class="title">Профиль игрока {{ userStore.username }}</h1>
-
-      
+        <ProfileMain />
+        <ProfileGames />
       </main>
     </div>
   </div>
@@ -16,78 +17,69 @@
 <script setup>
 import { useUserStore } from "@/store/userStore";
 import ProfileRatings from "@/components/profile/ProfileRatings.vue";
+import ProfileMain from "@/components/profile/ProfileMain.vue";
+import ProfileActivity from "@/components/profile/ProfileActivity.vue";
+import ProfileGames from "@/components/profile/ProfileGames.vue";
 
 const userStore = useUserStore();
 </script>
 
-<style scoped>
-.profile {
-  padding: 0 60px;
-
+<style scoped lang="less">
+.profile-page {
+  padding: 30px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
 .profile-container {
-  background: #1c1c1c; 
-  width: 100%;
-  min-height: 100vh;
+  max-width: 1400px;
+  margin: 0 auto;
   display: flex;
-  color: #fff;
+  gap: 30px;
+  min-height: calc(100vh - 60px);
 }
 
 .sidebar {
-  width: 250px;
-  padding: 20px;
-  background: #3a3a3a;
-  border-right: 1px solid #555;
+  width: 300px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  gap: 20px;
 }
 
-.sidebar-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 15px;
-  color: #e74c3c;
-}
-
-.ratings-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.rating-item {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  padding: 8px;
-  background: #4a4a4a;
-  border-radius: 4px;
-}
-
-.rating-type {
-  font-weight: 500;
-}
-
-.rating-value {
-  font-weight: 700;
-  color: #e74c3c;
+.activity-section {
+  flex: 1;
+  min-height: 0;
 }
 
 .main-content {
   flex: 1;
-  padding: 20px;
   display: flex;
   flex-direction: column;
-  /* align-items: center;
-  justify-content: center; */
+  gap: 20px;
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
-.title {
-  color: #e74c3c;
-  font-size: 3rem;
-  font-weight: 700;
-  margin: 0 0 20px 0;
-  text-align: center;
+@media (max-width: 1100px) {
+  .profile-container {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 15px;
+  }
+  
+  .main-content {
+    padding: 20px;
+  }
 }
 </style>

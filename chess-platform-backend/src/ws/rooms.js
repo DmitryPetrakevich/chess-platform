@@ -167,6 +167,8 @@ function addClientToRoom(roomId, ws, preferredColor = "random") {
       game: new Chess(),
       history: [],
       fen: new Chess().fen(),
+      isGameOver: false,      
+      result: null,
     });
   }
 

@@ -11,26 +11,32 @@
         <router-link to="/" class="page-header__logo">
           <div class="page-header__logo__container">
             <img :src="logoIcon" alt="Логотип" class="page-header__logo-img" />
-            <span class="page-header__logo-text">
-              TUSUR Chess
-            </span>
+            <span class="page-header__logo-text"> TUSUR Chess </span>
           </div>
         </router-link>
       </div>
 
       <nav class="page-header__nav">
-        <router-link to="coordinates" class="page-header__nav-link">
+        <router-link to="#" class="page-header__nav-link">
           Координаты
         </router-link>
-        <router-link to="puzzles" class="page-header__nav-link">Задачи</router-link>
+        <router-link to="#" class="page-header__nav-link">
+          Задачи
+        </router-link>
         <a class="page-header__nav-link">Новости</a>
       </nav>
 
       <nav v-if="!userStore.isLoggedIn" class="page-header__btns">
-        <router-link to="/login" class="page-header__btn page-header__btn--primary">
+        <router-link
+          to="/login"
+          class="page-header__btn page-header__btn--primary"
+        >
           Войти
         </router-link>
-        <router-link to="/signup" class="page-header__btn page-header__btn--accent">
+        <router-link
+          to="/signup"
+          class="page-header__btn page-header__btn--accent"
+        >
           Регистрация
         </router-link>
       </nav>
@@ -40,7 +46,11 @@
           <img :src="searchIcon" alt="Поиск" class="search-icon" />
         </div>
         <div>
-          <img :src="notificationIcon" alt="Оповещение" class="notification-icon" />
+          <img
+            :src="notificationIcon"
+            alt="Оповещение"
+            class="notification-icon"
+          />
         </div>
 
         <div class="page-header__user-name" @click="toggleMenu">
@@ -48,37 +58,64 @@
           <img :src="profileNameIcon" alt="Профиль" class="profile-icon" />
         </div>
 
-        <div v-if="isMenuOpen" class="page-header__overlay" @click="closeMenu"></div>
+        <div
+          v-if="isMenuOpen"
+          class="page-header__overlay"
+          @click="closeMenu"
+        ></div>
 
         <div v-if="isMenuOpen" class="page-header__dropdown">
-          <router-link to="/profile" class="page-header__dropdown-item" @click="closeMenu">
-            <img :src="profileIcon" alt="Профиль" class="profile-menu-icon"  />
+          <router-link
+             to="/profile"
+            class="page-header__dropdown-item"
+            @click="closeMenu"
+          >
+            <img :src="profileIcon" alt="Профиль" class="profile-menu-icon" />
             Профиль
           </router-link>
 
-          <router-link to="/profile" class="page-header__dropdown-item" @click="closeMenu">
-            <img :src="messageIcon" alt="Входящие" class="profile-menu-icon"/>
+          <router-link
+            to="#"
+            class="page-header__dropdown-item"
+          >
+            <img :src="messageIcon" alt="Входящие" class="profile-menu-icon" />
             Входящие
           </router-link>
 
-          <router-link to="/profile" class="page-header__dropdown-item" @click="closeMenu">
-            <img :src="settingsIcon" alt="Настройки" class="profile-menu-icon" />
+          <router-link
+            to="#"
+            class="page-header__dropdown-item"
+          >
+            <img
+              :src="settingsIcon"
+              alt="Настройки"
+              class="profile-menu-icon"
+            />
             Настройки
           </router-link>
 
-          <button @click="userStore.logout()" class="page-header__dropdown-item">
+          <button
+            @click="userStore.logout()"
+            class="page-header__dropdown-item"
+          >
             <img :src="logOutIcon" alt="Выйти" class="profile-menu-icon" />
             Выйти
           </button>
 
           <hr class="divider" />
 
-          <router-link to="/profile" class="page-header__dropdown-item" @click="closeMenu">
+          <router-link
+            to="#"
+            class="page-header__dropdown-item"
+          >
             <img :src="languageIcon" alt="Язык" class="profile-menu-icon" />
             Язык
           </router-link>
 
-          <router-link to="/profile" class="page-header__dropdown-item" @click="closeMenu">
+          <router-link
+            to="#"
+            class="page-header__dropdown-item"
+          >
             <img :src="themeIcon" alt="Тема" class="profile-menu-icon" /> Тема
           </router-link>
         </div>
@@ -86,26 +123,44 @@
     </div>
   </header>
 
-  <div v-if="isMobileMenuOpen" class="mobile-menu-overlay" @click="closeMobileMenu"></div>
+  <div
+    v-if="isMobileMenuOpen"
+    class="mobile-menu-overlay"
+    @click="closeMobileMenu"
+  ></div>
 
   <div v-if="isMobileMenuOpen" class="mobile-menu">
     <nav class="mobile-menu__nav">
-      <router-link to="coordinates" class="page-header__nav-link" @click="closeMobileMenu">Координаты
+      <router-link
+        to="coordinates"
+        class="page-header__nav-link"
+        @click="closeMobileMenu"
+        >Координаты
       </router-link>
-      <router-link to="puzzles" class="page-header__nav-link" @click="closeMobileMenu">
+      <router-link
+        to="puzzles"
+        class="page-header__nav-link"
+        @click="closeMobileMenu"
+      >
         Задачи
       </router-link>
-      <a class="page-header__nav-link" @click="closeMobileMenu">
-        Новости
-      </a>
+      <a class="page-header__nav-link" @click="closeMobileMenu"> Новости </a>
     </nav>
 
     <div class="mobile-menu__user">
       <template v-if="!userStore.isLoggedIn">
-        <router-link to="/login" class="page-header__btn--primary" @click="closeMobileMenu">
+        <router-link
+          to="/login"
+          class="page-header__btn--primary"
+          @click="closeMobileMenu"
+        >
           Войти
         </router-link>
-        <router-link to="/signup" class="page-header__btn--accent" @click="closeMobileMenu">
+        <router-link
+          to="/signup"
+          class="page-header__btn--accent"
+          @click="closeMobileMenu"
+        >
           Регистрация
         </router-link>
       </template>
@@ -169,7 +224,7 @@ watch(() => userStore.isLoggedIn, closeMenu);
   box-sizing: border-box;
   height: 60px;
   width: 100%;
-  background-color: #1c1c1c; 
+  background-color: #1c1c1c;
   z-index: 1000;
 }
 
@@ -514,8 +569,6 @@ watch(() => userStore.isLoggedIn, closeMenu);
     gap: 10px;
     font-size: 16px;
   }
-
-
 
   .burger {
     display: flex;

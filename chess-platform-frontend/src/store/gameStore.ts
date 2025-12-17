@@ -351,6 +351,7 @@ export const useGameStore = defineStore("game", () => {
           if (data.fen) {
             chess.value.load(data.fen);
             parseFEN(data.fen);
+            checkGameState();
           } else {
             resetBoard();
           }
@@ -361,6 +362,7 @@ export const useGameStore = defineStore("game", () => {
           if (data.fen) {
             chess.value.load(data.fen);
             parseFEN(data.fen);
+            checkGameState();
           }
 
           if (data.history) {
