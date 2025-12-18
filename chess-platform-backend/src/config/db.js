@@ -11,7 +11,7 @@ const pool = new Pool({
 
 async function saveGameToDB(gameData) {
   try {
-    console.log("Пытаемся сохранить в БД:", gameData); 
+    console.log("Пытаемся сохранить в БД:", gameData);
 
     const query = `
       INSERT INTO games (
@@ -21,10 +21,10 @@ async function saveGameToDB(gameData) {
         result, reason, moves, final_fen,
         time_control, created_at, finished_at, duration_seconds
       ) VALUES (
-        $1, $2, $3, $4,   
-        $5, $6, $7,    
+        $1, $2, $3, $4,
+        $5, $6, $7,
         $8, $9, $10, $11,
-        $12, NOW(), NOW(), $13  
+        $12, NOW(), NOW(), $13
       )
     `;
 
@@ -32,10 +32,10 @@ async function saveGameToDB(gameData) {
       gameData.roomId,
       gameData.whiteUserId || null,
       gameData.whiteRating || 1200,
-      gameData.whiteUsername || "Anonymous",   
+      gameData.whiteUsername || "Anonymous",   // ← $4
       gameData.blackUserId || null,
       gameData.blackRating || 1200,
-      gameData.blackUsername || "Anonymous",   
+      gameData.blackUsername || "Anonymous",   // ← $7
       gameData.result,
       gameData.reason || null,
       gameData.moves || "",
