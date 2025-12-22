@@ -34,8 +34,9 @@
       </div>
 
       <div class="middle">
+        <GameReplayer v-if="mode === 'both'" />
         <MoveHistory v-if="mode === 'both'" />
-
+        
         <div
           v-if="mode === 'both' && gameStore.result.type"
           class="game-status"
@@ -142,7 +143,10 @@
           >
             Вернуться на главную
           </router-link>
-        </div>
+      </div>
+
+      <GameReplayer v-if="mode === 'bottom'" />
+      <!-- <MoveHistory v-if="mode === 'bottom'" /> -->
 
       <GameActions v-if="mode == 'bottom' && !gameStore.result.type" />
 
@@ -197,6 +201,7 @@ import { useTimerStore } from "@/store/timerStore";
 
 import MoveHistory from "./MoveHistory.vue";
 import GameActions from "./GameActions.vue";
+import GameReplayer from "./GameReplayer.vue";
 
 const userStore = useUserStore();
 const gameStore = useGameStore();
@@ -412,8 +417,7 @@ watch(
   justify-content: space-between;
   gap: 12px;
   padding: 10px;
-  background: white;
-  // border-radius: 5px;
+  background: @gray-50;
   transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
   border: 1px solid #e6eefb;
 }
@@ -643,6 +647,7 @@ watch(
 
   .player-bottom {
     border-radius: 10px;
+    margin-top: 12px;
   }
 
   .game-actions {

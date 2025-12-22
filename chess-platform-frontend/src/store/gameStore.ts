@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref, reactive, computed } from "vue";
+import { ref, watch, computed } from "vue";
 import { useTimerStore } from "./timerStore";
 import { useUserStore } from "./userStore";
 import { Chess } from "chess.js";
@@ -72,6 +72,7 @@ export const useGameStore = defineStore("game", () => {
    * Флаг, указывающий на активное предложение ничьи от соперника.
    */
   const offerDraw = ref(false);
+  const currentReplayIndex = ref(-1);
   /**
    * Флаг, указывающий на активное предложение отменить последний ход от соперника.
    */
@@ -99,6 +100,33 @@ export const useGameStore = defineStore("game", () => {
     username: "Opponent",
     blitzRating: 1200,
   });
+
+  watch(moveHistory, () => {
+  currentReplayIndex.value = moveHistory.value.length;
+}, { deep: true });
+
+function goToMove(index) {
+  if (index < 0) index = 0;
+  if (index > moveHistory.value.length) index = moveHistory.value.length;
+
+  currentReplayIndex.value = index;
+
+  // Восстанавливаем позицию с начала
+  chess.value.reset();
+  chess.value.load("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
+  // Применяем все ходы до выбранного
+  for (let i = 0; i < index; i++) {
+    const move = moveHistory.value[i];
+    chess.value.move(move.san);
+  }
+
+  parseFEN(chess.value.fen());
+}
+
+function isReplayMode() {
+  return currentReplayIndex.value < moveHistory.value.length;
+}
 
   function setOpponent(data) {
     opponent.value = {
@@ -698,6 +726,9 @@ export const useGameStore = defineStore("game", () => {
     offerUndo,
     promotionMove,
     showPromotionModal,
+    currentReplayIndex,
+    goToMove,
+    isReplayMode,
     setInitialPosition: resetBoard,
     makeMove,
     checkGameState,
