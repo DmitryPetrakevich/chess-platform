@@ -9,7 +9,6 @@
       
       <div class="user-details">
         <h1 class="username">{{ userStore.username }}</h1>
-        <!-- <p class="user-title">Шахматист</p> -->
         
         <div class="stats-grid">
           <div class="stat-item">
@@ -132,18 +131,18 @@ const streak = computed(() => 3); // Временно
 
 @media (max-width: 768px) {
   .profile-info {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    // flex-direction: column;
+    // align-items: center;
+    // text-align: center;
   }
   
   .username {
-    font-size: 28px;
+    // font-size: 28px;
   }
   
   .stats-grid {
-    justify-content: center;
-    gap: 30px;
+    // justify-content: center;
+    // gap: 30px;
   }
 }
 </style>
