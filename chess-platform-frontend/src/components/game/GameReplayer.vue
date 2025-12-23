@@ -32,6 +32,7 @@
 </template>
 
 <script setup>
+  import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useGameStore } from '@/store/gameStore';
 
 import nextMoveIcon from '@/assets/forward.svg'
@@ -40,6 +41,33 @@ import backMoveIcon from '@/assets/forward.svg'
 import goToStartIcon  from '@/assets/fast-forward.svg'
 
 const gameStore = useGameStore();
+
+function handleKeyDown(event) {
+  if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+  const key = event.key.toLowerCase();
+
+  const isPrev = key === 'a' || key === 'arrowleft' || key === 'ф';
+  const isNext = key === 'd' || key === 'arrowright' || key === 'в';
+
+  if (isPrev || isNext) {
+    event.preventDefault(); 
+    if (isPrev) {
+      gameStore.goToMove(gameStore.currentReplayIndex - 1);
+    } else {
+      gameStore.goToMove(gameStore.currentReplayIndex + 1);
+    }
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
+
 
 </script>
 

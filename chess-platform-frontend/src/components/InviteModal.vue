@@ -249,6 +249,9 @@ onBeforeUnmount(() => {
 }
 
 .title {
+  margin: 0;
+  margin-bottom: 10px;
+  padding: 0;
   font-family: "Manrope", sans-serif;
 }
 
