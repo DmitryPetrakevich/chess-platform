@@ -3,7 +3,7 @@
     <div class="profile-container">
       <aside class="sidebar">
         <ProfileRatings />
-        <ProfileActivity class="activity-section" />
+        <!-- <ProfileActivity class="activity-section" /> -->
       </aside>
 
       <main class="main-content">

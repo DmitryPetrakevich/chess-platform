@@ -3,27 +3,11 @@
     <div class="profile-info">
       <div class="avatar-section">
         <div class="avatar">
-          <span class="avatar-initial">{{ userInitial }}</span>
         </div>
       </div>
       
       <div class="user-details">
         <h1 class="username">{{ userStore.username }}</h1>
-        
-        <div class="stats-grid">
-          <div class="stat-item">
-            <div class="stat-value">{{ totalGames }}</div>
-            <div class="stat-label">Партий</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">{{ winRate }}%</div>
-            <div class="stat-label">Побед</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">{{ streak }}</div>
-            <div class="stat-label">Серия</div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -34,14 +18,6 @@ import { computed } from "vue";
 import { useUserStore } from "@/store/userStore";
 
 const userStore = useUserStore();
-
-const userInitial = computed(() => {
-  return userStore.username?.charAt(0).toUpperCase() || "U";
-});
-
-const totalGames = computed(() => 156); // Временно
-const winRate = computed(() => 62); // Временно
-const streak = computed(() => 3); // Временно
 </script>
 
 <style scoped lang="less">
@@ -65,20 +41,14 @@ const streak = computed(() => 3); // Временно
 }
 
 .avatar {
-  width: 120px;
-  height: 120px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #5fc877 0%, #06855b 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
-}
-
-.avatar-initial {
-  font-size: 48px;
-  font-weight: 700;
-  color: white;
 }
 
 .level-badge {

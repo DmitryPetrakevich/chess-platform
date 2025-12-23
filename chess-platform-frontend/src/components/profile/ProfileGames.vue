@@ -61,7 +61,7 @@
             <div class="game-meta">
               <div class="meta-item">
                 <span class="meta-icon">📊</span>
-                <span>{{ game.moves.length }} ходов</span>
+                <span>{{ Math.ceil(game.moves.length / 2) }} ходов</span>
               </div>
               <div class="meta-item">
                 <span class="meta-icon">⏱️</span>
