@@ -105,23 +105,21 @@ export const useGameStore = defineStore("game", () => {
   currentReplayIndex.value = moveHistory.value.length;
 }, { deep: true });
 
-function goToMove(index) {
+function goToMove(index: number) {
   if (index < 0) index = 0;
   if (index > moveHistory.value.length) index = moveHistory.value.length;
 
   currentReplayIndex.value = index;
 
-  // Восстанавливаем позицию с начала
-  chess.value.reset();
-  chess.value.load("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-
-  // Применяем все ходы до выбранного
-  for (let i = 0; i < index; i++) {
-    const move = moveHistory.value[i];
-    chess.value.move(move.san);
+  if (index === 0) {
+    chess.value.reset();
+  } else {
+    const targetFen = moveHistory.value[index - 1].fen;
+    chess.value.load(targetFen);
   }
 
   parseFEN(chess.value.fen());
+  currentTurn.value = chess.value.turn();
 }
 
 function isReplayMode() {
