@@ -70,6 +70,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", checkMobile);
+  game.disconnect();
 });
 
 watch(() => game.playerColor, (newColor, oldColor) => {

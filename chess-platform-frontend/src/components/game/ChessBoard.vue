@@ -134,6 +134,7 @@ function pieceImage(squareId) {
 function onSquareClick(id) {
   if (game.result.type) return;
   if (game.showPromotionModal) return;
+  if (game.isReplayMode()) return;
 
   const clickedPiece = game.pieces[id];
 
@@ -191,7 +192,7 @@ function onSquareClick(id) {
  * @param {DragEvent} event - объект события dragstart.
  */
 function onDragStart(id, event) {
-  if (game.result.type) {
+  if (game.result.type || game.isReplayMode()) {
   event.preventDefault();
   return; 
 }

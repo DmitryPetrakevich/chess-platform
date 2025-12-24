@@ -1,11 +1,8 @@
 <template>
   <div class="main">
 
-    <div class="play-friends">
-      <!-- <router-link to="/play" class="play-friends-btn">
-        Сыграть с компьютером
-      </router-link> -->
-
+  <div class="play-friends">
+    <template v-if="userStore.isLoggedIn">
       <button class="play-friends-btn">
         Сыграть с компьютером
       </button>
@@ -13,7 +10,24 @@
       <button class="play-friends-btn" @click="openInvite">
         Бросить вызов другу
       </button>
-    </div>
+    </template>
+
+    <template v-else>
+      <!-- Сообщение для неавторизованных -->
+      <div class="auth-message">
+        <p class="auth-title">Зарегистрируйтесь, чтобы играть</p>
+        <p class="auth-desc">Создайте аккаунт или войдите, чтобы начать партию с другом</p>
+        <div class="auth-buttons">
+          <router-link to="/login" class="auth-btn login">
+            Войти
+          </router-link>
+          <router-link to="/signup" class="auth-btn signup">
+            Регистрация
+          </router-link>
+        </div>
+      </div>
+    </template>
+  </div>
 
     <InviteModal v-if="showInvite" @close="showInvite = false" @created="onRoomCreated" />
   </div>
@@ -21,8 +35,12 @@
 
 <script setup>
 import { ref } from 'vue';
-import InviteModal from '@/components/InviteModal.vue';
+import { useUserStore } from '@/store/userStore';
 import { RouterLink } from 'vue-router'
+
+import InviteModal from '@/components/InviteModal.vue';
+
+const userStore = useUserStore();
 
 const showInvite = ref(false); 
 
@@ -89,6 +107,58 @@ function onRoomCreated(roomData) {
 .play-friends-btn:active {
   transform: translateY(0);
   box-shadow: 0 2px 10px rgba(52, 152, 219, 0.4);
+}
+
+.auth-message {
+  text-align: center;
+  padding: 20px;
+  color: #bdc3c7;
+}
+
+.auth-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: white;
+}
+
+.auth-desc {
+  font-size: 14px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.auth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-btn {
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.login {
+  background: #555;
+  color: white;
+}
+
+.login:hover {
+  background: #666;
+}
+
+.signup {
+  background: #e74c3c;
+  color: white;
+}
+
+.signup:hover {
+  background: #c0392b;
 }
 
 @media(max-width: 480px) {

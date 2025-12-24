@@ -9,7 +9,7 @@
         <div class="move-number">{{ index + 1 + "." }}</div>
 
         <div  class="move white"
-          :class="{ active: selectedMove === row.whiteIndex }"
+          :class="{ active: isActive(row.whiteIndex) }"
           @click="selectMove(row.whiteIndex)"
           >
           {{ row.white }}
@@ -17,7 +17,7 @@
 
         <div v-if="row.black"
           class="move black"
-          :class="{ active: selectedMove === row.blackIndex }"
+          :class="{ active: isActive(row.blackIndex) }"
           @click="selectMove(row.blackIndex)"
           >
           {{ row.black }}
@@ -33,11 +33,18 @@ import { useGameStore } from "@/store/gameStore";
 
 const gameStore = useGameStore();
 
-const selectedMove = ref(null);
+// const selectedMove = ref(null);
 
-function selectMove(index) {
-  selectedMove.value = index;
-  // Здесь можно добавить логику для просмотра позиции 
+function selectMove(moveIndex) {
+  if(moveIndex >= 0) {
+    gameStore.goToMove(moveIndex + 1);
+  } else {
+    gameStore.goToMove(0)
+  }
+}
+
+function isActive(moveIndex) {
+  return gameStore.currentReplayIndex > 0 && moveIndex === gameStore.currentReplayIndex - 1;
 }
 
 /**
@@ -60,7 +67,7 @@ const formattedMoves = computed(() => {
 })
 
 function formatMove(m) {
-  return m.san;
+  return m?.san || "";
 }
 </script>
 
@@ -114,7 +121,9 @@ function formatMove(m) {
 }
 
 .move.active {
-  background: @blue-200;
+  background: @blue-300;
+  font-weight: 700;
+  color: white;
 }
 
 .move.empty {

@@ -113,9 +113,16 @@ function goToMove(index: number) {
 
   if (index === 0) {
     chess.value.reset();
+    lastMove.value = { from: null, to: null }; 
   } else {
     const targetFen = moveHistory.value[index - 1].fen;
     chess.value.load(targetFen);
+
+    const prevMove = moveHistory.value[index - 1];
+    lastMove.value = {
+      from: prevMove.from,
+      to: prevMove.to,
+    };
   }
 
   parseFEN(chess.value.fen());
@@ -609,6 +616,7 @@ function isReplayMode() {
     moveHistory.value = [];
     pieces.value = {};
     resetBoard();
+    shouldRedirect.value = null;
 
     console.log("🔌 Отключились от игры");
   }
