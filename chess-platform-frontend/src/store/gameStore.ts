@@ -492,6 +492,19 @@ function isReplayMode() {
 
         case "undo-accepted":
           console.log("Undo принято оппонентом");
+
+          if (moveHistory.value.length >= 1) {
+            const previousMove = moveHistory.value[moveHistory.value.length - 1];
+            lastMove.value = {
+              from: previousMove.from,
+              to: previousMove.to,
+            };
+          } else {
+            lastMove.value = { from: null, to: null };
+          }
+
+          currentReplayIndex.value = moveHistory.value.length;
+
           break;
 
         case "preStartUpdate":

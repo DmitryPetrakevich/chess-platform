@@ -548,7 +548,8 @@ watch(
   text-align: center;
   font-size: 13px;
   font-weight: 700;
-  margin-bottom: 10px;
+  background: @gray-50;
+  border: 1px solid @gray-200;
 
   &-text {
     padding-bottom: 10px;
@@ -600,6 +601,9 @@ watch(
   align-items: center;
   justify-content: center;
   gap: 10px;
+  padding: 5px 0;
+  background: @gray-50;
+  border: 1px solid @gray-200;
 }
 
 .prestart-label {
