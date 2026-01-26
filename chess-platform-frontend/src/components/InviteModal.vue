@@ -209,7 +209,7 @@ function performRedirect() {
 watch(
   [() => game.shouldRedirect, () => game.playersCount],
   ([newShouldRedirect, newPlayersCount]) => {
-    console.log("🎯 Reactivity: Проверяем переход...", {
+    console.log(" Reactivity: Проверяем переход...", {
       shouldRedirect: newShouldRedirect,
       playersCount: newPlayersCount,
       roomId: roomId.value,
