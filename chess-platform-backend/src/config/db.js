@@ -32,10 +32,10 @@ async function saveGameToDB(gameData) {
       gameData.roomId,
       gameData.whiteUserId || null,
       gameData.whiteRating || 1200,
-      gameData.whiteUsername || "Anonymous",   // ← $4
+      gameData.whiteUsername || "Anonymous",   
       gameData.blackUserId || null,
       gameData.blackRating || 1200,
-      gameData.blackUsername || "Anonymous",   // ← $7
+      gameData.blackUsername || "Anonymous",   
       gameData.result,
       gameData.reason || null,
       gameData.moves || "",

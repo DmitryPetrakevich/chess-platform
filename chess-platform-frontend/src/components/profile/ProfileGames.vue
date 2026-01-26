@@ -272,7 +272,7 @@ const formatDate = (dateStr) => {
 
 .game-card {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #bec1c5;
   border-radius: 12px;
   padding: 20px;
   cursor: pointer;

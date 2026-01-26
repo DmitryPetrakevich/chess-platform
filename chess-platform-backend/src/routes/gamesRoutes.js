@@ -30,7 +30,7 @@ router.get("/", async (req, res) => {
           ? game.blackRating
           : game.whiteRating
       },
-      playerColor: game.whiteUserId === userId ? "white" : "black",  // Теперь сравнение число === число
+      playerColor: game.whiteUserId === userId ? "white" : "black",  
       result: game.result,
       reason: game.reason,
       moves: game.moves ? game.moves.split(" ") : [],

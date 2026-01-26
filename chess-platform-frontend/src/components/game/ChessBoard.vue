@@ -117,7 +117,7 @@ const squares = computed(() =>
  * @returns {string|null} путь к svg-файлу или null, если фигуры нет.
  */
 function pieceImage(squareId) {
-  const code = game.pieces[squareId] // например "wP" или "bK"
+  const code = game.pieces[squareId] 
   if (!code) return null;
 
   return new URL(`../../assets/chess-pieces/${code}.svg`, import.meta.url).href;

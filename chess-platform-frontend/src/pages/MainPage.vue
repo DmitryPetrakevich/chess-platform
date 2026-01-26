@@ -13,7 +13,6 @@
     </template>
 
     <template v-else>
-      <!-- Сообщение для неавторизованных -->
       <div class="auth-message">
         <p class="auth-title">Зарегистрируйтесь, чтобы играть</p>
         <p class="auth-desc">Создайте аккаунт или войдите, чтобы начать партию с другом</p>

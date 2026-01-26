@@ -92,7 +92,7 @@ onBeforeUnmount(() => {
     transition: all 0.3s ease;
 
     &:hover {
-        background-color: @gray-200;
+      background-color: @gray-200;
     }
 }
 
@@ -103,5 +103,17 @@ onBeforeUnmount(() => {
     &.rev {
         transform: rotate(180deg);
     }
+}
+
+@media (max-width: 480px) {
+.replay-controls {
+    gap: 15px;
+    padding: 3px 0;
+}
+  
+  .replayer-img {
+    height: 15px;
+    width: 15px;
+  }
 }
 </style>

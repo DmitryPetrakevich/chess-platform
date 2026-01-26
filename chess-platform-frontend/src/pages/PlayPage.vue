@@ -91,7 +91,7 @@ watch(() => game.playerColor, (newColor, oldColor) => {
   padding: 10px;
   min-height: calc(100vh - 60px);
   box-sizing: border-box;
-  background-color: rgb(236, 236, 236);
+  background-color: rgb(255, 255, 255);
 }
 
 .play-content {

@@ -33,8 +33,6 @@ import { useGameStore } from "@/store/gameStore";
 
 const gameStore = useGameStore();
 
-// const selectedMove = ref(null);
-
 function selectMove(moveIndex) {
   if(moveIndex >= 0) {
     gameStore.goToMove(moveIndex + 1);

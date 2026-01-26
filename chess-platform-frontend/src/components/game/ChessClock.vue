@@ -145,10 +145,10 @@
           </router-link>
       </div>
 
+      <GameActions v-if="mode == 'bottom' && !gameStore.result.type" />
       <GameReplayer v-if="mode === 'bottom'" />
       <!-- <MoveHistory v-if="mode === 'bottom'" /> -->
 
-      <GameActions v-if="mode == 'bottom' && !gameStore.result.type" />
 
       <div
         v-if="mode === 'top' && timerStore.preSeconds > 0"

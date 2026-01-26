@@ -3,7 +3,6 @@
     <div class="profile-container">
       <aside class="sidebar">
         <ProfileRatings />
-        <!-- <ProfileActivity class="activity-section" /> -->
       </aside>
 
       <main class="main-content">
@@ -18,7 +17,6 @@
 import { useUserStore } from "@/store/userStore";
 import ProfileRatings from "@/components/profile/ProfileRatings.vue";
 import ProfileMain from "@/components/profile/ProfileMain.vue";
-import ProfileActivity from "@/components/profile/ProfileActivity.vue";
 import ProfileGames from "@/components/profile/ProfileGames.vue";
 
 const userStore = useUserStore();
