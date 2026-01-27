@@ -3,16 +3,15 @@
     <div class="login-form">
       <h2 class="title">Войти</h2>
       <form class="login-form__container" @submit.prevent="handleLogin">
-        <input
+
+        <Input
           v-model="loginData.identifier"
-          class="form-input"
           type="text"
           placeholder="Логин или электронная почта"
           required
         />
-        <input
+        <Input
           v-model="loginData.password"
-          class="form-input"
           type="password"
           placeholder="Пароль"
           required
@@ -39,6 +38,8 @@
 import { ref, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/userStore";
+
+import Input from "@/UI/Input.vue";
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -119,7 +120,7 @@ const showMessage = (text, type) => {
 
 .login-form {
   width: 100%;
-  max-width: 420px;
+  max-width: 450px;
   padding: 40px 30px;
   border-radius: 12px;
   background-color: #353535;

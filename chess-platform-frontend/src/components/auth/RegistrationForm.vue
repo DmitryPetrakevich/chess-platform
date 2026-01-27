@@ -7,35 +7,33 @@
       >
         <h2 class="title">Регистрация</h2>
 
-        <input
+        <Input
           v-model="formData.username"
-          class="form-input"
           type="text"
           placeholder="Имя пользователя"
           required
         />
-        <input
+
+        <Input
           v-model="formData.email"
-          class="form-input"
           type="email"
           placeholder="Email"
           required
         />
-        <input
+
+        <Input
           v-model="formData.password"
-          class="form-input"
           type="password"
           placeholder="Пароль"
           required
         />
 
         <div class="checkbox-container">
-          <input
-            v-model="formData.agreement"
-            type="checkbox"
-            id="agreement"
-            class="checkbox"
+          <CheckBox            
+          v-model="formData.agreement"
+          id="agreement"
           />
+
           <label for="agreement" class="checkbox-label">
             Я соглашаюсь с
             <router-link to="/privacy-policy" class="link">политикой конфиденциальности</router-link>
@@ -56,6 +54,9 @@
 import { ref, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/userStore";
+
+import Input from "@/UI/Input.vue";
+import CheckBox from "@/UI/CheckBox.vue";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -156,12 +157,13 @@ const resetForm = () => {
   background: #353535;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   width: 100%;
-  max-width: 420px;
+  max-width: 450px;
 }
 
 .registration-form__container {
   display: flex;
   flex-direction: column;
+  width: 100%;
   gap: 20px;
 }
 
@@ -175,30 +177,9 @@ const resetForm = () => {
   font-family: "Arial", sans-serif;
 }
 
-.form-input {
-  padding: 14px 16px;
-  border: 2px solid #777;
-  border-radius: 8px;
-  font-size: 16px;
-  background: #343434;
-  color: #fff;
-  transition: all 0.3s ease;
-
-  &::placeholder {
-    color: #aaa;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: #e74c3c;
-    background: #282828;
-    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
-  }
-}
-
 .checkbox-container {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   margin: 10px 0;
 }
