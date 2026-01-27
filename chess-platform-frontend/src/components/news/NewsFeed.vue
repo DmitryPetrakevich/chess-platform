@@ -1,5 +1,5 @@
 <template>
-  <div class="news-section">
+  <div class="news-section" id="news-section">
     <h2>Новости</h2>
 
     <div v-if="newsStore.loading">Загрузка...</div>
@@ -70,9 +70,8 @@ const formatDate = (dateStr) => {
 }
 
 .news-section h2 {
-  margin-bottom: 1.2rem;
   color: #ecf0f1;
-  font-size: 1.8rem;
+  font-size: 32px;
   text-align: center;
 }
 

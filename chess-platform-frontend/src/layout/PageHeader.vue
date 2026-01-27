@@ -23,7 +23,9 @@
         <router-link to="#" class="page-header__nav-link">
           Задачи
         </router-link>
-        <a class="page-header__nav-link">Новости</a>
+        <a href="#news-section" class="page-header__nav-link">
+          Новости
+        </a>
       </nav>
 
       <nav v-if="!userStore.isLoggedIn" class="page-header__btns">

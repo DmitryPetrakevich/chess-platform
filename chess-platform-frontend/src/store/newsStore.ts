@@ -1,4 +1,3 @@
-// src/stores/newsStore.ts
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
@@ -7,13 +6,23 @@ export const useNewsStore = defineStore('news', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  const fetchNews = async () => {
+  const fetchNews = async (force = false) => {
+    const cached = localStorage.getItem('newsCache')
+    if (cached && !force) {
+      const { data, timestamp } = JSON.parse(cached)
+      if (Date.now() - timestamp < 1800000) { // пол часа кэша
+        news.value = data
+        loading.value = false
+        return
+      }
+    }
+
     loading.value = true
     error.value = null
 
     const sources = [
       { name: 'ФШР', url: 'https://ruchess.ru/news/feed/' },
-      { name: 'Lichess Blog', url: 'https://lichess.org/blog.atom' } // запасной
+      { name: 'Lichess Blog', url: 'https://lichess.org/blog.atom' }
     ]
 
     for (const source of sources) {
@@ -34,7 +43,6 @@ export const useNewsStore = defineStore('news', () => {
         news.value = data.items
           .map((item: any) => {
             let thumbnail = ''
-
             const html = item.description || item.content || ''
             const imgMatch = html.match(/<img[^>]+src=["'](.*?)["']/i)
             if (imgMatch && imgMatch[1]) {
@@ -51,8 +59,8 @@ export const useNewsStore = defineStore('news', () => {
               title: item.title || 'Без заголовка',
               link: item.link || '#',
               pubDate: item.pubDate || item.published || '',
-              content: cleanContent.substring(0, 120) + 
-                      (cleanContent.length > 120 ? '...' : ''),
+              content: cleanContent.substring(0, 120) +
+              (cleanContent.length > 120 ? '...' : ''),
               thumbnail,
               source: source.name
             }
@@ -61,7 +69,11 @@ export const useNewsStore = defineStore('news', () => {
           .slice(0, 6)
 
         if (news.value.length > 0) {
-          console.log(`Успех: ${news.value.length} новостей из ${source.name}`)
+          localStorage.setItem('newsCache', JSON.stringify({
+            data: news.value,
+            timestamp: Date.now()
+          }))
+
           break
         }
       } catch (err) {
@@ -77,9 +89,10 @@ export const useNewsStore = defineStore('news', () => {
     loading.value = false
   }
 
-  return { 
-    news, 
-    loading, 
-    error, 
-    fetchNews }
+  return {
+    news,
+    loading,
+    error,
+    fetchNews
+  }
 })

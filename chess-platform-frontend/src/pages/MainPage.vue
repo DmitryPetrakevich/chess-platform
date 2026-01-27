@@ -15,7 +15,7 @@
         <AuthPrompt />
       </template>
     </div>
-
+    
     <NewsFeed></NewsFeed>
 
     <InviteModal
@@ -53,7 +53,7 @@ function onRoomCreated(roomData) {
 .main {
   background: #1c1c1c;
   width: 100%;
-  height: 100vh;
+  height: 100%;
   padding-top: 100px;
   color: #ecf0f1;
 }
@@ -63,9 +63,7 @@ function onRoomCreated(roomData) {
   flex-direction: row;
   justify-content: center;
   gap: 50px;
-  border-radius: 12px;
-  padding: 20px;
-  margin: 0 auto;
+  margin-bottom: 100px;
 }
 
 </style>
