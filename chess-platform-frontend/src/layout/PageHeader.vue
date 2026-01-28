@@ -225,7 +225,8 @@ watch(() => userStore.isLoggedIn, closeMenu);
   display: block;
   box-sizing: border-box;
   height: 60px;
-  width: 100%;
+  width: calc(100% - 60px); 
+  margin: 0 30px;
   background-color: #1c1c1c;
   z-index: 1000;
 }
@@ -235,7 +236,6 @@ watch(() => userStore.isLoggedIn, closeMenu);
   justify-content: space-between;
   align-items: center;
   height: 100%;
-  padding: 0 40px;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -445,9 +445,11 @@ watch(() => userStore.isLoggedIn, closeMenu);
 }
 
 @media (max-width: 768px) {
-  .page-header__container {
-    padding: 0 25px;
-  }
+  .page-header {
+  width: calc(100% - 30px); 
+  margin: 0 15px;
+
+}
 
   .page-header__logo {
     font-size: 14px;

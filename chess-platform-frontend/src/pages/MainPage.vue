@@ -52,9 +52,10 @@ function onRoomCreated(roomData) {
 <style scoped>
 .main {
   background: #1c1c1c;
-  width: 100%;
+  width: calc(100% - 60px); 
   height: 100%;
   padding-top: 100px;
+  margin: 0 30px;
   color: #ecf0f1;
 }
 
@@ -64,6 +65,14 @@ function onRoomCreated(roomData) {
   justify-content: center;
   gap: 50px;
   margin-bottom: 100px;
+}
+
+@media (max-width: 768px) {
+  .main {
+  width: calc(100% - 30px); 
+  margin: 0 15px;
+}
+  
 }
 
 </style>

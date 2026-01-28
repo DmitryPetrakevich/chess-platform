@@ -2,38 +2,46 @@
   <div class="news-section" id="news-section">
     <h2>Новости</h2>
 
-    <div v-if="newsStore.loading">Загрузка...</div>
-    <div v-else-if="newsStore.error">
+    <!-- Добавил классы для стилизации состояний -->
+    <div v-if="newsStore.loading" class="loading">Загрузка...</div>
+    <div v-else-if="newsStore.error" class="error">
       {{ newsStore.error }}
       <button @click="newsStore.fetchNews">Повторить</button>
     </div>
-    <div v-else-if="newsStore.news.length === 0">Нет новостей</div>
+    <div v-else-if="newsStore.news.length === 0" class="empty">Нет новостей</div>
 
-    <div v-else class="news-list">
+    <!-- ИЗМЕНЕНО: news-list → news-grid для сетки -->
+    <div v-else class="news-grid">
+      <!-- ИЗМЕНЕНО: news-item → news-card для вертикальной карточки -->
       <a
         v-for="item in newsStore.news"
         :key="item.link"
         :href="item.link"
         target="_blank"
         rel="noopener noreferrer"
-        class="news-item"
+        class="news-card"
       >
-        <div class="news-preview">
+        <!-- ИЗМЕНЕНО: news-preview → news-image-container для лучшего нейминга -->
+        <div class="news-image-container">
           <img
             v-if="item.thumbnail"
             :src="item.thumbnail"
             alt="Новость"
-            class="news-thumbnail"
+            class="news-image"
             loading="lazy"
             @error="onImageError"
           />
           <div v-else class="no-image">Нет фото</div>
         </div>
 
-        <div class="news-text">
-          <h3>{{ item.title }}</h3>
-          <p class="date">{{ formatDate(item.pubDate) }}</p>
-          <p class="snippet">{{ item.content.substring(0, 120) }}...</p>
+        <!-- ИЗМЕНЕНО: news-text → news-content для вертикальной структуры -->
+        <div class="news-content">
+          <!-- ИЗМЕНЕНО: h3 → .news-title с классом -->
+          <h3 class="news-title">{{ item.title }}</h3>
+          <!-- ИЗМЕНЕНО: .date → .news-date -->
+          <p class="news-date">{{ formatDate(item.pubDate) }}</p>
+          <!-- ИЗМЕНЕНО: .snippet → .news-snippet -->
+          <p class="news-snippet">{{ item.content.substring(0, 120) }}...</p>
         </div>
       </a>
     </div>
@@ -62,102 +70,154 @@ const formatDate = (dateStr) => {
 
 <style scoped>
 .news-section {
-  margin: 2rem 0;
-  padding: 1.5rem;
+  padding: 2rem; 
+  max-width: 100%;
   background: #2a2a2a;
-  border-radius: 12px;
+  border-radius: 16px; 
   border: 1px solid #444;
 }
 
 .news-section h2 {
   color: #ecf0f1;
-  font-size: 32px;
+  font-size: 36px; 
   text-align: center;
+  text-transform: uppercase;
+  margin-bottom: 2rem; 
+  font-weight: 600; 
 }
 
-.news-list {
+.news-grid {
   display: grid;
-  gap: 1.2rem;
+  grid-template-columns: repeat(2, 1fr); 
+  gap: 2rem; 
 }
 
-.news-item {
+@media (max-width: 768px) {
+  .news-grid {
+    grid-template-columns: 1fr; 
+  }
+}
+
+.news-card {
   display: flex;
-  gap: 1.2rem;
-  padding: 1rem;
+  flex-direction: column; 
   background: #333;
-  border-radius: 8px;
+  border-radius: 12px; 
+  overflow: hidden; 
   text-decoration: none;
   color: #ecf0f1;
-  transition: all 0.2s;
+  transition: all 0.3s ease; 
+  height: 100%; 
+  border: 1px solid #444; 
 }
 
-.news-item:hover {
+.news-card:hover {
   background: #3a3a3a;
-  transform: translateY(-3px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+  transform: translateY(-5px); 
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); 
+  border-color: #555; 
 }
 
-.news-preview {
-  flex: 0 0 120px;
-  height: 80px;
+.news-image-container {
+  width: 100%;
+  height: 220px; 
   overflow: hidden;
-  border-radius: 6px;
+  position: relative;
   background: #222;
 }
 
-.news-thumbnail {
+.news-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  border-radius: 6px;
+  object-fit: cover; 
+  transition: transform 0.5s ease; 
+}
+
+.news-card:hover .news-image {
+  transform: scale(1.05); 
 }
 
 .no-image {
   width: 100%;
   height: 100%;
-  background: #444;
+  background: linear-gradient(135deg, #444 0%, #2a2a2a 100%); 
   display: flex;
   align-items: center;
   justify-content: center;
   color: #777;
-  font-size: 0.8rem;
+  font-size: 1rem; 
   text-align: center;
+  padding: 1rem; 
 }
 
-.news-text {
-  flex: 1;
+
+.news-content {
+  padding: 1.5rem; 
+  flex-grow: 1; 
+  display: flex;
+  flex-direction: column; 
 }
 
-.news-text h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1.2rem;
-}
-
-.date {
-  font-size: 0.85rem;
-  color: #bdc3c7;
-  margin-bottom: 0.5rem;
-}
-
-.snippet {
-  font-size: 0.9rem;
-  color: #aaa;
+.news-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.3rem; 
+  font-weight: 600; 
   line-height: 1.4;
+  color: #fff; 
+  display: -webkit-box;
+  -webkit-line-clamp: 2; 
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
+
+.news-date {
+  font-size: 0.9rem;
+  color: #bdc3c7;
+  margin-bottom: 1rem; 
+  font-weight: 500; 
+}
+
+.news-snippet {
+  font-size: 1rem; 
+  color: #aaa;
+  line-height: 1.5; 
+  flex-grow: 1; 
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; 
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 
 .loading, .error, .empty {
   text-align: center;
-  padding: 2rem;
+  padding: 3rem 2rem; 
   color: #bdc3c7;
+  font-size: 1.1rem; 
+}
+
+.error {
+  background: rgba(231, 76, 60, 0.1); 
+  border-radius: 8px;
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  padding: 2rem;
 }
 
 .error button {
-  margin-top: 1rem;
-  padding: 0.6rem 1.2rem;
+  margin-top: 1.5rem; 
+  padding: 0.8rem 1.5rem; 
   background: #3498db;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px; 
   cursor: pointer;
+  font-size: 1rem; 
+  font-weight: 500; 
+  transition: background 0.2s; 
+}
+
+.error button:hover {
+  background: #2980b9; 
 }
 </style>
