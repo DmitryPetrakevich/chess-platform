@@ -8,20 +8,20 @@
           class="cell"
           :class="[
             cell.color, 
-            { selected: selectedSquare === cell.id },
-            { highlighted: highlightedSquares.has(cell.id) },
+            { selected: isSquareSelected(cell.id) },
+            { highlighted: isSquareHighlighted(cell.id) },
             { 'last-move': game.lastMove.from === cell.id || game.lastMove.to === cell.id }
           ]"
-          @click="onSquareClick(cell.id)"
+          @click="squareClick.handleSquareClick(cell.id)"
           @dragover.prevent
-          @drop="onDrop(cell.id, $event)" 
+          @drop="dragDrop.handleDrop(cell.id, $event)" 
         >
           <img v-if="pieceImage(cell.id)" 
             :src="pieceImage(cell.id)" 
             class="piece" 
             draggable="true"
-            @dragstart="onDragStart(cell.id, $event)" 
-            @dragend="onDragEnd"
+            @dragstart="dragDrop.handleDragStart(cell.id, $event)" 
+            @dragend="dragDrop.handleDragEnd"
           />
         </div>
         <div class="rank-label">
@@ -38,297 +38,59 @@
     <PromotionModal 
       v-if="game.showPromotionModal && game.promotionMove"
       :color="game.promotionMove.piece[0]"
-      @select="onPromotionSelect"
-      @cancel="onPromotionCancel"
+      @select="squareClick.handlePromotionSelect"
+      @cancel="squareClick.handlePromotionCancel"
     />
   </div>
 </template>
 
 <script setup>
-import { useGameStore } from "@/store/gameStore";
-import { computed, ref, onMounted, nextTick , watch } from "vue"; 
-import PromotionModal from "./PromotionModal.vue";
+import { useGameStore } from "@/store/gameStore"
+import { computed, ref, watch } from "vue" 
+import { useSquareClick } from "@/composables/useSquareClick"
+import { useDragAndDrop } from "@/composables/useDragAndDrop"
+import PromotionModal from "./PromotionModal.vue"
 
-const game = useGameStore();
+const game = useGameStore()
 
-const flipped = computed(() => game.playerColor === "b");
+const squareClick = useSquareClick()
+const dragDrop = useDragAndDrop(squareClick)
 
-/**
- * ID клетки, которая в данный момент выбрана (выделена) пользователем.
- * Используется для отслеживания выбранной фигуры перед выполнением хода.
- * 
- * @example "e2" - выбрана клетка e2
- * @example null - нет выбранной клетки
- * 
- * @usage
- * // При клике на фигуру:
- * selectedSquare.value = "e2"
- * 
- * // После выполнения хода:
- * selectedSquare.value = null
- */
-const selectedSquare = ref(null) 
-/**
- * Множество клеток, которые должны быть подсвечены как доступные для хода.
- * Содержит ID клеток, куда может переместиться выбранная фигура.
- * 
- * @example Set {"e3", "e4"} - пешка на e2 может пойти на e3 и e4
- * @example Set {} - нет доступных ходов или фигура не выбрана
- * 
- * @usage
- * // При выборе фигуры:
- * highlightedSquares.value = new Set(["e3", "e4"])
- * 
- * // При сбросе выбора:
- * highlightedSquares.value.clear()
- * 
- * @see getAvailableMoves - функция, которая заполняет это множество
- */
-const highlightedSquares = ref(new Set()); 
-/**
- * Клетка, с которой начали перетаскивание.
- * @type {import('vue').Ref<string|null>}
- * Используется как запасной источник информации о начальной клетке,
- * если event.dataTransfer не содержит данных (разные браузеры/платформы).
- */
-const draggedFrom = ref(null); 
+const isSquareSelected = (id) => squareClick.selectedSquare.value === id
+const isSquareHighlighted = (id) => squareClick.highlightedSquares.value.has(id)
+
+const flipped = computed(() => game.playerColor === "b")
 
 const files = computed(() =>
   flipped.value ? ["h","g","f","e","d","c","b","a"] : ["a","b","c","d","e","f","g","h"]
-);
+)
+
 const ranks = computed(() =>
   flipped.value ? [1,2,3,4,5,6,7,8] : [8,7,6,5,4,3,2,1]
-);
+)
 
 const squares = computed(() =>
   ranks.value.map((rank, rIdx) =>
     files.value.map((file, fIdx) => {
-      const color = (rIdx + fIdx) % 2 === 0 ? "light" : "dark";
-      return { id: `${file}${rank}`, file, rank, color };
+      const color = (rIdx + fIdx) % 2 === 0 ? "light" : "dark"
+      return { id: `${file}${rank}`, file, rank, color }
     })
   )
-);
+)
 
- game.setInitialPosition();
+game.setInitialPosition()
 
-/**
- * Возвращает путь к картинке фигуры на указанной клетке.
- * @param {string} squareId - id клетки, например "e2".
- * @returns {string|null} путь к svg-файлу или null, если фигуры нет.
- */
 function pieceImage(squareId) {
   const code = game.pieces[squareId] 
-  if (!code) return null;
+  if (!code) return null
 
-  return new URL(`../../assets/chess-pieces/${code}.svg`, import.meta.url).href;
-}
-
-/**
- * Обрабатывает клик по клетке шахматной доски.
- * - Если фигура только выбирается → сохраняет её клетку.
- * - Если фигура уже выбрана → пытается сделать ход.
- * - Проверяет корректность хода через isValidMove().
- * - Переключает ход между белыми и чёрными.
- * @param {string} id - id клетки, по которой кликнули (например "e2").
- */
-function onSquareClick(id) {
-  if (game.result.type) return;
-  if (game.showPromotionModal) return;
-  if (game.isReplayMode()) return;
-
-  const clickedPiece = game.pieces[id];
-
-  if (clickedPiece && clickedPiece[0] === game.currentTurn) {
-    if (selectedSquare.value === id) {
-      selectedSquare.value = null;
-      highlightedSquares.value.clear();
-    } else {
-      selectedSquare.value = id;
-      highlightedSquares.value = game.getAvailableMoves(id);
-    }
-    return;
-  }
-
-  if (selectedSquare.value && highlightedSquares.value.has(id)) {
-    const piece = game.pieces[selectedSquare.value];
-    const isPawn = piece && (piece[1] === 'P' || piece[1] === 'p'); 
-    const isPromotionSquare = (id[1] === '8' && piece[0] === 'w') || (id[1] === '1' && piece[0] === 'b');
-    
-    if (isPawn && isPromotionSquare) {
-      game.promotionMove = {
-        from: selectedSquare.value,
-        to: id,
-        piece: piece,
-        pending: true
-      };
-      game.showPromotionModal = true;
-      
-      // ждем выбор фигуры
-      selectedSquare.value = null;
-      highlightedSquares.value.clear();
-    } else {
-      // Обычный ход - отправляем сразу
-      game.sendMove(selectedSquare.value, id);
-      selectedSquare.value = null;
-      highlightedSquares.value.clear();
-    }
-  } else {
-    selectedSquare.value = null;
-    highlightedSquares.value.clear();
-  }
-}
-
-/**
- * Начало перетаскивания фигуры.
- * Что делает:
- * - Проверяет, есть ли фигура на клетке и принадлежит ли она игроку, который сейчас ходит.
- *   Если нет — отменяет перетаскивание (event.preventDefault()).
- * - Сохраняет исходную клетку в draggedFrom (запасной источник).
- * - Кладёт id клетки в event.dataTransfer (тип "text/plain") — это облегчает
- *   получение исходной клетки в обработчике drop в разных браузерах.
- * - Устанавливает event.dataTransfer.effectAllowed = "move".
- *
- * @param {string} id - id клетки-источника (например "e2").
- * @param {DragEvent} event - объект события dragstart.
- */
-function onDragStart(id, event) {
-  if (game.result.type || game.isReplayMode()) {
-  event.preventDefault();
-  return; 
-}
-
-  const piece = game.pieces[id];
-  
-  if (!piece) {
-    event.preventDefault();
-    return;
-  }
-
-  if (piece[0] !== game.currentTurn) {
-    event.preventDefault();
-    return;
-  }
-  
-  draggedFrom.value = id;
-  
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", id);
-  }
-}
-
-/**
- * Завершение перетаскивания (dragend).
- * Просто очищает временное состояние (draggedFrom).
- *
- * @param {DragEvent} [event] - объект события dragend (не обязателен).
- */
-function onDragEnd() {
-  draggedFrom.value = null;
-}
-
-/**
- * Обработчик drop на клетке-приёмнике.
- *
- * Шаги:
- * - Предотвращает дефолтное поведение браузера (event.preventDefault()).
- * - Пытается извлечь исходную клетку (from) из event.dataTransfer (text/plain).
- * - Если dataTransfer пуст или недоступен — использует запасную draggedFrom.
- * - Если from определена — вызывает makeMove(from, to).
- * - В конце очищает draggedFrom.
- *
- * @param {string} to - id клетки-приёмника (например "e4").
- * @param {DragEvent} event - объект события drop.
- */
-function onDrop(to, event) {
-  event.preventDefault();
-
-  if (game.result.type) {
-  draggedFrom.value = null;
-  return; 
-}
-
-  let from = null;
-  try {
-    from = event.dataTransfer?.getData("text/plain") || draggedFrom.value;
-  } catch (e) {
-    console.error("Ошибка при получении dataTransfer:", e);
-    from = draggedFrom.value;
-  }
-
-  if (!from) return;
-
-  if (from === to) {
-    selectedSquare.value = null;
-    highlightedSquares.value.clear();
-    draggedFrom.value = null;
-    return;
-  }
-
-  const piece = game.pieces[from];
-  if (!piece) {
-    console.warn("onDrop: нет фигуры на from", from);
-    draggedFrom.value = null;
-    return;
-  }
-  if (piece[0] !== game.playerColor) { 
-    console.warn("onDrop: пытаются двигать не свою фигуру:", from);
-    draggedFrom.value = null;
-    return;
-  }
-
-  if (game.currentTurn !== game.playerColor) {
-    console.warn("onDrop: сейчас не ваша очередь:", game.currentTurn);
-    draggedFrom.value = null;
-    return;
-  }
-
-  const avail = game.getAvailableMoves(from);
-  if (!avail.has(to)) {
-    console.warn(`onDrop: недопустимый ход ${from} → ${to}`);
-    draggedFrom.value = null;
-    selectedSquare.value = null;
-    highlightedSquares.value.clear();
-    return;
-  }
-
-  const isPawn = piece && (piece[1] === 'P' || piece[1] === 'p');
-  const isPromotionSquare = (to[1] === '8' && piece[0] === 'w') || (to[1] === '1' && piece[0] === 'b');
-  
-  if (isPawn && isPromotionSquare) {
-    game.promotionMove = {
-      from: from,
-      to: to,
-      piece: piece,
-      pending: true
-    };
-    game.showPromotionModal = true;
-  } else {
-    // Обычный ход
-    game.sendMove(from, to);
-  }
-
-  selectedSquare.value = null;
-  highlightedSquares.value.clear();
-  draggedFrom.value = null;
-}
-
-function onPromotionSelect(piece) {
-  game.completePromotion(piece);
-}
-
-function onPromotionCancel() {
-  game.cancelPromotion();
-  
-  selectedSquare.value = null;
-  highlightedSquares.value.clear();
+  return new URL(`../../assets/chess-pieces/${code}.svg`, import.meta.url).href
 }
 
 watch(() => game.result.type, (newResult) => {
   if (newResult) {
-    selectedSquare.value = null;
-    highlightedSquares.value.clear();
-    draggedFrom.value = null;
+    squareClick.resetSelection()
+    dragDrop.resetDrag()
   }
 })
 </script>

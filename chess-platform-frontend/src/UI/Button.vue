@@ -1,4 +1,3 @@
-<!-- src/ui/Button.vue -->
 <template>
   <button 
     class="btn"
