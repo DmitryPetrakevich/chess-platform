@@ -35,10 +35,10 @@
   import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useGameStore } from '@/store/gameStore';
 
-import nextMoveIcon from '@/assets/forward.svg'
-import goToEndIcon  from '@/assets/fast-forward.svg'
-import backMoveIcon from '@/assets/forward.svg'
-import goToStartIcon  from '@/assets/fast-forward.svg'
+import nextMoveIcon from '@/assets/icons/replayer/forward.svg'
+import goToEndIcon  from '@/assets/icons/replayer/fast-forward.svg'
+import backMoveIcon from '@/assets/icons/replayer/forward.svg'
+import goToStartIcon  from '@/assets/icons/replayer/fast-forward.svg'
 
 const gameStore = useGameStore();
 

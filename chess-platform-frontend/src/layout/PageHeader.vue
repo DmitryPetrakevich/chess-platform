@@ -17,7 +17,7 @@
       </div>
 
       <nav class="page-header__nav">
-        <router-link to="#" class="page-header__nav-link">
+        <router-link to="coordinates" class="page-header__nav-link">
           Координаты
         </router-link>
         <router-link to="#" class="page-header__nav-link">
@@ -182,16 +182,16 @@ import { ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useUserStore } from "@/store/userStore";
 
-import logoIcon from "@/assets/icons/logo.svg";
-import profileNameIcon from "@/assets/icons/profile-name.svg";
-import searchIcon from "@/assets/icons/search.svg";
-import notificationIcon from "@/assets/icons/notification.svg";
-import profileIcon from "@/assets/icons/profile.svg";
-import messageIcon from "@/assets/icons/message.svg";
-import settingsIcon from "@/assets/icons/settings.svg";
-import logOutIcon from "@/assets/icons/logout.svg";
-import languageIcon from "@/assets/icons/language.svg";
-import themeIcon from "@/assets/icons/theme.svg";
+import logoIcon from "@/assets/icons/page-header/logo.svg";
+import profileNameIcon from "@/assets/icons/page-header/profile-name.svg";
+import searchIcon from "@/assets/icons/page-header/search.svg";
+import notificationIcon from "@/assets/icons/page-header/notification.svg";
+import profileIcon from "@/assets/icons/page-header/profile.svg";
+import messageIcon from "@/assets/icons/page-header/message.svg";
+import settingsIcon from "@/assets/icons/page-header/settings.svg";
+import logOutIcon from "@/assets/icons/page-header/logout.svg";
+import languageIcon from "@/assets/icons/page-header/language.svg";
+import themeIcon from "@/assets/icons/page-header/theme.svg";
 
 const route = useRoute();
 const userStore = useUserStore();
@@ -448,7 +448,6 @@ watch(() => userStore.isLoggedIn, closeMenu);
   .page-header {
   width: calc(100% - 30px); 
   margin: 0 15px;
-
 }
 
   .page-header__logo {
@@ -580,10 +579,6 @@ watch(() => userStore.isLoggedIn, closeMenu);
 
   .page-header__nav {
     display: none;
-  }
-
-  .page-header__container {
-    padding: 0 20px;
   }
 }
 

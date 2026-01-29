@@ -1,6 +1,6 @@
 <template>
   <div class="news-section" id="news-section">
-    <h2>Новости</h2>
+    <h2 class="news-section__title">Новости</h2>
 
     <!-- Добавил классы для стилизации состояний -->
     <div v-if="newsStore.loading" class="loading">Загрузка...</div>
@@ -70,14 +70,14 @@ const formatDate = (dateStr) => {
 
 <style scoped>
 .news-section {
-  padding: 2rem; 
+  padding: 20px; 
   max-width: 100%;
   background: #2a2a2a;
   border-radius: 16px; 
   border: 1px solid #444;
 }
 
-.news-section h2 {
+.news-section__title {
   color: #ecf0f1;
   font-size: 36px; 
   text-align: center;
@@ -95,6 +95,10 @@ const formatDate = (dateStr) => {
 @media (max-width: 768px) {
   .news-grid {
     grid-template-columns: 1fr; 
+  }
+
+  .news-section__title {
+    font-size: 30px; 
   }
 }
 

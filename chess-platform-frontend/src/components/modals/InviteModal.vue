@@ -53,9 +53,9 @@ import { useRouter } from "vue-router";
 import { useGameStore } from "@/store/gameStore";
 import { useUserStore } from "@/store/userStore";
 
-import whiteIcon from "@/assets/inviteModel/choice-white.svg";
-import blackIcon from "@/assets/inviteModel/choice-black.svg";
-import randomIcon from "@/assets/inviteModel/choice-random.svg";
+import whiteIcon from "@/assets/game/inviteModel/choice-white.svg";
+import blackIcon from "@/assets/game/inviteModel/choice-black.svg";
+import randomIcon from "@/assets/game/inviteModel/choice-random.svg";
 
 const game = useGameStore();
 const user = useUserStore();

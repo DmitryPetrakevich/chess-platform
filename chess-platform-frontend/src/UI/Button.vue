@@ -13,23 +13,16 @@
     :disabled="disabled || loading"
     @click="$emit('click', $event)"
   >
-    <!-- Индикатор загрузки -->
     <span v-if="loading" class="btn-loader"></span>
     
-    <!-- Иконка слева -->
-    <span v-if="$slots.icon && !loading" class="btn-icon">
-      <slot name="icon" />
+    <span v-if="icon && !loading" class="btn-icon">
+      <img :src="icon" alt="" />
     </span>
     
-    <!-- Текст кнопки -->
     <span class="btn-text">
       <slot />
     </span>
     
-    <!-- Иконка справа -->
-    <span v-if="$slots.iconAfter && !loading" class="btn-icon">
-      <slot name="iconAfter" />
-    </span>
   </button>
 </template>
 
@@ -40,19 +33,20 @@ defineProps<{
   disabled?: boolean
   loading?: boolean
   fullWidth?: boolean
+  icon?: string
 }>()
 
 defineEmits(['click'])
 </script>
 
-<style scoped>
+<style lang="less" scoped>
 .btn {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-width: 120px;
-  padding: 12px 24px;
+  padding: 16px 30px;
   border: none;
   border-radius: 8px;
   font-family: "Manrope", sans-serif;
@@ -68,12 +62,12 @@ defineEmits(['click'])
 }
 
 .btn-primary {
-  background-color: rgb(91, 91, 195);
+  background-color: @gray-500;
   color: white;
 }
 
 .btn-primary:hover:not(.btn-disabled):not(:disabled) {
-  background-color: rgb(40, 40, 145);
+  background-color: @gray-700;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(91, 91, 195, 0.3);
 }
@@ -180,6 +174,17 @@ defineEmits(['click'])
 
 .btn-text {
   white-space: nowrap;
+}
+
+.btn-icon img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.btn-primary .btn-icon img,
+.btn-secondary .btn-icon img {
+  filter: invert(1);
 }
 
 @media (max-width: 1024px) {

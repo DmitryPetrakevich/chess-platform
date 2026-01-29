@@ -21,9 +21,11 @@ export const useNewsStore = defineStore('news', () => {
     error.value = null
 
     const sources = [
-      { name: 'ФШР', url: 'https://ruchess.ru/news/feed/' },
-      { name: 'Lichess Blog', url: 'https://lichess.org/blog.atom' }
-    ]
+      { name: 'Lichess Blog', url: 'https://lichess.org/blog.atom' },
+      { name: 'Chess.com News', url: 'https://www.chess.com/rss/news' },
+      { name: 'The Week in Chess', url: 'https://theweekinchess.com/twic-rss-feed' },
+      { name: 'ChessBase', url: 'https://en.chessbase.com/feed' },
+]
 
     for (const source of sources) {
       try {
@@ -66,7 +68,7 @@ export const useNewsStore = defineStore('news', () => {
             }
           })
           .filter(item => item.title && item.link)
-          .slice(0, 6)
+          .slice(0, 8)
 
         if (news.value.length > 0) {
           localStorage.setItem('newsCache', JSON.stringify({

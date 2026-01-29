@@ -2,11 +2,19 @@
   <div class="main">
     <div class="play-friends">
       <template v-if="userStore.isLoggedIn">
-        <Button variant="primary" @click="playWithComputer">
+        <Button 
+        variant="primary" 
+        @click="playWithComputer"
+        :icon="cpuIcon"
+        >
           Сыграть с компьютером
         </Button>
 
-        <Button variant="primary" @click="openInvite">
+        <Button 
+        variant="primary" 
+        @click="openInvite"
+        :icon="personIcon"
+        >
           Бросить вызов другу
         </Button>
       </template>
@@ -31,10 +39,13 @@ import { ref } from "vue";
 import { useUserStore } from "@/store/userStore";
 import { RouterLink } from "vue-router";
 
-import InviteModal from "@/components/InviteModal.vue";
+import InviteModal from "@/components/modals/InviteModal.vue";
 import NewsFeed from "@/components/news/NewsFeed.vue";
 import Button from "@/UI/Button.vue";
 import AuthPrompt from "@/UI/AuthPrompt.vue";
+
+import cpuIcon from "@/assets/icons/main-page/cpu.svg"
+import personIcon from "@/assets/icons/main-page/person.svg"
 
 const userStore = useUserStore();
 
@@ -61,18 +72,21 @@ function onRoomCreated(roomData) {
 
 .play-friends {
   display: flex;
-  flex-direction: row;
-  justify-content: center;
-  gap: 50px;
+  flex-direction: column;
+  margin: 0 auto;
+  gap: 20px;
+  padding: 20px;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 15px;
+  max-width: 600px;
   margin-bottom: 100px;
 }
 
 @media (max-width: 768px) {
   .main {
-  width: calc(100% - 30px); 
-  margin: 0 15px;
+    width: calc(100% - 30px); 
+    margin: 0 15px;
+  }
 }
-  
-}
-
 </style>

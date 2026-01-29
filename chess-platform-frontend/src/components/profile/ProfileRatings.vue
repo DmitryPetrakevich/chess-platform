@@ -30,9 +30,9 @@
 <script setup>
 import { computed } from "vue";
 import { useUserStore } from "@/store/userStore";
-import bulletIcon from "@/assets/profile/bullet.svg";
-import blitzIcon from "@/assets/profile/blitz.svg";
-import rapidIcon from "@/assets/profile/rapid.svg";
+import bulletIcon from "@/assets/game/profile/bullet.svg";
+import blitzIcon from "@/assets/game/profile/blitz.svg";
+import rapidIcon from "@/assets/game/profile/rapid.svg";
 
 const userStore = useUserStore();
 

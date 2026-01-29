@@ -83,7 +83,7 @@ watch(() => game.playerColor, (newColor, oldColor) => {
 
 </script>
 
-<style scoped>
+<style lang="less" scoped>
 .play {
   display: flex;
   justify-content: center;
@@ -91,7 +91,7 @@ watch(() => game.playerColor, (newColor, oldColor) => {
   padding: 10px;
   min-height: calc(100vh - 60px);
   box-sizing: border-box;
-  background-color: rgb(255, 255, 255);
+  background-color: @gray-100;
 }
 
 .play-content {
