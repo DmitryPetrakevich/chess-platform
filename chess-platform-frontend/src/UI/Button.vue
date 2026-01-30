@@ -68,7 +68,6 @@ defineEmits(['click'])
 
 .btn-primary:hover:not(.btn-disabled):not(:disabled) {
   background-color: @gray-700;
-  transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(91, 91, 195, 0.3);
 }
 

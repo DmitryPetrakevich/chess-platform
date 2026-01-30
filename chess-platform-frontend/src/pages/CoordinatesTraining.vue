@@ -1,48 +1,47 @@
 <template>
     <div class="coordinates">
-        <div class="info">
-            <h1 class="title">
-                Тренировка координат
-            </h1>
+            <TrainingSettings />
+
+            <CoordinateBoard />
+
             
-            <p class="description">
-                Скоро на этой странице будет логика тренировки шахматных координат
-            </p>
-        </div>
+
+            <div class="sidebar-right">
+                <CoordinateDescription></CoordinateDescription>
+                <Button variant="primary">Начать игру</Button>
+
+            </div>
+
     </div>
 </template>
 
 <script setup>
+import CoordinateBoard from '@/components/coordinates/CoordinateBoard.vue';
+import CoordinateDescription from '@/components/coordinates/CoordinateDescription.vue';
+import TrainingSettings from '@/components/coordinates/TrainingSettings.vue';
+import Button from '@/UI/Button.vue';
 
 </script>
 
-<style scoped>
+<style lang="less" scoped>
 .coordinates {
-    background-color: #2c2c2c; 
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    box-sizing: border-box;
+    background-color: #1c1c1c;
     width: 100%;
     min-height: 100vh;
+    gap: 20px;
+    padding: 0 20px 20px 20px;
+}
+
+.sidebar-right {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
+    flex-direction: column;
+    width: 100%;
+    max-width: 350px;
+    gap: 40px;
 }
 
-.info {
-    text-align: center;
-    max-width: 600px;
-}
-
-.title {
-    color: #e74c3c;
-    font-size: 3rem;
-    font-weight: 700;
-    margin: 0 0 20px 0;
-}
-
-.description {
-    color: #bdc3c7;
-    font-size: 1.3rem;
-    line-height: 1.6;
-    margin: 0;
-}
 </style>
