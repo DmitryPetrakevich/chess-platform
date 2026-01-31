@@ -3,8 +3,8 @@
         <div class="container">
             <button 
             class="btn"
-            :class="{active: activeButton === 'black'}"
-            @click="activeButton = 'black'"
+            :class="{active: coordinationStore.activeColor === 'black'}"
+            @click="coordinationStore.activeColor = 'black'; coordinationStore.flipped = true"         
             >
                 <img 
                 :src="blackKingIcon"
@@ -15,8 +15,8 @@
 
             <button 
             class="btn"
-            :class="{active: activeButton === 'random'}"
-            @click="activeButton = 'random'"
+            :class="{active: coordinationStore.activeColor === 'random'}"
+            @click="coordinationStore.activeColor = 'random'"
             >
                 <img 
                 :src="randomIcon"
@@ -27,8 +27,8 @@
 
             <button 
             class="btn"
-            :class="{active: activeButton === 'white'}"
-            @click="activeButton = 'white'"
+            :class="{active: coordinationStore.activeColor === 'white'}"
+            @click="coordinationStore.activeColor = 'white'; coordinationStore.flipped = false""
             >
                 <img 
                 :src="whiteKingIcon"
@@ -46,9 +46,9 @@ import { ref } from "vue";
 import whiteKingIcon from "@/assets/game/inviteModel/choice-white.svg"
 import blackKingIcon from "@/assets/game/inviteModel/choice-black.svg"
 import randomIcon from "@/assets/game/inviteModel/choice-random.svg"
+import { useCoordinatesStore } from "@/store/coordinatesStore";
 
-const activeButton = ref('white')
-
+const coordinationStore = useCoordinatesStore()
 
 </script>
 

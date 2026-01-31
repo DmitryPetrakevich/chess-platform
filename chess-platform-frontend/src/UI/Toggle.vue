@@ -10,7 +10,7 @@
 
         <span class="toggle-slider"></span>
 
-        <span class="toggle-label" @click.stop.prevent> 
+        <span class="toggle-label"> 
             <slot> </slot> 
         </span>
     </label>
@@ -76,6 +76,7 @@ const emit = defineEmits<{
 .toggle-label {
   font-size: 16px;
   color: #c6c6c6;
+  font-family: "Manrope", sans-serif;
 }
 
 .toggle-wrapper.disabled {

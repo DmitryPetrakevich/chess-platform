@@ -16,14 +16,22 @@
             отметить соответствующее им поле.
         </p>
 
-        <p class="text">
+        <p v-if="coordinatesStore.activeMode === 'timer'" class="text">
             У вас есть 30 секунд на то, чтобы правильно 
             отметить как можно больше полей!
+        </p>
+
+        <p v-if="coordinatesStore.activeMode === 'infinite'" class="text">
+            Продвиньтесь так далеко, как сможете. Время не 
+            ограничено!
         </p>
     </div>
 </template>
 
 <script setup>
+import { useCoordinatesStore } from '@/store/coordinatesStore';
+
+const coordinatesStore = useCoordinatesStore()
 
 </script>
 
@@ -35,27 +43,25 @@
     box-sizing: border-box;
     padding: 10px;
     max-width: 350px;
-    border: 1px solid rgb(174, 174, 174);
+    border-radius: 10px;
     background-color: #2a2a2a;
-    max-height: 550px;
 }
 
 .text {
     font-size: 16px;
-    color: white;
+    color: rgb(222, 222, 222);
     line-height: 1.5; 
-}
+    font-family: 'Manrope', sans-serif;}
 
 p {
     white-space: pre-wrap;
-    // margin-bottom: 10px;
 }
 
 h2 {
     font-size: 36px;
     margin-bottom: 20px;
-    color: white;
-}
+    color: rgb(222, 222, 222);
+    font-family: 'Manrope', sans-serif;}
 
 li {
     margin-bottom: 10px;

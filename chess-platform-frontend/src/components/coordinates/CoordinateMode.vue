@@ -2,16 +2,16 @@
   <div class="mode">
     <button 
     class="btn"
-    :class="{active: activeButton === 'timer'}"
-    @click="activeButton= 'timer'"
+    :class="{active: coordinatesStore.activeMode === 'timer'}"
+    @click="coordinatesStore.activeMode= 'timer'"
     >
         0:30
     </button>
 
     <button 
     class="btn"
-    :class="{active: activeButton === 'infinite'}"
-    @click="activeButton= 'infinite'"
+    :class="{active: coordinatesStore.activeMode === 'infinite'}"
+    @click="coordinatesStore.activeMode= 'infinite'"
     >
       <img 
       :src="infiniteIcon" 
@@ -26,7 +26,9 @@
 import { ref } from "vue";
 import infiniteIcon from "@/assets/icons/coordinate-page/infinite.svg"
 
-const activeButton = ref('timer')
+import { useCoordinatesStore } from "@/store/coordinatesStore";
+
+const coordinatesStore = useCoordinatesStore()
 
 </script>
 
@@ -44,6 +46,7 @@ const activeButton = ref('timer')
     align-items: center;
     padding: 5px 10px;
     font-size: 20px;
+    font-family: "Manrope", sans-serif;
     width: 100%;
     border: 1px solid gray;
     background-color: @gray-300;
@@ -55,7 +58,7 @@ const activeButton = ref('timer')
 }
 
 .btn-img {
-    height: 25px;
-    width: 25px;
+    height: 30px;
+    width: 30px;
 }
 </style>

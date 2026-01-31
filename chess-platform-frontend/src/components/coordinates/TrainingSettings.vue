@@ -4,8 +4,8 @@
         <CoordinateBoardOrientation></CoordinateBoardOrientation>
         <CoordinateStats></CoordinateStats>
 
-        <Toggle v-model="showPieces">Показать фигуры</Toggle>
-        <Toggle v-model="showCoordinates">Показать координаты</Toggle>
+        <Toggle v-model="coordinatesStore.showPieces">Показать фигуры</Toggle>
+        <Toggle v-model="coordinatesStore.showCoordinates">Показать координаты</Toggle>
 
     </div>
 </template>
@@ -19,9 +19,9 @@ import CoordinateBoardOrientation from './CoordinateBoardOrientation.vue';
 import CoordinateStats from './CoordinateStats.vue';
 import Toggle from '@/UI/Toggle.vue';
 
-const showPieces = ref(true)
-const showCoordinates = ref(true)
+import { useCoordinatesStore } from '@/store/coordinatesStore';
 
+const coordinatesStore = useCoordinatesStore();
 
 </script>
 
@@ -29,8 +29,11 @@ const showCoordinates = ref(true)
 .settings {
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
     gap: 20px;
     padding: 10px;
+    height: 400px;
+    border-radius: 10px;
     background-color: #2a2a2a;
     min-width: 300px;
     max-width: 400px;

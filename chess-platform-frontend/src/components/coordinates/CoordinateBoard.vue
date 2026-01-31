@@ -1,55 +1,53 @@
 <template>
   <div class="board-wrapper">
-    <div class="board">
-      <div v-for="(row, rIndex) in squares" :key="rIndex" class="rank-row">
-        <div 
-          v-for="cell in row" 
-          :key="cell.id" 
-          class="cell"
-          :class="[
-            cell.color, 
-          ]"
-        >
-          <img v-if="pieceImage(cell.id)" 
-            :src="pieceImage(cell.id)" 
-            class="piece" 
-          />
+    <div class="board-container">
+      <div class="board">
+        <div v-for="(row, rIndex) in squares" :key="rIndex" class="rank-row">
+          <div 
+            v-for="cell in row" 
+            :key="cell.id" 
+            class="cell"
+            :class="cell.color"
+          >
+            <img 
+              v-if="pieceImage(cell.id)" 
+              :src="pieceImage(cell.id)" 
+              class="piece" 
+              :class="{ hidden: !coordinatesStore.showPieces }"
+            />
+          </div>
         </div>
-        <div class="rank-label">
-          {{ row[0].rank }}
+        
+        <div 
+          class="files-bottom"
+          :class="{ hidden: !coordinatesStore.showCoordinates }"
+        >
+          <div v-for="f in files" :key="f" class="file-label">{{ f }}</div>
         </div>
       </div>
-
-      <div class="files-row">
-        <div v-for="f in files" :key="f" class="file-label">{{ f }}</div>
-        <div class="rank-label"></div>
+      
+      <div 
+        class="ranks-side"
+        :class="{ hidden: !coordinatesStore.showCoordinates }"
+      >
+        <div v-for="r in ranks" :key="r" class="rank-label">{{ r }}</div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { useGameStore } from "@/store/gameStore"
-import { computed, ref, watch } from "vue" 
-import { useSquareClick } from "@/composables/useSquareClick"
-import { useDragAndDrop } from "@/composables/useDragAndDrop"
+import { computed } from "vue" 
+import { useCoordinatesStore } from "@/store/coordinatesStore"
 
-const game = useGameStore()
-
-const squareClick = useSquareClick()
-const dragDrop = useDragAndDrop(squareClick)
-
-const isSquareSelected = (id) => squareClick.selectedSquare.value === id
-const isSquareHighlighted = (id) => squareClick.highlightedSquares.value.has(id)
-
-const flipped = computed(() => game.playerColor === "b")
+const coordinatesStore = useCoordinatesStore()
 
 const files = computed(() =>
-  flipped.value ? ["h","g","f","e","d","c","b","a"] : ["a","b","c","d","e","f","g","h"]
+  coordinatesStore.flipped ? ["h","g","f","e","d","c","b","a"] : ["a","b","c","d","e","f","g","h"]
 )
 
 const ranks = computed(() =>
-  flipped.value ? [1,2,3,4,5,6,7,8] : [8,7,6,5,4,3,2,1]
+  coordinatesStore.flipped ? [1,2,3,4,5,6,7,8] : [8,7,6,5,4,3,2,1]
 )
 
 const squares = computed(() =>
@@ -61,21 +59,11 @@ const squares = computed(() =>
   )
 )
 
-game.setInitialPosition()
-
 function pieceImage(squareId) {
-  const code = game.pieces[squareId] 
+  const code = coordinatesStore.pieces[squareId] 
   if (!code) return null
-
   return new URL(`../../assets/chess-pieces/${code}.svg`, import.meta.url).href
 }
-
-watch(() => game.result.type, (newResult) => {
-  if (newResult) {
-    squareClick.resetSelection()
-    dragDrop.resetDrag()
-  }
-})
 </script>
 
 <style lang="less" scoped>
@@ -83,54 +71,80 @@ watch(() => game.result.type, (newResult) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 20px;
   box-sizing: border-box;
 }
 
-.board {
-  display: inline-block;
-  user-select: none;
-  max-width: min(80vh, 1500px);
-  max-height: min(80vh, 1500px);
+.board-container {
+  display: flex;
   width: 100%;
-  height: auto;
-  aspect-ratio: 1 / 1; 
+  max-width: min(85vh, 1500px);
+  aspect-ratio: 1 / 1;
+}
+
+.board {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .rank-row {
   display: flex;
-  align-items: stretch;
-  height: calc(100% / 8); 
+  flex: 1;
 }
 
 .cell {
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-  cursor: pointer;
   flex: 1;
   aspect-ratio: 1 / 1;
+  position: relative;
+  box-sizing: border-box;
 }
 
-.rank-label {
+.ranks-side {
   width: clamp(20px, 3vw, 30px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  
+  &.hidden {
+    visibility: hidden;
+    opacity: 0;
+  }
+}
+
+.ranks-side .rank-label {
+  text-align: center;
+  font-family: 'Manrope', sans-serif;
+  color: @gray-300;
+  font-weight: 600;
+  font-size: clamp(12px, 2vw, 16px);
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: @gray-300;
-  font-weight: 600;
-  margin-left: 2px;
-  font-size: clamp(12px, 2vw, 16px);
 }
 
-.file-label {
-  width: 100%;
-  text-align: center;
-  font-weight: 600;
-  color: @gray-300;
-  font-size: clamp(12px, 2vw, 16px);
+.files-bottom {
   height: clamp(20px, 3vw, 30px);
+  display: flex;
+  
+  &.hidden {
+    visibility: hidden;
+    opacity: 0;
+  }
+}
+
+.files-bottom .file-label {
+  flex: 1;
+  text-align: center;
+  font-family: 'Manrope', sans-serif;
+  color: @gray-300;
+  font-weight: 600;
+  font-size: clamp(12px, 2vw, 16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .piece {
@@ -138,6 +152,14 @@ watch(() => game.result.type, (newResult) => {
   height: 100%;
   object-fit: contain;
   padding: 2px; 
+  pointer-events: none;
+  -webkit-touch-callout: none; 
+  transition: visibility 0.2s, opacity 0.2s;
+
+  &.hidden {
+    visibility: hidden;
+    opacity: 0;
+  }
 }
 
 .cell.light {
@@ -148,67 +170,13 @@ watch(() => game.result.type, (newResult) => {
   background: #b58863;
 }
 
-.files-row {
-  display: flex;
-  align-items: center;
-  height: clamp(20px, 3vw, 30px);
-}
-
-.cell.highlighted {
-  position: relative; 
-}
-
-.cell.highlighted::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 30%;          
-  height: 30%;
-  background: rgba(136, 168, 136, 0.4); 
-  border-radius: 50%;  
-  transform: translate(-50%, -50%); 
-  pointer-events: none; 
-  z-index: 1;
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
-}
-
-.cell.dark.highlighted::after {
-  background: rgba(180, 200, 180, 0.45); 
-  box-shadow: 0 0 2px rgba(0, 0, 0, 0.549);
-}
-
-.cell.selected {
-  box-sizing: border-box;
-  background-color: rgba(67, 94, 67, 0.4);
-}
-
-.cell.selected.highlighted {
-  background: inherit !important;
-}
-
-.cell.last-move {
-  background: rgba(255, 255, 0, 0.435) !important; 
-}
-
-.board.flipped {
-  transform: rotate(180deg);
-}
-
-.board.flipped .piece,
-.board.flipped .file-label,
-.board.flipped .rank-label {
-  transform: rotate(180deg);
-}
-
 @media (max-width: 768px) {
   .board-wrapper {
     padding: 0;
   }
-
-  .board {
+  
+  .board-container {
     max-width: min(60vh, 600px);
-    max-height: min(60vh, 600px);
-}
+  }
 }
 </style>

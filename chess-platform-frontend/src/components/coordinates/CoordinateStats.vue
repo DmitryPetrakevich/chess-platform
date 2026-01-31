@@ -13,6 +13,7 @@
 .stats {
     width: 100%;
     height: 100px;
+    border-radius: 5px;
     border: 1px solid rgb(234, 234, 234);
 }
 
@@ -21,6 +22,7 @@ p {
     font-size: 20px;
     font-weight: 600;
     color: white;
+    font-family: 'Manrope', sans-serif;
     text-align: center;
     margin-top: 40px;
 }
