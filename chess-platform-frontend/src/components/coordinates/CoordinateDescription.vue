@@ -39,8 +39,8 @@ const coordinatesStore = useCoordinatesStore()
 .description {
     display: flex;
     flex-direction: column;
-    width: 100%;
     box-sizing: border-box;
+    width: 100%;
     padding: 10px;
     max-width: 350px;
     border-radius: 10px;

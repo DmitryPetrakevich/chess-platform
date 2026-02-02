@@ -4,7 +4,8 @@
             <button 
             class="btn"
             :class="{active: coordinationStore.activeColor === 'black'}"
-            @click="coordinationStore.activeColor = 'black'; coordinationStore.flipped = true"         
+            @click="coordinationStore.activeColor = 'black'; coordinationStore.flipped = true"   
+            style="border-radius: 5px 0 0 5px;"      
             >
                 <img 
                 :src="blackKingIcon"
@@ -29,6 +30,7 @@
             class="btn"
             :class="{active: coordinationStore.activeColor === 'white'}"
             @click="coordinationStore.activeColor = 'white'; coordinationStore.flipped = false""
+            style="border-radius: 0 5px 5px 0;"
             >
                 <img 
                 :src="whiteKingIcon"
@@ -64,7 +66,7 @@ const coordinationStore = useCoordinatesStore()
     box-sizing: border-box;
     justify-content: center;
     align-items: center;
-    padding: 5px 10px;
+    padding: 10px 15px;
     font-size: 24px;
     width: 100%;
     border: 1px solid gray;
@@ -77,7 +79,7 @@ const coordinationStore = useCoordinatesStore()
 }
 
 .btn-img {
-    height: 25px;
-    width: 25px;
+    height: 30px;
+    width: 30px;
 }
 </style>

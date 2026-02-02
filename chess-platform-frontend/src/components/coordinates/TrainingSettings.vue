@@ -1,8 +1,8 @@
 <template>
     <div class="settings">
-        <CoordinateMode></CoordinateMode>
-        <CoordinateBoardOrientation></CoordinateBoardOrientation>
-        <CoordinateStats></CoordinateStats>
+        <CoordinateMode/>
+        <CoordinateBoardOrientation/>
+        <CoordinateStats />
 
         <Toggle v-model="coordinatesStore.showPieces">Показать фигуры</Toggle>
         <Toggle v-model="coordinatesStore.showCoordinates">Показать координаты</Toggle>
@@ -35,7 +35,7 @@ const coordinatesStore = useCoordinatesStore();
     height: 400px;
     border-radius: 10px;
     background-color: #2a2a2a;
-    min-width: 300px;
-    max-width: 400px;
+    min-width: 350px;
+    max-width: 500px;
 }
 </style>

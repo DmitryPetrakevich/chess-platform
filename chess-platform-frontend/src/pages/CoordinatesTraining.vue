@@ -1,12 +1,31 @@
 <template>
   <div class="coordinates">
-    <TrainingSettings />
+    <TrainingSettings v-if="!coordinateStore.activeTraining" />
+
+    <CoordinatePanel v-if="coordinateStore.activeTraining" />
 
     <CoordinateBoard />
 
     <div class="sidebar-right">
-      <CoordinateDescription></CoordinateDescription>
-      <Button variant="primary">Начать игру</Button>
+      <CoordinateDescription/>
+      
+      <Button 
+        v-if="!coordinateStore.isActive"
+        @click="coordinateStore.startTraining()"
+        variant="primary"
+        class="btn"
+      >
+        Начать игру
+      </Button>
+      
+      <Button 
+        v-else
+        @click="coordinateStore.stopTraining()"
+        variant="secondary"
+        class="btn"
+      >
+        Завершить тренировку
+      </Button>
     </div>
   </div>
 </template>
@@ -16,13 +35,19 @@ import CoordinateBoard from "@/components/coordinates/CoordinateBoard.vue";
 import CoordinateDescription from "@/components/coordinates/CoordinateDescription.vue";
 import TrainingSettings from "@/components/coordinates/TrainingSettings.vue";
 import Button from "@/UI/Button.vue";
+
+import { useCoordinatesStore } from "@/store/coordinatesStore";
+import CoordinatePanel from "@/components/coordinates/CoordinatePanel.vue";
+
+const coordinateStore = useCoordinatesStore()
 </script>
 
 <style lang="less" scoped>
 .coordinates {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: flex-start;
+  align-items: flex-start; 
   box-sizing: border-box;
   background-color: #1c1c1c;
   width: 100%;
@@ -34,8 +59,8 @@ import Button from "@/UI/Button.vue";
 .sidebar-right {
   display: flex;
   flex-direction: column;
-  width: 100%;
   max-width: 350px;
   gap: 20px;
 }
+
 </style>

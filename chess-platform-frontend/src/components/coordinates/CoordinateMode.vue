@@ -4,6 +4,7 @@
     class="btn"
     :class="{active: coordinatesStore.activeMode === 'timer'}"
     @click="coordinatesStore.activeMode= 'timer'"
+    style="border-radius: 5px 0 0 5px;"
     >
         0:30
     </button>
@@ -12,6 +13,7 @@
     class="btn"
     :class="{active: coordinatesStore.activeMode === 'infinite'}"
     @click="coordinatesStore.activeMode= 'infinite'"
+    style="border-radius: 0 5px 5px 0;"
     >
       <img 
       :src="infiniteIcon" 
