@@ -2,7 +2,7 @@
   <div class="board-wrapper">
     <div class="board-container">
       <div 
-        v-if="coordinatesStore.isActive && coordinatesStore.targetSquare"
+        v-if="coordinatesStore.showCoordinatesOnBoard && coordinatesStore.targetSquare"
         class="coordinates-overlay"
       >
         <transition name="slide" mode="out-in">
@@ -223,9 +223,9 @@ function handleCellClick(squareId) {
     padding: 0;
   }
   
-  .board-container {
-    max-width: min(60vh, 600px);
-  }
+  // .board-container {
+  //   max-width: min(60vh, 600px);
+  // }
 
   .coordinate-text {
     font-size: clamp(48px, 8vw, 100px); 
@@ -284,7 +284,7 @@ function handleCellClick(squareId) {
   user-select: none;
   position: absolute;
   left: 60%;
-  top: 50%;
+  top: 55%;
   transform: translateY(-50%);
   z-index: 1000;
   opacity: 0.8;
@@ -293,7 +293,7 @@ function handleCellClick(squareId) {
 }
 
 .slide-enter-active {
-  animation: slideFromRight 0.2s ease-out;
+  animation: slideFromRight 0.1s ease-out;
 }
 
 @keyframes slideFromRight {

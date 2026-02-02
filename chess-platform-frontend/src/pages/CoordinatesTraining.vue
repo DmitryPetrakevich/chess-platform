@@ -1,13 +1,13 @@
 <template>
   <div class="coordinates">
-    <TrainingSettings v-if="!coordinateStore.activeTraining" />
+    <TrainingSettings class="settings" v-if="!coordinateStore.activeTraining" />
 
-    <CoordinatePanel v-if="coordinateStore.activeTraining" />
+    <CoordinatePanel class="settings" v-if="coordinateStore.activeTraining" />
 
     <CoordinateBoard />
 
     <div class="sidebar-right">
-      <CoordinateDescription/>
+      <CoordinateDescription  />
       
       <Button 
         v-if="!coordinateStore.isActive"
@@ -26,7 +26,14 @@
       >
         Завершить тренировку
       </Button>
+
+      <TrainingSettings class="settings" v-if="!coordinateStore.activeTraining" />
+
+      <CoordinatePanel class="settings" v-if="coordinateStore.activeTraining" />
+
+
     </div>
+
   </div>
 </template>
 
@@ -59,8 +66,28 @@ const coordinateStore = useCoordinatesStore()
 .sidebar-right {
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
   max-width: 350px;
   gap: 20px;
+  margin-left: auto;
+}
+
+@media (max-width: 1200px) {
+  .coordinates > .settings {
+    display: none;
+  }
+
+
+}
+
+@media (min-width: 1200px) {
+  .sidebar-right > .settings {
+    display: none;
+  }
+
+
+
+
 }
 
 </style>

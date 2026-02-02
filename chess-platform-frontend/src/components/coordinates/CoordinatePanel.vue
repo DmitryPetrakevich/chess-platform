@@ -18,8 +18,12 @@
                     Время
                 </span>
 
-                <span v-if="coordinatesStore.activeMode === 'timer'" class="timer-time">
-                    {{ coordinatesStore.timeLeft }}
+                <span 
+                v-if="coordinatesStore.activeMode === 'timer'" 
+                class="timer-time"
+                :class="{'low-time': coordinatesStore.timeLeft < 10}"
+                >
+                    {{ coordinatesStore.formattedTime  }}
                 </span>
 
                 <img v-if="coordinatesStore.activeMode === 'infinite'" class="timer-img" :src="infiniteIcon">
@@ -138,6 +142,10 @@ const coordinatesStore = useCoordinatesStore();
     &-time {
         font-size: 60px;
         color: rgb(209, 209, 209);
+
+        &.low-time {
+            color: #df2c2c;
+        }
     }
 
     &-img {
@@ -176,6 +184,7 @@ const coordinatesStore = useCoordinatesStore();
     box-sizing: border-box;
     gap: 20px;
     height: 400px;
+    padding: 10px;
     border-radius: 10px;
     background-color: #2a2a2a;
     min-width: 350px;
