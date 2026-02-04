@@ -21,7 +21,7 @@
                 <span 
                 v-if="coordinatesStore.activeMode === 'timer'" 
                 class="timer-time"
-                :class="{'low-time': coordinatesStore.timeLeft < 10}"
+                :class="{'low-time': coordinatesStore.timeLeft < 5}"
                 >
                     {{ coordinatesStore.formattedTime  }}
                 </span>
@@ -38,13 +38,13 @@
             </div>
 
             <div v-if="!coordinatesStore.isActive" class="settings">
-                <CoordinateMode/>
-                <CoordinateBoardOrientation/>
-                <CoordinateStats />
+                <!-- <CoordinateMode/> -->
+                <!-- <CoordinateBoardOrientation/> -->
+                <!-- <CoordinateStats /> -->
 
-                <Toggle v-model="coordinatesStore.showPieces">Показать фигуры</Toggle>
-                <Toggle v-model="coordinatesStore.showCoordinates">Показать координаты</Toggle>
-
+                <!-- <Toggle v-model="coordinatesStore.showPieces">Показать фигуры</Toggle> -->
+                <!-- <Toggle v-model="coordinatesStore.showCoordinates">Показать координаты</Toggle> -->
+                <TrainingSettings></TrainingSettings>
             </div>
         </div>
     </div>
@@ -66,6 +66,7 @@ import Toggle from '@/UI/Toggle.vue';
 import whiteIcon from "@/assets/game/inviteModel/choice-white.svg"
 import blackIcon from "@/assets/game/inviteModel/choice-black.svg"
 import infiniteIcon from "@/assets/icons/coordinate-page/infinite.svg"
+import TrainingSettings from './TrainingSettings.vue';
 
 const coordinatesStore = useCoordinatesStore();
 
@@ -78,8 +79,10 @@ const coordinatesStore = useCoordinatesStore();
     padding: 10px;
     border-radius: 10px;
     background-color: #2a2a2a;
-    min-width: 350px;
-    max-width: 500px;
+    margin-left: auto;
+    // min-width: 300px;
+    width: 100%;
+    // max-width: 350px;
 }
 
 .panel__container {
@@ -183,11 +186,37 @@ const coordinatesStore = useCoordinatesStore();
     flex-direction: column;
     box-sizing: border-box;
     gap: 20px;
-    height: 400px;
     padding: 10px;
     border-radius: 10px;
     background-color: #2a2a2a;
-    min-width: 350px;
+    min-width: 300px;
     max-width: 500px;
+}
+
+@media (max-width: 480px) {
+.result {
+
+    &-text {
+        font-size: 36px;
+        color: rgb(209, 209, 209);
+    }
+
+    &-number {
+        font-size: 50px;
+        color: rgb(209, 209, 209);
+    }
+}
+
+.timer {
+
+    &-text {
+        font-size: 36px;
+    }
+
+    &-time {
+        font-size: 50px;
+    }
+}
+
 }
 </style>

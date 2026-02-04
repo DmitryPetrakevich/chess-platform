@@ -2,7 +2,7 @@
     <div class="settings">
         <CoordinateMode/>
         <CoordinateBoardOrientation/>
-        <CoordinateStats />
+        <!-- <CoordinateStats /> -->
 
         <Toggle v-model="coordinatesStore.showPieces">Показать фигуры</Toggle>
         <Toggle v-model="coordinatesStore.showCoordinates">Показать координаты</Toggle>
@@ -30,12 +30,15 @@ const coordinatesStore = useCoordinatesStore();
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
+    margin-left: auto;
     gap: 20px;
     padding: 10px;
-    height: 400px;
+    // height: 400px;
     border-radius: 10px;
     background-color: #2a2a2a;
-    min-width: 350px;
-    max-width: 500px;
+    width: 100%;
+    // min-width: 300px;
+    // max-width: 350px;
 }
+
 </style>

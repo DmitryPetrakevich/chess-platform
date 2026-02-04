@@ -110,23 +110,28 @@ function handleCellClick(squareId) {
 <style lang="less" scoped>
 .board-wrapper {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   position: relative;
   box-sizing: border-box;
 }
 
 .board-container {
   display: flex;
+  box-sizing: border-box;
   position: relative;
-  width: 100%;
+  // width: 100%;
 }
 
 .board {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: min(85vh, 85vw, 800px);
+  min-height: min(85vh, 85vw, 800px);
+  box-sizing: border-box;
+
 }
 
 .rank-row {
@@ -219,14 +224,6 @@ function handleCellClick(squareId) {
 }
 
 @media (max-width: 768px) {
-  .board-wrapper {
-    padding: 0;
-  }
-  
-  // .board-container {
-  //   max-width: min(60vh, 600px);
-  // }
-
   .coordinate-text {
     font-size: clamp(48px, 8vw, 100px); 
   }
@@ -237,7 +234,13 @@ function handleCellClick(squareId) {
     transform: translateX(-50%);
   }
 }
-  
+
+@media (max-width: 1100px) {
+  .board-wrapper {
+    align-self: center;
+  }
+}
+ 
 .coordinates-overlay {
   position: absolute; 
   top: 0;
@@ -249,19 +252,14 @@ function handleCellClick(squareId) {
   align-items: center;
   z-index: 1000; 
   pointer-events: none;
-  
 }
 
 .current-coordinate {
   font-size: clamp(64px, 10vw, 140px); 
   font-weight: 900; 
-  color: #928d8d; 
-  text-shadow: 
-    4px 4px 0 rgba(0, 0, 0, 0.9),
-    -4px -4px 0 rgba(0, 0, 0, 0.9),
-    4px -4px 0 rgba(0, 0, 0, 0.9),
-    -4px 4px 0 rgba(0, 0, 0, 0.9);
-    font-family: 'Manrope', sans-serif;
+  color: #006400; 
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.7);
+  font-family: 'Manrope', sans-serif;
   user-select: none;
   position: absolute;
   left: 40%;
@@ -274,12 +272,8 @@ function handleCellClick(squareId) {
 .next-coordinate {
   font-size: clamp(45px, 8vw, 68px); 
   font-weight: 600; 
-  color: #928d8d; 
-  text-shadow: 
-    2px 2px 0 rgba(0, 0, 0, 0.9),
-    -2px -2px 0 rgba(0, 0, 0, 0.9),
-    2px -2px 0 rgba(0, 0, 0, 0.9),
-    -2px 2px 0 rgba(0, 0, 0, 0.9);
+  color: #006400; 
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.7);
   font-family: 'Manrope', sans-serif;
   user-select: none;
   position: absolute;
@@ -289,7 +283,6 @@ function handleCellClick(squareId) {
   z-index: 1000;
   opacity: 0.8;
   pointer-events: none;
-
 }
 
 .slide-enter-active {

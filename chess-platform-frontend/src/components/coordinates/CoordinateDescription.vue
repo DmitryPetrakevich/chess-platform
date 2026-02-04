@@ -42,7 +42,6 @@ const coordinatesStore = useCoordinatesStore()
     box-sizing: border-box;
     width: 100%;
     padding: 10px;
-    max-width: 350px;
     border-radius: 10px;
     background-color: #2a2a2a;
 }
@@ -51,7 +50,8 @@ const coordinatesStore = useCoordinatesStore()
     font-size: 16px;
     color: rgb(222, 222, 222);
     line-height: 1.5; 
-    font-family: 'Manrope', sans-serif;}
+    font-family: 'Manrope', sans-serif;
+}
 
 p {
     white-space: pre-wrap;
@@ -61,9 +61,21 @@ h2 {
     font-size: 36px;
     margin-bottom: 20px;
     color: rgb(222, 222, 222);
-    font-family: 'Manrope', sans-serif;}
+    font-family: 'Manrope', sans-serif;
+}
 
 li {
     margin-bottom: 10px;
+}
+
+@media (max-width: 480px) {
+.text {
+    font-size: 13px;
+}
+
+h2 {
+    font-size: 30px;
+}
+
 }
 </style>

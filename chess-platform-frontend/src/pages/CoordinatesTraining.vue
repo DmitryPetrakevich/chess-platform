@@ -4,12 +4,12 @@
 
     <CoordinatePanel class="settings" v-if="coordinateStore.activeTraining" />
 
-    <CoordinateBoard />
+    <CoordinateBoard class="board" />
 
     <div class="sidebar-right">
-      <CoordinateDescription  />
-      
-      <Button 
+      <CoordinateDescription class="description" />
+
+      <Button
         v-if="!coordinateStore.isActive"
         @click="coordinateStore.startTraining()"
         variant="primary"
@@ -17,8 +17,8 @@
       >
         Начать игру
       </Button>
-      
-      <Button 
+
+      <Button
         v-else
         @click="coordinateStore.stopTraining()"
         variant="secondary"
@@ -27,13 +27,13 @@
         Завершить тренировку
       </Button>
 
-      <TrainingSettings class="settings" v-if="!coordinateStore.activeTraining" />
+      <TrainingSettings
+        class="settings"
+        v-if="!coordinateStore.activeTraining"
+      />
 
       <CoordinatePanel class="settings" v-if="coordinateStore.activeTraining" />
-
-
     </div>
-
   </div>
 </template>
 
@@ -46,21 +46,21 @@ import Button from "@/UI/Button.vue";
 import { useCoordinatesStore } from "@/store/coordinatesStore";
 import CoordinatePanel from "@/components/coordinates/CoordinatePanel.vue";
 
-const coordinateStore = useCoordinatesStore()
+const coordinateStore = useCoordinatesStore();
 </script>
 
 <style lang="less" scoped>
 .coordinates {
   display: flex;
   flex-direction: row;
-  justify-content: flex-start;
-  align-items: flex-start; 
+  justify-content: center;
+  align-items: flex-start;
   box-sizing: border-box;
   background-color: #1c1c1c;
   width: 100%;
   min-height: 100vh;
-  gap: 20px;
-  padding: 0 20px 20px 20px;
+  gap: 50px;
+  padding: 20px;
 }
 
 .sidebar-right {
@@ -68,26 +68,41 @@ const coordinateStore = useCoordinatesStore()
   flex-direction: column;
   box-sizing: border-box;
   max-width: 350px;
+  width: 100%;
   gap: 20px;
-  margin-left: auto;
+  margin-right: auto;
 }
 
-@media (max-width: 1200px) {
+.settings {
+  max-width: 350px;
+  min-width: 250px;
+}
+
+@media (max-width: 1400px) {
   .coordinates > .settings {
     display: none;
   }
-
-
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1400px) {
   .sidebar-right > .settings {
     display: none;
   }
-
-
-
-
 }
 
+@media (max-width: 1100px) {
+  .coordinates {
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  .sidebar-right {
+    margin: 0 auto;
+    max-width: 800px;
+  }
+
+  .settings {
+    max-width: 880px;
+  }
+}
 </style>

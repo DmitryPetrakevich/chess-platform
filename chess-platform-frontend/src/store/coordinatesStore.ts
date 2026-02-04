@@ -6,6 +6,7 @@ export const useCoordinatesStore = defineStore("coordinates", () => {
   const activeColor = ref("white");
   const flipped = ref(false);
   const showPieces = ref(true);
+  const showCoordinates = ref(true)
   const score = ref(0);
   const activeTraining = ref(false);
 
@@ -201,6 +202,7 @@ export const useCoordinatesStore = defineStore("coordinates", () => {
     activeColor,
     flipped,
     showPieces,
+    showCoordinates,
     showCoordinatesOnBoard,
     pieces,
     score,
