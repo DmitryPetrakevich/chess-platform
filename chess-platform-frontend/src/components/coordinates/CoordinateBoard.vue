@@ -2,7 +2,7 @@
   <div class="board-wrapper">
     <div class="board-container">
       <div 
-        v-if="coordinatesStore.showCoordinatesOnBoard && coordinatesStore.targetSquare"
+        v-if="coordinatesStore.isActive && coordinatesStore.targetSquare"
         class="coordinates-overlay"
       >
         <transition name="slide" mode="out-in">
@@ -46,6 +46,20 @@
         >
           <div v-for="f in files" :key="f" class="file-label">{{ f }}</div>
         </div>
+
+        <div 
+          v-if="coordinatesStore.activeMode === 'timer' && coordinatesStore.isActive"
+          class="time-indicator-wrapper"
+        >
+          <TimeIndicator 
+            :time="coordinatesStore.timeLeft"
+            :max-time="30"
+            size="medium"
+            variant="success"
+            :animate="true"
+            class="time-indicator"
+          />
+        </div>
       </div>
       
       <div 
@@ -61,6 +75,7 @@
 <script setup>
 import { computed } from "vue" 
 import { useCoordinatesStore } from "@/store/coordinatesStore"
+import TimeIndicator from "@/UI/TimeIndicator .vue"
 
 const coordinatesStore = useCoordinatesStore()
 
@@ -121,7 +136,6 @@ function handleCellClick(squareId) {
   display: flex;
   box-sizing: border-box;
   position: relative;
-  // width: 100%;
 }
 
 .board {

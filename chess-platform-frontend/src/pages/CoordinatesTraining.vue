@@ -7,7 +7,7 @@
     <CoordinateBoard class="board" />
 
     <div class="sidebar-right">
-      <CoordinateDescription class="description" />
+      <CoordinateDescription v-if="!coordinateStore.isActive" class="description" />
 
       <Button
         v-if="!coordinateStore.isActive"
@@ -42,6 +42,7 @@ import CoordinateBoard from "@/components/coordinates/CoordinateBoard.vue";
 import CoordinateDescription from "@/components/coordinates/CoordinateDescription.vue";
 import TrainingSettings from "@/components/coordinates/TrainingSettings.vue";
 import Button from "@/UI/Button.vue";
+import TimeProgress from "@/UI/TimeIndicator .vue";
 
 import { useCoordinatesStore } from "@/store/coordinatesStore";
 import CoordinatePanel from "@/components/coordinates/CoordinatePanel.vue";
@@ -60,7 +61,7 @@ const coordinateStore = useCoordinatesStore();
   width: 100%;
   min-height: 100vh;
   gap: 50px;
-  padding: 20px;
+  padding: 0 20px 20px 20px;
 }
 
 .sidebar-right {
@@ -102,7 +103,7 @@ const coordinateStore = useCoordinatesStore();
   }
 
   .settings {
-    max-width: 880px;
+    max-width: 800px;
   }
 }
 </style>

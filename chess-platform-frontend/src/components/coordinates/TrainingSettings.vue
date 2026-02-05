@@ -33,12 +33,8 @@ const coordinatesStore = useCoordinatesStore();
     margin-left: auto;
     gap: 20px;
     padding: 10px;
-    // height: 400px;
     border-radius: 10px;
     background-color: #2a2a2a;
     width: 100%;
-    // min-width: 300px;
-    // max-width: 350px;
 }
-
 </style>

@@ -19,7 +19,6 @@ export const useCoordinatesStore = defineStore("coordinates", () => {
 
   const showError = ref(false);
   const errorTimer = ref(null);
-  const showCoordinatesOnBoard = ref(false);
 
   let intervalID = 0;
   let tenthsIntervalID = 0;
@@ -140,19 +139,14 @@ export const useCoordinatesStore = defineStore("coordinates", () => {
     intervalID = 0;
     tenthsIntervalID = 0;
     generateRandomSquare();
-    showCoordinatesOnBoard.value = false;
 
     setTimeout(() => {
-      isActive.value = true;
-      showCoordinatesOnBoard.value = true;
-
       if (activeMode.value === "timer") {
         intervalID = setInterval(() => {
           if (timeLeft.value > 0) {
             timeLeft.value--;
           } else {
             isActive.value = false;
-            showCoordinatesOnBoard.value = false;
             clearInterval(intervalID);
             clearInterval(tenthsIntervalID);
           }
@@ -168,7 +162,7 @@ export const useCoordinatesStore = defineStore("coordinates", () => {
           }
         }, 100);
       }
-    }, 1000);
+    }, 500);
   }
 
   function stopTraining() {
@@ -183,7 +177,6 @@ export const useCoordinatesStore = defineStore("coordinates", () => {
     isActive.value = false;
     activeTraining.value = false;
     targetSquare.value = "";
-    showCoordinatesOnBoard.value = false;
   }
 
   const formattedTime = computed(() => {
@@ -203,7 +196,6 @@ export const useCoordinatesStore = defineStore("coordinates", () => {
     flipped,
     showPieces,
     showCoordinates,
-    showCoordinatesOnBoard,
     pieces,
     score,
     activeTraining,
