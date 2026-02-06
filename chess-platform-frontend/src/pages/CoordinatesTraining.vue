@@ -43,9 +43,9 @@ import CoordinateDescription from "@/components/coordinates/CoordinateDescriptio
 import TrainingSettings from "@/components/coordinates/TrainingSettings.vue";
 import Button from "@/UI/Button.vue";
 import TimeProgress from "@/UI/TimeIndicator .vue";
+import CoordinatePanel from "@/components/coordinates/CoordinatePanel.vue";
 
 import { useCoordinatesStore } from "@/store/coordinatesStore";
-import CoordinatePanel from "@/components/coordinates/CoordinatePanel.vue";
 
 const coordinateStore = useCoordinatesStore();
 </script>
@@ -105,5 +105,9 @@ const coordinateStore = useCoordinatesStore();
   .settings {
     max-width: 800px;
   }
+}
+
+.btn {
+  font-family: 'Roboto', sans-serif;
 }
 </style>

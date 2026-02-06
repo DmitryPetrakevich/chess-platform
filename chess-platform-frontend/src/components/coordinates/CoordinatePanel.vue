@@ -106,6 +106,7 @@ const coordinatesStore = useCoordinatesStore();
 
   &-text {
     font-size: 45px;
+    font-family: 'Roboto', sans-serif;
     color: rgb(209, 209, 209);
   }
 
@@ -136,6 +137,7 @@ const coordinatesStore = useCoordinatesStore();
 
   &-text {
     font-size: 45px;
+    font-family: 'Roboto', sans-serif;
     color: rgb(209, 209, 209);
   }
 
@@ -174,6 +176,7 @@ const coordinatesStore = useCoordinatesStore();
 
   &-text {
     font-size: 18px;
+    font-family: 'Roboto', sans-serif;
     color: rgb(209, 209, 209);
   }
 }

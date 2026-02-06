@@ -2,7 +2,7 @@
     <div class="settings">
         <CoordinateMode/>
         <CoordinateBoardOrientation/>
-        <!-- <CoordinateStats /> -->
+        <CoordinateStats />
 
         <Toggle v-model="coordinatesStore.showPieces">Показать фигуры</Toggle>
         <Toggle v-model="coordinatesStore.showCoordinates">Показать координаты</Toggle>

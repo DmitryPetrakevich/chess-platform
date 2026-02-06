@@ -17,13 +17,13 @@
         </p>
 
         <p v-if="coordinatesStore.activeMode === 'timer'" class="text">
-            У вас есть 30 секунд на то, чтобы правильно 
+            У вас есть <span style="color: red">30 секунд</span> на то, чтобы правильно 
             отметить как можно больше полей!
         </p>
 
         <p v-if="coordinatesStore.activeMode === 'infinite'" class="text">
-            Продвиньтесь так далеко, как сможете. Время не 
-            ограничено!
+            Продвиньтесь так далеко, как сможете.<span style="color: red;"> Время не 
+            ограничено!</span> 
         </p>
     </div>
 </template>
