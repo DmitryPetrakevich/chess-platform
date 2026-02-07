@@ -269,7 +269,7 @@ function handleCellClick(squareId) {
 }
 
 .current-coordinate {
-  font-size: clamp(64px, 10vw, 140px); 
+  font-size: clamp(64px, 16vw, 140px); 
   font-weight: 900; 
   color: #006400; 
   text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.7);
@@ -284,7 +284,7 @@ function handleCellClick(squareId) {
 }
 
 .next-coordinate {
-  font-size: clamp(45px, 8vw, 68px); 
+  font-size: clamp(40px, 12vw, 90px); 
   font-weight: 600; 
   color: #006400; 
   text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.7);

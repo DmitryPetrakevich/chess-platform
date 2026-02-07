@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, reactive, computed } from "vue";
+import { useGameStats } from "@/composables/useGameStats";
 
 export const useCoordinatesStore = defineStore("coordinates", () => {
   /**
@@ -70,6 +71,18 @@ export const useCoordinatesStore = defineStore("coordinates", () => {
    * ID интервала для таймера десятых долей секунды
    */
   let tenthsIntervalID = 0;
+
+  const {
+    gameHistory,
+    averageScoreWhite,
+    averageScoreBlack,
+    whiteGamesCount,
+    blackGamesCount,
+    bestScoreWhite,
+    bestScoreBlack,
+    saveCurrentGame: saveStats,
+    loadGameHistory
+  } = useGameStats();
 
   const pieces = reactive<Record<string, string>>({
     a1: "wR",
@@ -205,6 +218,22 @@ export const useCoordinatesStore = defineStore("coordinates", () => {
     return false;
   }
 
+  function scrollToResults() {
+    if (window.innerWidth < 1100 && !isActive.value) {
+      setTimeout(() => {
+        const sidebar = document.querySelector(".sidebar-right");
+
+        if (sidebar) {
+          sidebar.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+          return;
+        }
+      }, 500);
+    }
+  }
+
   /**
    * Начинает новую тренировку
    * @description Запускает процесс тренировки:
@@ -296,6 +325,7 @@ export const useCoordinatesStore = defineStore("coordinates", () => {
 
     isActive.value = false;
     targetSquare.value = "";
+    scrollToResults();
   }
 
   /**
@@ -312,146 +342,18 @@ export const useCoordinatesStore = defineStore("coordinates", () => {
     return `${secondsStr}.${timeTenths.value}`;
   });
 
-  /**
-   * Интерфейс результата игры
-   * @interface GameResult
-   * @property {number} score - Количество верных кликов в игре
-   * @property {'white' | 'black'} color - Цвет фигур, за которые играл пользователь
-   * @property {'timer' | 'infinite'} mode - Режим игры
-   * @property {Date} [date] - Дата и время окончания игры (опционально)
-   */
-  interface GameResult {
-    score: number;
-    color: "white" | "black";
-    mode: "timer" | "infinite";
-    date?: Date;
+/**
+ * Сохраняет текущую игру в историю 
+ */
+const saveCurrentGame = () => {
+  if (score.value > 0 && activeMode.value === "timer") {
+    saveStats(
+      score.value, 
+      activeColor.value as "white" | "black", 
+      activeMode.value as "timer" | "infinite"
+    );
   }
-
-  /**
-   * История всех сыгранных игр
-   * @description
-   * - Хранит результаты всех завершенных тренировок
-   * - Сохраняется в localStorage под ключом 'chessGameHistory'
-   * - Загружается автоматически при инициализации store
-   * - Используется для расчета статистики
-   */
-  const gameHistory = ref<GameResult[]>([]);
-
-  /**
-   * Сохраняет текущую игру в историю
-   */
-  function saveCurrentGame() {
-    if (score.value > 0 && activeMode.value === "timer") {
-      const result: GameResult = {
-        score: score.value,
-        color: activeColor.value as "white" | "black",
-        mode: activeMode.value as "timer" | "infinite",
-        date: new Date(),
-      };
-
-      gameHistory.value.push(result);
-      localStorage.setItem(
-        "chessGameHistory",
-        JSON.stringify(gameHistory.value),
-      );
-    }
-  }
-
-  /**
-   * Средний результат для белых фигур
-   * @returns {number} Среднее арифметическое score по всем играм белыми
-   *   - Округлено до целого числа
-   *   - 0 если нет игр белыми
-   */
-  const averageScoreWhite = computed(() => {
-    const whiteGames = gameHistory.value.filter(
-      (game) => game.color === "white",
-    );
-    if (whiteGames.length === 0) return 0;
-    const total = whiteGames.reduce((sum, game) => sum + game.score, 0);
-    return Math.round(total / whiteGames.length);
-  });
-
-  /**
-   * Средний результат для черных фигур
-   * @returns {number} Среднее арифметическое score по всем играм черными
-   *   - Округлено до целого числа
-   *   - 0 если нет игр черными
-   */
-  const averageScoreBlack = computed(() => {
-    const blackGames = gameHistory.value.filter(
-      (game) => game.color === "black",
-    );
-    if (blackGames.length === 0) return 0;
-    const total = blackGames.reduce((sum, game) => sum + game.score, 0);
-    return Math.round(total / blackGames.length);
-  });
-
-  /**
-   * Количество сыгранных игр белыми фигурами
-   * @returns {number} Количество записей в gameHistory с color === 'white'
-   */
-  const whiteGamesCount = computed(
-    () => gameHistory.value.filter((game) => game.color === "white").length,
-  );
-
-  /**
-   * Количество сыгранных игр черными фигурами
-   * @returns {number} Количество записей в gameHistory с color === 'black'
-   */
-  const blackGamesCount = computed(
-    () => gameHistory.value.filter((game) => game.color === "black").length,
-  );
-
-  /**
-   * Лучший результат для белых фигур
-   * @returns {number} Максимальный score среди всех игр белыми
-   *   - 0 если нет игр белыми
-   */
-  const bestScoreWhite = computed(() => {
-    const whiteGames = gameHistory.value.filter(
-      (game) => game.color === "white",
-    );
-    if (whiteGames.length === 0) return 0;
-    return Math.max(...whiteGames.map((game) => game.score));
-  });
-
-  /**
-   * Лучший результат для черных фигур
-   * @returns {number} Максимальный score среди всех игр черными
-   *   - 0 если нет игр черными
-   */
-  const bestScoreBlack = computed(() => {
-    const blackGames = gameHistory.value.filter(
-      (game) => game.color === "black",
-    );
-    if (blackGames.length === 0) return 0;
-    return Math.max(...blackGames.map((game) => game.score));
-  });
-
-  /**
-   * Загружает историю игр из localStorage
-   * - Читает данные из localStorage по ключу 'chessGameHistory'
-   * - Парсит JSON строку в массив объектов
-   * - Восстанавливает объекты Date из строк
-   * - При ошибках парсинга инициализирует пустым массивом
-   *
-   * @sideEffects Инициализирует gameHistory.value данными из localStorage
-   */
-  function loadGameHistory() {
-    const saved = localStorage.getItem("chessGameHistory");
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        gameHistory.value = data.map((item) => ({
-          ...item,
-          date: item.date ? new Date(item.date) : new Date(),
-        }));
-      } catch {
-        gameHistory.value = [];
-      }
-    }
-  }
+};
 
   loadGameHistory();
 
@@ -474,6 +376,7 @@ export const useCoordinatesStore = defineStore("coordinates", () => {
     allCoordinates,
     showError,
 
+    gameHistory,
     averageScoreWhite,
     averageScoreBlack,
     whiteGamesCount,
@@ -485,5 +388,7 @@ export const useCoordinatesStore = defineStore("coordinates", () => {
     stopTraining,
     checkClick,
     generateRandomSquare,
+    scrollToResults,
+    saveCurrentGame
   };
 });
