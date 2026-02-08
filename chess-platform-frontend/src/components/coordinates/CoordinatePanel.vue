@@ -1,8 +1,26 @@
 <template>
   <div class="panel">
     <div class="panel__container">
-      <div class="result" :class="{ error: coordinatesStore.showError }">
-        <span class="result-text"> Результат </span>
+      <div
+        class="result"
+        :class="{
+          error: coordinatesStore.showError,
+          record: isNewRecord && !coordinatesStore.isActive,
+        }"
+      >
+      <span 
+      v-if="!isNewRecord"
+      class="result-text"
+      > 
+        Результат 
+      </span>
+
+      <span 
+      v-if="isNewRecord && !coordinatesStore.isActive"
+      class="result-text"
+      > 
+        Новый рекорд
+      </span>
 
         <span class="result-number">
           {{ coordinatesStore.score }}
@@ -37,9 +55,7 @@
 
         <span class="color-text">
           Вы играете
-          {{
-            coordinatesStore.activeColor === "white" ? "белыми" : "черными"
-          }}
+          {{ coordinatesStore.activeColor === "white" ? "белыми" : "черными" }}
           фигурами
         </span>
       </div>
@@ -52,12 +68,12 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
-
+import { ref, computed } from "vue";
 import { useCoordinatesStore } from "@/store/coordinatesStore";
+import { useGameStats } from "@/composables/useGameStats";
 import { disposePinia } from "pinia";
-import Button from "@/UI/Button.vue";
 
+import Button from "@/UI/Button.vue";
 import CoordinateMode from "./CoordinateMode.vue";
 import CoordinateBoardOrientation from "./CoordinateBoardOrientation.vue";
 import CoordinateStats from "./CoordinateStats.vue";
@@ -68,7 +84,25 @@ import blackIcon from "@/assets/game/inviteModel/choice-black.svg";
 import infiniteIcon from "@/assets/icons/coordinate-page/infinite.svg";
 import TrainingSettings from "./TrainingSettings.vue";
 
+const stats = useGameStats();
 const coordinatesStore = useCoordinatesStore();
+
+const showResult = computed(
+  () => !coordinatesStore.isActive && coordinatesStore.score > 0,
+);
+const score = computed(() => coordinatesStore.score);
+const color = computed(() => coordinatesStore.activeColor);
+
+const isNewRecord = computed(() => {
+  if (coordinatesStore.isActive) {
+    return false;
+  }
+  
+  return stats.isNewRecord(
+    score.value,
+    color.value === "random" ? "white" : color.value,
+  );
+});
 </script>
 
 <style lang="less" scoped>
@@ -106,7 +140,7 @@ const coordinatesStore = useCoordinatesStore();
 
   &-text {
     font-size: 45px;
-    font-family: 'Roboto', sans-serif;
+    font-family: "Roboto", sans-serif;
     color: rgb(209, 209, 209);
   }
 
@@ -117,8 +151,19 @@ const coordinatesStore = useCoordinatesStore();
 
   &.error {
     .result-number {
-      color: #ff3b30;
+      color: #adad26;
     }
+  }
+
+  &.record {
+    background:
+      linear-gradient(
+        135deg,
+        rgba(212, 175, 55, 0.9) 0%,
+        rgba(184, 134, 11, 0.9) 100%
+      ),
+      url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><pattern id="pattern" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M0,0 L10,10 M10,0 L0,10" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern><rect width="100" height="100" fill="url(%23pattern)"/></svg>');
+    background-blend-mode: overlay;
   }
 }
 
@@ -137,7 +182,7 @@ const coordinatesStore = useCoordinatesStore();
 
   &-text {
     font-size: 45px;
-    font-family: 'Roboto', sans-serif;
+    font-family: "Roboto", sans-serif;
     color: rgb(209, 209, 209);
   }
 
@@ -176,7 +221,7 @@ const coordinatesStore = useCoordinatesStore();
 
   &-text {
     font-size: 18px;
-    font-family: 'Roboto', sans-serif;
+    font-family: "Roboto", sans-serif;
     color: rgb(209, 209, 209);
   }
 }
@@ -189,7 +234,6 @@ const coordinatesStore = useCoordinatesStore();
   border-radius: 10px;
   background-color: #2a2a2a;
   width: 100%;
-  // min-width: 300px;
 }
 
 @media (max-width: 480px) {

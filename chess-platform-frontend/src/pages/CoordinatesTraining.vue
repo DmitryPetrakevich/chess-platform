@@ -7,13 +7,15 @@
     <CoordinateBoard class="board" />
 
     <div class="sidebar-right">
-      <CoordinateDescription v-if="!coordinateStore.isActive" class="description" />
+      <CoordinateDescription v-if="!coordinateStore.activeTraining" class="description" />
 
+      <CoordinatePanel class="settings" v-if="coordinateStore.activeTraining" />
       <Button
         v-if="!coordinateStore.isActive"
         @click="coordinateStore.startTraining()"
         variant="primary"
         class="btn"
+        :class="{'btn-start': coordinateStore.activeTraining}"
       >
         Начать игру
       </Button>
@@ -22,7 +24,7 @@
         v-else
         @click="coordinateStore.stopTraining()"
         variant="secondary"
-        class="btn"
+        class="btn btn-finish"
       >
         Завершить тренировку
       </Button>
@@ -31,8 +33,6 @@
         class="settings"
         v-if="!coordinateStore.activeTraining"
       />
-
-      <CoordinatePanel class="settings" v-if="coordinateStore.activeTraining" />
     </div>
   </div>
 </template>
@@ -59,7 +59,7 @@ const coordinateStore = useCoordinatesStore();
   box-sizing: border-box;
   background-color: #1c1c1c;
   width: 100%;
-  min-height: 100vh;
+  min-height: calc(100vh - 60px);
   gap: 50px;
   padding: 0 20px 20px 20px;
 }
@@ -88,6 +88,11 @@ const coordinateStore = useCoordinatesStore();
 @media (min-width: 1400px) {
   .sidebar-right > .settings {
     display: none;
+  }
+
+  .btn-finish,
+  .btn-start {
+    margin-top: 40vh;
   }
 }
 

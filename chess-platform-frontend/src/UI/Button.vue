@@ -78,7 +78,6 @@ defineEmits(['click'])
 
 .btn-secondary:hover:not(.btn-disabled):not(:disabled) {
   background-color: #666;
-  transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
@@ -90,7 +89,6 @@ defineEmits(['click'])
 
 .btn-outline:hover:not(.btn-disabled):not(:disabled) {
   background-color: rgba(91, 91, 195, 0.1);
-  transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(91, 91, 195, 0.2);
 }
 
@@ -126,7 +124,6 @@ defineEmits(['click'])
 }
 
 .btn:active:not(.btn-disabled):not(:disabled) {
-  transform: translateY(1px);
   transition: transform 0.1s ease;
 }
 

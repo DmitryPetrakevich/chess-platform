@@ -1,4 +1,4 @@
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 
 /**
  * Результат завершенной игры для статистики
@@ -158,6 +158,24 @@ export function useGameStats() {
     return Math.max(...blackGames.map(game => game.score))
   })
 
+  /**
+ * Проверяет, является ли результат новым рекордом для указанного цвета
+ * @description Сравнивает текущий результат с лучшим результатом для указанного цвета
+ * 
+ * @param {number} score - Текущий результат
+ * @param {'white' | 'black'} color - Цвет фигур
+ * @returns {boolean} true если это новый рекорд
+ */
+const isNewRecord = (score: number, color: 'white' | 'black'): boolean => {
+  if (score <= 0) return false
+  
+  if (color === 'white') {
+    return score > bestScoreWhite.value
+  } else {
+    return score > bestScoreBlack.value
+  }
+}
+
   onMounted(() => {
     loadGameHistory()
   })
@@ -171,6 +189,7 @@ export function useGameStats() {
     bestScoreWhite,
     bestScoreBlack,
     saveCurrentGame,
-    loadGameHistory
+    loadGameHistory,
+    isNewRecord
   }
 }
