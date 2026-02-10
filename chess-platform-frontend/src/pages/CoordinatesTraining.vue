@@ -60,7 +60,7 @@ const coordinateStore = useCoordinatesStore();
   background-color: #1c1c1c;
   width: 100%;
   min-height: calc(100vh - 60px);
-  gap: 50px;
+  gap: 30px;
   padding: 0 20px 20px 20px;
 }
 
