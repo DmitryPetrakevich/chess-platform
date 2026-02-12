@@ -1,26 +1,77 @@
 <template>
   <div class="invite-overlay" @click.self="close">
     <div class="invite-card" role="dialog" aria-modal="true">
-      <h3 class="title">Пригласить друга</h3>
+      <h3 class="title">Параметры игры</h3>
+      <hr class="divider">
 
-      <div class="color-select">
-        <p>Выбери, за кого хочешь играть:</p>
-        <div class="color-buttons">
+      <div class="time-controls__wrapper">
+        <h3 class="time-controls-title">Контроль времени</h3>
+        <div class="time-controls">
           <button
-            v-for="option in colorOptions"
-            :key="option.value"
-            class="btn color-btn"
-            :class="{
-              active: colorWasSelected && selectedColor === option.value,
-            }"
-            @click="selectColor(option.value)"
+            v-for="time in timeControls"
+            :key="time.value"
+            class="time-option"
+            :class="{ active: selectedTime === time.value }"
+            @click="selectedTime = time.value"
           >
-            <img :src="option.src" :alt="option.label" class="color-icon" />
+            {{ time.value }}
           </button>
         </div>
       </div>
 
-      <p class="desc">
+      <div class="game-mode__wrapper">
+        <h3 class="game-mode-title">Режим игры</h3>
+        <div class="game-mode">
+          <button
+            v-for="mode in gameModes"
+            :key="mode.value"
+            class="btn-mode"
+            :class="{ active: selectedMode === mode.value }"
+            @click="selectedMode = mode.value"
+          >
+            {{ mode.label }}
+          </button>
+        </div>
+      </div>
+
+      <div class="color-select__wrapper">
+        <div class="color-select">
+          <h3 class="color-select-title">Сторона</h3>
+          <div class="color-buttons">
+            <button
+              v-for="option in colorOptions"
+              :key="option.value"
+              class="btn color-btn"
+              :class="{
+                active: selectedColor === option.value,
+              }"
+             @click="selectedColor = option.value " 
+            >
+              <div class="color-btn-content">
+                <img :src="option.src" :alt="option.label" class="color-icon" />
+                <span class="color-label">{{ option.text }}</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <router-link
+      to="/inviteShare"
+      >
+      <Button
+      variant="primary"
+      :icon="personIcom"
+      size="sm"
+      @click="selectColor()" 
+      >
+        Бросить вызов другу
+      </Button>
+      </router-link>
+    </div>
+  </div>
+
+    <!-- <p class="desc">
         Отправь эту ссылку другу — по ней он попадёт в твою игру:
       </p>
 
@@ -42,9 +93,7 @@
 
       <p v-if="waiting" class="invite-waiting">
         Ждём, пока друг перейдёт по ссылке...
-      </p>
-    </div>
-  </div>
+      </p> -->
 </template>
 
 <script setup>
@@ -56,6 +105,9 @@ import { useUserStore } from "@/store/userStore";
 import whiteIcon from "@/assets/game/inviteModel/choice-white.svg";
 import blackIcon from "@/assets/game/inviteModel/choice-black.svg";
 import randomIcon from "@/assets/game/inviteModel/choice-random.svg";
+import personIcom from "@/assets/icons/main-page/person.svg"
+
+import Button from "@/UI/Button.vue";
 
 const game = useGameStore();
 const user = useUserStore();
@@ -75,22 +127,18 @@ const props = defineProps({
  * @emits {created} - Создание новой комнаты с данными {roomId, color}
  */
 const emit = defineEmits(["close", "created"]);
-
 /**
  * Идентификатор игровой комнаты
  */
 const roomId = ref(props.initialRoomId);
-
 /**
  * Флаг, указывающий что ссылка скопирована в буфер обмена
  */
 const copied = ref(false);
-
 /**
  * Флаг ожидания подключения второго игрока
  */
 const waiting = ref(false);
-
 /**
  * Выбранный цвет фигур игрока
  *
@@ -99,15 +147,41 @@ const waiting = ref(false);
 const selectedColor = ref("random");
 
 const colorWasSelected = ref(false);
+/**
+ * Выбранный контроль времени
+ */
+const selectedTime = ref("3+0")
+/**
+ * Выбранный режим игры
+ */
+const selectedMode = ref('rated')
 
 /**
  * Опции выбора цвета фигур
  */
 const colorOptions = [
-  { value: "random", label: "Случайно", src: randomIcon },
-  { value: "b", label: "Черные", src: blackIcon },
-  { value: "w", label: "Белые", src: whiteIcon },
+  { value: "b", label: "Черные", src: blackIcon, text: "Чёрные фигуры" },
+  { value: "random", label: "Случайно", src: randomIcon, text: "Случайно" },
+  { value: "w", label: "Белые", src: whiteIcon, text: "Белые фигуры" },
 ];
+
+const timeControls = ref([
+  { value: "1+0", minutes: 1, increment: 0 },
+  { value: "1+1", minutes: 1, increment: 1 },
+  { value: "3+0", minutes: 3, increment: 0 },
+  { value: "3+1", minutes: 3, increment: 1 },
+  { value: "3+2", minutes: 3, increment: 2 },
+  { value: "5+0", minutes: 5, increment: 0 },
+  { value: "5+3", minutes: 5, increment: 3 },
+  { value: "10+0", minutes: 10, increment: 0 },
+  { value: "10+5", minutes: 10, increment: 5 },
+  { value: "15+10", minutes: 15, increment: 10 }
+]);
+
+const gameModes = ref([  
+  { value: "friendly", label: "Товарищеская" },
+  { value: "rated", label: "Рейтинговая" }
+]);
 
 /**
  * Вычисляемое свойство - ссылка для приглашения друга
@@ -136,10 +210,7 @@ function genId() {
  * Обрабатывает выбор цвета фигур игроком
  * Обновляет selectedColor и пересчитывает ссылку через computed свойство
  */
-function selectColor(color) {
-  selectedColor.value = color;
-  colorWasSelected.value = true;
-  
+function selectColor() {
   roomId.value = genId();
   waiting.value = true;
 
@@ -236,10 +307,15 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .invite-card {
-  width: 450px;
-  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  gap: 20px;
+  width: 100%;
+  max-width: 500px;
   min-width: 300px;
   background: #222;
   color: #fff;
@@ -249,10 +325,12 @@ onBeforeUnmount(() => {
 }
 
 .title {
+  font-size: 25px;
   margin: 0;
-  margin-bottom: 10px;
+  // margin-bottom: 10px;
   padding: 0;
   font-family: "Manrope", sans-serif;
+  font-weight: 500;
 }
 
 .desc {
@@ -267,26 +345,132 @@ onBeforeUnmount(() => {
 }
 
 .invite-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
   z-index: 1000;
+}
+
+.time-controls__wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.time-controls {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 3px;
+  width: 100%;
+}
+
+.game-mode__wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.game-mode {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+
+  & > :first-child {
+    border-radius: 5px 0 0 5px;
+  }
+
+  & > :last-child {
+    border-radius: 0 5px 5px 0;
+
+  }
+}
+
+.btn-mode {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  flex: 1;
+  background-color: @gray-400;
+  color: @white-150;
+  border: none;
+
+  &.active {
+    background-color: @blue-500;
+  }
+}
+
+
+.color-btn-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px; 
+}
+
+.time-controls-title,
+.game-mode-title,
+.color-select-title {
+  font-size: 16px;
+  margin-bottom: 5px;
+  font-weight: 400;
+  font-family: "Manrope", sans-serif;
+}
+
+.time-option {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  background-color: @gray-400;
+  border: none;
+  border-radius: 3px;
+  padding: 8px 0;
+  color: @white-150;
+
+  &.active {
+  background-color: @blue-500;
+
+  }
+}
+
+
+
+
+
+
+
+.color-select__wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+
 }
 
 .color-select {
   margin-bottom: 12px;
   font-family: "Manrope", sans-serif;
   text-align: center;
+  width: 100%;
 }
 
 .color-buttons {
   display: flex;
   justify-content: center;
-  gap: 12px;
   margin-top: 6px;
+
+  & > :first-child {
+    border-radius: 5px 0 0 5px;
+  }
+
+  & > :last-child {
+    border-radius: 0 5px 5px 0;
+  }
 }
 
 .color-icon {
@@ -296,13 +480,23 @@ onBeforeUnmount(() => {
 }
 
 .color-btn {
-  background: #444;
-  border: 1px solid #555;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  padding: 3px 5px;
+  background-color: @gray-400;
+  font-family: "Manrope", sans-serif;
+  border: none;
+  color: @white-150;
+  cursor: pointer;
+
+  &.active {
+    background-color: @blue-500;
+  }
 }
 
-.color-btn.active {
-  background: #1856b9;
-}
+
 
 .link-row {
   display: flex;
@@ -322,13 +516,17 @@ onBeforeUnmount(() => {
 }
 
 .btn {
-  padding: 8px 25px;
-  border-radius: 6px;
-  background: #3b82f6;
-  font-family: "Manrope", sans-serif;
-  border: none;
-  color: white;
-  cursor: pointer;
+  // display: inline-flex;
+  // justify-content: center;
+  // align-items: center;
+  // flex: 1;
+  // padding: 3px 5px;
+  // /* border-radius: 6px; */
+  // background: #7c838d;
+  // font-family: "Manrope", sans-serif;
+  // border: none;
+  // color: white;
+  // cursor: pointer;
 }
 
 .btn.outline {
@@ -371,7 +569,13 @@ onBeforeUnmount(() => {
   }
 
   .btn {
-    padding: 6px 15px;
+    /* padding: 6px 15px; */
   }
+}
+
+.divider {
+  width: 100%;
+  padding: 0;
+  margin: 0;
 }
 </style>

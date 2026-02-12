@@ -8,6 +8,7 @@ import CoordinatesTraining from '@/pages/CoordinatesTraining.vue'
 import ChessPuzzles from '@/pages/ChessPuzzles.vue'
 import Profile from '@/pages/ProfilePage.vue'
 import PrivacyPolicy from '@/components/auth/PrivacyPolicy.vue'
+import InviteShare from '@/pages/InviteShare.vue'
 
 const routes = [
   { path: '/', component: MainPage },
@@ -19,6 +20,7 @@ const routes = [
   { path: '/puzzles', component: ChessPuzzles },
   { path: '/profile', component: Profile },
   { path: '/privacy-policy', component: PrivacyPolicy },
+  { path: '/inviteShare', component: InviteShare },
 ]
 
 export const router = createRouter({

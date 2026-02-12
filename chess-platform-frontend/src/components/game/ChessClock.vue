@@ -544,6 +544,7 @@ watch(
   display: flex;
   flex-direction: row;
   justify-content: space-around;
+  align-items:  center;
   padding: 0 10px;
   text-align: center;
   font-size: 13px;
