@@ -6,9 +6,10 @@ const { Chess } = require("chess.js");
  * Обеспечивает синхронизированный отсчет времени для обоих игроков.
  */
 class RoomTimer {
-  constructor(initialTime = 300) { // 10 минут по умолчанию
+  constructor(initialTime = 300, initialIncrement = 0) { // 10 минут по умолчанию
     this.whiteTime = initialTime;
     this.blackTime = initialTime;
+    this.increment = initialIncrement;
     this.lastUpdate = Date.now();
     this.currentTurn = 'w';
     this.isRunning = false;
@@ -109,6 +110,12 @@ class RoomTimer {
   switchTurn(newTurn) {
     this.currentTurn = newTurn;
     this.lastUpdate = Date.now();
+
+    if (newTurn === 'w') {
+      this.blackTime += this.increment;
+    } else {
+      this.whiteTime += this.increment;
+    }
   }
 
   /**
@@ -156,21 +163,32 @@ class RoomTimer {
 /**
  * Добавляет клиента в указанную комнату и назначает цвет фигур
  */
-function addClientToRoom(roomId, ws, preferredColor = "random") {
-  if (!rooms.has(roomId)) {
-    rooms.set(roomId, {
-      players: new Set(),
-      white: null,
-      black: null,
-      turn: "w",
-      timer: new RoomTimer(600),
-      game: new Chess(),
-      history: [],
-      fen: new Chess().fen(),
-      isGameOver: false,      
-      result: null,
-    });
-  }
+function addClientToRoom(roomId, ws, preferredColor = "random", timeString = null) {
+    if (!rooms.has(roomId)) {
+      let initialTime = 600; 
+      let increment = 0;     
+
+      if (timeString) {
+        const [minutes, inc] = timeString.split('+').map(Number);
+        if (!isNaN(minutes) && !isNaN(inc)) {
+          initialTime = minutes * 60; 
+          increment = inc;           
+        }
+      }
+
+      rooms.set(roomId, {
+        players: new Set(),
+        white: null,
+        black: null,
+        turn: "w",
+        timer: new RoomTimer(initialTime, increment), 
+        game: new Chess(),
+        history: [],
+        fen: new Chess().fen(),
+        isGameOver: false,      
+        result: null,
+      });
+    }
 
   const room = rooms.get(roomId);
   room.players.add(ws);
