@@ -68,6 +68,7 @@ defineEmits(['click'])
 
 .btn-primary:hover:not(.btn-disabled):not(:disabled) {
   background-color: @gray-700;
+  box-shadow: 0 4px 12px rgba(91, 91, 195, 0.3);
 }
 
 .btn-secondary {
@@ -77,6 +78,7 @@ defineEmits(['click'])
 
 .btn-secondary:hover:not(.btn-disabled):not(:disabled) {
   background-color: #666;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .btn-outline {
@@ -87,6 +89,7 @@ defineEmits(['click'])
 
 .btn-outline:hover:not(.btn-disabled):not(:disabled) {
   background-color: rgba(91, 91, 195, 0.1);
+  box-shadow: 0 4px 12px rgba(91, 91, 195, 0.2);
 }
 
 .btn-sm {

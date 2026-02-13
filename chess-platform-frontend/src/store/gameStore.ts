@@ -101,47 +101,37 @@ export const useGameStore = defineStore("game", () => {
     blitzRating: 1200,
   });
 
-  const inviteParams = ref({
-    time: "3+0",
-    mode: "friendly",
-    color: "random",
-  });
+  watch(moveHistory, () => {
+  currentReplayIndex.value = moveHistory.value.length;
+}, { deep: true });
 
-  watch(
-    moveHistory,
-    () => {
-      currentReplayIndex.value = moveHistory.value.length;
-    },
-    { deep: true },
-  );
+function goToMove(index: number) {
+  if (index < 0) index = 0;
+  if (index > moveHistory.value.length) index = moveHistory.value.length;
 
-  function goToMove(index: number) {
-    if (index < 0) index = 0;
-    if (index > moveHistory.value.length) index = moveHistory.value.length;
+  currentReplayIndex.value = index;
 
-    currentReplayIndex.value = index;
+  if (index === 0) {
+    chess.value.reset();
+    lastMove.value = { from: null, to: null }; 
+  } else {
+    const targetFen = moveHistory.value[index - 1].fen;
+    chess.value.load(targetFen);
 
-    if (index === 0) {
-      chess.value.reset();
-      lastMove.value = { from: null, to: null };
-    } else {
-      const targetFen = moveHistory.value[index - 1].fen;
-      chess.value.load(targetFen);
-
-      const prevMove = moveHistory.value[index - 1];
-      lastMove.value = {
-        from: prevMove.from,
-        to: prevMove.to,
-      };
-    }
-
-    parseFEN(chess.value.fen());
-    currentTurn.value = chess.value.turn();
+    const prevMove = moveHistory.value[index - 1];
+    lastMove.value = {
+      from: prevMove.from,
+      to: prevMove.to,
+    };
   }
 
-  function isReplayMode() {
-    return currentReplayIndex.value < moveHistory.value.length;
-  }
+  parseFEN(chess.value.fen());
+  currentTurn.value = chess.value.turn();
+}
+
+function isReplayMode() {
+  return currentReplayIndex.value < moveHistory.value.length;
+}
 
   function setOpponent(data) {
     opponent.value = {
@@ -170,7 +160,7 @@ export const useGameStore = defineStore("game", () => {
 
   function resetBoard() {
     chess.value = new Chess();
-    parseFEN(chess.value.fen());
+    parseFEN(chess.value.fen()); 
   }
 
   /**
@@ -345,7 +335,7 @@ export const useGameStore = defineStore("game", () => {
    * Подключается к серверу WebSocket и слушает события.
    * @param {string} roomId - ID комнаты (например "game123")
    */
-  function connectToServer(roomId = "game123", color = null, name = "Player", time = "3+0") {
+  function connectToServer(roomId = "game123", color = null, name = "Player") {
     if (ws && ws.readyState === WebSocket.OPEN && ws.roomId === roomId) return;
 
     if (ws) {
@@ -360,34 +350,28 @@ export const useGameStore = defineStore("game", () => {
     ws = new WebSocket("ws://localhost:3000");
     ws.roomId = roomId;
     const userId = userStore.userId;
-
-    const usernameToSend =
-      name && name.trim() !== ""
-        ? name
-        : userStore.username && userStore.username.trim() !== ""
-          ? userStore.username
-          : "Player";
+    
+    const usernameToSend = (name && name.trim() !== "") 
+    ? name 
+    : (userStore.username && userStore.username.trim() !== "" ? userStore.username : "Player");
 
     ws.onopen = () => {
       console.log("✅ WebSocket подключен (client)");
-      console.log("🎨 Отправляю данные на сервер:");
-
-      const payload = {
-        type: "join",
-        roomId: roomId || "default",
-        color: color || "random",
-        name: usernameToSend || "Player",
-        userId: userId || null,
-        time: time
-      };
-
-      console.log("Отправляю payload:", payload); // лог перед отправкой
-
-      try {
-        ws.send(JSON.stringify(payload));
-      } catch (err) {
-        console.error("Ошибка отправки:", err);
-      }
+      console.log("🎨 Отправляю данные на сервер:", {
+        roomId,
+        color,
+        name: usernameToSend,
+        userId,
+      });
+      ws.send(
+        JSON.stringify({
+          type: "join",
+          roomId,
+          color,
+          name: usernameToSend,
+          userId,
+        })
+      );
     };
 
     ws.onmessage = (event) => {
@@ -510,8 +494,7 @@ export const useGameStore = defineStore("game", () => {
           console.log("Undo принято оппонентом");
 
           if (moveHistory.value.length >= 1) {
-            const previousMove =
-              moveHistory.value[moveHistory.value.length - 1];
+            const previousMove = moveHistory.value[moveHistory.value.length - 1];
             lastMove.value = {
               from: previousMove.from,
               to: previousMove.to,
@@ -578,8 +561,8 @@ export const useGameStore = defineStore("game", () => {
                 data.winner === "w"
                   ? "whiteWin"
                   : data.winner === "b"
-                    ? "blackWin"
-                    : "draw",
+                  ? "blackWin"
+                  : "draw",
               reason: data.reason || "unknown",
             };
           }
@@ -697,18 +680,18 @@ export const useGameStore = defineStore("game", () => {
           roomId: currentRoomId.value,
           reason,
           winner,
-        }),
+        })
       );
       console.log(
         "📤 Отправил game_over на сервер для нешахматного окончания:",
-        reason,
+        reason
       );
     }
 
     console.log(
       "Игра окончена:",
       reason,
-      winner ? `победитель ${winner}` : "ничья",
+      winner ? `победитель ${winner}` : "ничья"
     );
   }
 
@@ -736,7 +719,7 @@ export const useGameStore = defineStore("game", () => {
         JSON.stringify({
           type: "accept-undo",
           roomId: currentRoomId.value,
-        }),
+        })
       );
       console.log("Отправил accept-undo на сервер");
     }
@@ -763,7 +746,6 @@ export const useGameStore = defineStore("game", () => {
     promotionMove,
     showPromotionModal,
     currentReplayIndex,
-    inviteParams,
     goToMove,
     isReplayMode,
     setInitialPosition: resetBoard,

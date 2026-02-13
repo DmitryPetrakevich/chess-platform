@@ -2,6 +2,10 @@
   <div class="app">
     <PageHeader />
     <RouterView></RouterView>
+    <!-- <Play /> -->
+    <!-- <RegistrationForm /> -->
+    <!-- <LogInPage /> -->
+      <!-- <MainPage /> -->
   </div>
 </template>
 

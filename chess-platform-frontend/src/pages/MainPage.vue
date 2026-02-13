@@ -62,7 +62,6 @@ function onRoomCreated(roomData) {
 
 <style scoped>
 .main {
-  box-sizing: border-box;
   background: #1c1c1c;
   width: calc(100% - 60px); 
   height: 100%;
