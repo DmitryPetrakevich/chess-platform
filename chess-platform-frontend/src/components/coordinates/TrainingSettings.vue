@@ -34,7 +34,7 @@ const coordinatesStore = useCoordinatesStore();
     gap: 20px;
     padding: 10px;
     border-radius: 10px;
-    background-color: #2a2a2a;
+    background-color: @black-800;
     width: 100%;
 }
 </style>

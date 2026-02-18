@@ -84,7 +84,7 @@ function pieceImage(squareId) {
   const code = game.pieces[squareId] 
   if (!code) return null
 
-  return new URL(`../../assets/chess-pieces/${code}.svg`, import.meta.url).href
+  return new URL(`../../assets/icons/chess-pieces/${code}.svg`, import.meta.url).href
 }
 
 watch(() => game.result.type, (newResult) => {
@@ -108,8 +108,8 @@ watch(() => game.result.type, (newResult) => {
 .board {
   display: inline-block;
   user-select: none;
-  max-width: min(80vh, 1500px);
-  max-height: min(80vh, 1500px);
+  max-width: min(85vh, 1500px);
+  max-height: min(85vh, 1500px);
   width: 100%;
   height: auto;
   aspect-ratio: 1 / 1; 

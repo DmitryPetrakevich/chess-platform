@@ -225,9 +225,9 @@ watch(() => userStore.isLoggedIn, closeMenu);
   display: block;
   box-sizing: border-box;
   height: 60px;
-  width: calc(100% - 60px); 
-  margin: 0 30px;
-  background-color: #1c1c1c;
+  width: 100%;
+  padding: 0 20px;
+  background-color: @black-900;
   z-index: 1000;
 }
 
@@ -399,6 +399,7 @@ watch(() => userStore.isLoggedIn, closeMenu);
 
 .page-header__btn {
   display: inline-block;
+  box-sizing: border-box;
   padding: 8px 15px;
   border: none;
   border-radius: 8px;
@@ -408,31 +409,28 @@ watch(() => userStore.isLoggedIn, closeMenu);
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 1px;
+  outline: none;
   text-decoration: none;
   text-align: center;
   color: inherit;
 }
 
 .page-header__btn--primary {
-  background: #555;
+  background-color: @black-500;
   color: white;
-  border: 2px solid #555;
 }
 
 .page-header__btn--primary:hover {
-  background: #666;
-  border-color: #666;
+  background-color: @black-600;
 }
 
 .page-header__btn--accent {
-  background: #e74c3c;
+  background: @red-500;
   color: white;
-  border: 2px solid #e74c3c;
 }
 
 .page-header__btn--accent:hover {
-  background: #c0392b;
-  border-color: #c0392b;
+  background: @red-600;
 }
 
 .page-header__btn:focus,
@@ -442,46 +440,6 @@ watch(() => userStore.isLoggedIn, closeMenu);
 
 .page-header__btn.router-link-active {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
-}
-
-@media (max-width: 768px) {
-  .page-header {
-  width: calc(100% - 30px); 
-  margin: 0 15px;
-}
-
-  .page-header__logo {
-    font-size: 14px;
-  }
-
-  .page-header__btn {
-    padding: 6px 15px;
-    font-size: 10px;
-  }
-
-  .page-header__nav {
-    gap: 25px;
-  }
-
-  .page-header__nav-link {
-    font-size: 14px;
-  }
-
-  .page-header__user-menu {
-    gap: 10px;
-  }
-
-  .profile-icon,
-  .notification-icon,
-  .search-icon {
-    width: 25px;
-    height: 25px;
-  }
-
-  .page-header__user-name {
-    gap: 10px;
-    font-size: 16px;
-  }
 }
 
 .burger {
@@ -528,16 +486,6 @@ watch(() => userStore.isLoggedIn, closeMenu);
   animation: slideInLeft 0.3s ease-out;
 }
 
-@keyframes slideInLeft {
-  from {
-    transform: translateX(-100%);
-  }
-
-  to {
-    transform: translateX(0);
-  }
-}
-
 .mobile-menu__nav {
   display: flex;
   flex-direction: column;
@@ -554,6 +502,12 @@ watch(() => userStore.isLoggedIn, closeMenu);
 
 .mobile-menu__nav a:hover {
   color: #e74c3c;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid #444;
+  margin: 10px 0;
 }
 
 @media (max-width: 990px) {
@@ -579,6 +533,45 @@ watch(() => userStore.isLoggedIn, closeMenu);
 
   .page-header__nav {
     display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header {
+  padding: 0 10px;
+}
+
+  .page-header__logo {
+    font-size: 14px;
+  }
+
+  .page-header__btn {
+    padding: 6px 15px;
+    font-size: 10px;
+  }
+
+  .page-header__nav {
+    gap: 25px;
+  }
+
+  .page-header__nav-link {
+    font-size: 14px;
+  }
+
+  .page-header__user-menu {
+    gap: 10px;
+  }
+
+  .profile-icon,
+  .notification-icon,
+  .search-icon {
+    width: 25px;
+    height: 25px;
+  }
+
+  .page-header__user-name {
+    gap: 10px;
+    font-size: 16px;
   }
 }
 
@@ -633,15 +626,19 @@ watch(() => userStore.isLoggedIn, closeMenu);
   }
 }
 
-.divider {
-  border: none;
-  border-top: 1px solid #444;
-  margin: 10px 0;
-}
-
 @keyframes slideIn {
   from {
     transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
   }
 
   to {

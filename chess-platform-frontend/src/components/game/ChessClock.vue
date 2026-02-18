@@ -147,8 +147,6 @@
 
       <GameActions v-if="mode == 'bottom' && !gameStore.result.type" />
       <GameReplayer v-if="mode === 'bottom'" />
-      <!-- <MoveHistory v-if="mode === 'bottom'" /> -->
-
 
       <div
         v-if="mode === 'top' && timerStore.preSeconds > 0"
@@ -398,9 +396,7 @@ watch(
 .chess-timer {
   min-width: 280px;
   width: 100%;
-  box-shadow: var(0 6px 18px rgba(30, 41, 59, 0.08));
-  font-family: Inter, "Segoe UI", system-ui, -apple-system, "Helvetica Neue",
-    Arial;
+  font-family: @font-main;
   color: #0f172a;
 
   &__container {
@@ -422,8 +418,8 @@ watch(
   border: 1px solid #e6eefb;
 }
 .player-info.active {
-  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
-  transform: translateY(-2px);
+  // box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
+  // transform: translateY(-2px);
 }
 
 .player-top {
@@ -484,6 +480,7 @@ watch(
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+  font-weight: 400;
   background-color: rgb(212, 211, 211);
   text-align: center;
 
@@ -499,7 +496,7 @@ watch(
 }
 
 .timer.low-time {
-  background-color: @red-100;
+  background-color: @red-200;
 }
 
 .middle {
@@ -544,6 +541,7 @@ watch(
   display: flex;
   flex-direction: row;
   justify-content: space-around;
+  align-items:  center;
   padding: 0 10px;
   text-align: center;
   font-size: 13px;

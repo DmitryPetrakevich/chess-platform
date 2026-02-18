@@ -2,7 +2,6 @@
   <div class="news-section" id="news-section">
     <h2 class="news-section__title">Новости</h2>
 
-    <!-- Добавил классы для стилизации состояний -->
     <div v-if="newsStore.loading" class="loading">Загрузка...</div>
     <div v-else-if="newsStore.error" class="error">
       {{ newsStore.error }}
@@ -10,9 +9,7 @@
     </div>
     <div v-else-if="newsStore.news.length === 0" class="empty">Нет новостей</div>
 
-    <!-- ИЗМЕНЕНО: news-list → news-grid для сетки -->
     <div v-else class="news-grid">
-      <!-- ИЗМЕНЕНО: news-item → news-card для вертикальной карточки -->
       <a
         v-for="item in newsStore.news"
         :key="item.link"
@@ -21,7 +18,6 @@
         rel="noopener noreferrer"
         class="news-card"
       >
-        <!-- ИЗМЕНЕНО: news-preview → news-image-container для лучшего нейминга -->
         <div class="news-image-container">
           <img
             v-if="item.thumbnail"
@@ -34,13 +30,9 @@
           <div v-else class="no-image">Нет фото</div>
         </div>
 
-        <!-- ИЗМЕНЕНО: news-text → news-content для вертикальной структуры -->
         <div class="news-content">
-          <!-- ИЗМЕНЕНО: h3 → .news-title с классом -->
           <h3 class="news-title">{{ item.title }}</h3>
-          <!-- ИЗМЕНЕНО: .date → .news-date -->
           <p class="news-date">{{ formatDate(item.pubDate) }}</p>
-          <!-- ИЗМЕНЕНО: .snippet → .news-snippet -->
           <p class="news-snippet">{{ item.content.substring(0, 120) }}...</p>
         </div>
       </a>
@@ -68,13 +60,14 @@ const formatDate = (dateStr) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .news-section {
-  padding: 20px; 
-  max-width: 100%;
-  background: #2a2a2a;
+  background: @black-800;
   border-radius: 16px; 
   border: 1px solid #444;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 20px;
 }
 
 .news-section__title {
@@ -89,6 +82,9 @@ const formatDate = (dateStr) => {
 .news-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr); 
+  // width: 100%;
+  // max-width: 100%;
+  // box-sizing: border-box;
   gap: 2rem; 
 }
 
@@ -101,6 +97,7 @@ const formatDate = (dateStr) => {
     font-size: 30px; 
   }
 }
+
 
 .news-card {
   display: flex;

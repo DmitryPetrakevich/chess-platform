@@ -51,9 +51,9 @@ const coordinatesStore = useCoordinatesStore();
 
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .stats {
-  background: #2a2a2a;
+  background: none;
   border-radius: 10px;
   color: white;
   font-family: 'Manrope', sans-serif;
@@ -71,7 +71,7 @@ const coordinatesStore = useCoordinatesStore();
   padding: 15px;
   border-radius: 8px;
   margin-bottom: 15px;
-background-color: #454545;
+background-color: @black-700;
 }
 
 .color-stat.white {

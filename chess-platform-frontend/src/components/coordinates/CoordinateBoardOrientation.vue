@@ -45,9 +45,9 @@
 <script setup>
 import { ref } from "vue";
 
-import whiteKingIcon from "@/assets/game/inviteModel/choice-white.svg"
-import blackKingIcon from "@/assets/game/inviteModel/choice-black.svg"
-import randomIcon from "@/assets/game/inviteModel/choice-random.svg"
+import whiteKingIcon from "@/assets/icons/inviteModel/choice-white.svg"
+import blackKingIcon from "@/assets/icons/inviteModel/choice-black.svg"
+import randomIcon from "@/assets/icons/inviteModel/choice-random.svg"
 import { useCoordinatesStore } from "@/store/coordinatesStore";
 
 const coordinationStore = useCoordinatesStore()

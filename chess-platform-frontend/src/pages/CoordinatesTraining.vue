@@ -57,7 +57,7 @@ const coordinateStore = useCoordinatesStore();
   justify-content: center;
   align-items: flex-start;
   box-sizing: border-box;
-  background-color: #1c1c1c;
+  background-color: @black-900;
   width: 100%;
   min-height: calc(100vh - 60px);
   gap: 30px;
@@ -99,7 +99,6 @@ const coordinateStore = useCoordinatesStore();
 @media (max-width: 1100px) {
   .coordinates {
     flex-direction: column;
-    padding: 10px;
   }
 
   .sidebar-right {
@@ -112,7 +111,9 @@ const coordinateStore = useCoordinatesStore();
   }
 }
 
-.btn {
-  font-family: 'Roboto', sans-serif;
+@media(max-width: 768px) {
+  .coordinates {
+    padding: 0 10px 10px 10px;
+  }
 }
 </style>

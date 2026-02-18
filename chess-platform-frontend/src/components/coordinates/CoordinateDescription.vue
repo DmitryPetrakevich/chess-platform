@@ -35,7 +35,7 @@ const coordinatesStore = useCoordinatesStore()
 
 </script>
 
-<style lang="less" scoped>
+<style scoped lang="less">
 .description {
     display: flex;
     flex-direction: column;
@@ -43,7 +43,7 @@ const coordinatesStore = useCoordinatesStore()
     width: 100%;
     padding: 10px;
     border-radius: 10px;
-    background-color: #2a2a2a;
+    background-color: @black-800;
 }
 
 .text {

@@ -99,7 +99,7 @@ const squares = computed(() =>
 function pieceImage(squareId) {
   const code = coordinatesStore.pieces[squareId] 
   if (!code) return null
-  return new URL(`../../assets/chess-pieces/${code}.svg`, import.meta.url).href
+  return new URL(`../../assets/icons/chess-pieces/${code}.svg`, import.meta.url).href
 }
 
 function handleCellClick(squareId) {

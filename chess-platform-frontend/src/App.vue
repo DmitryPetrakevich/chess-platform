@@ -2,10 +2,6 @@
   <div class="app">
     <PageHeader />
     <RouterView></RouterView>
-    <!-- <Play /> -->
-    <!-- <RegistrationForm /> -->
-    <!-- <LogInPage /> -->
-      <!-- <MainPage /> -->
   </div>
 </template>
 
@@ -19,8 +15,9 @@ import MainPage from './pages/MainPage.vue';
 
 <style scoped>
 .app {
-  background-color: #1c1c1c;;
+  background-color: #9d0c0c;
 }  
+
 
 .no-scroll {
   overflow: hidden !important;

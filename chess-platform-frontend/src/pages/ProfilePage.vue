@@ -24,8 +24,8 @@ const userStore = useUserStore();
 
 <style scoped lang="less">
 .profile-page {
-  padding: 30px;
-  // min-height: 100vh;
+  padding: 0 20px;
+  min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
@@ -73,7 +73,7 @@ const userStore = useUserStore();
 
 @media (max-width: 768px) {
   .profile-page {
-    padding: 15px;
+    padding: 0 10px;
   }
   
   .main-content {

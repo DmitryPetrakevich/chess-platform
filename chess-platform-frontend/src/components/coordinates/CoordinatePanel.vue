@@ -79,8 +79,8 @@ import CoordinateBoardOrientation from "./CoordinateBoardOrientation.vue";
 import CoordinateStats from "./CoordinateStats.vue";
 import Toggle from "@/UI/Toggle.vue";
 
-import whiteIcon from "@/assets/game/inviteModel/choice-white.svg";
-import blackIcon from "@/assets/game/inviteModel/choice-black.svg";
+import whiteIcon from "@/assets/icons/inviteModel/choice-white.svg";
+import blackIcon from "@/assets/icons/inviteModel/choice-black.svg";
 import infiniteIcon from "@/assets/icons/coordinate-page/infinite.svg";
 import TrainingSettings from "./TrainingSettings.vue";
 
@@ -134,7 +134,7 @@ const isNewRecord = computed(() => {
   gap: 15px;
   width: 100%;
   height: 160px;
-  background-color: #454545;
+  background-color: @black-700;
   border-radius: 10px;
   transition: all 0.3s ease;
 
@@ -177,7 +177,7 @@ const isNewRecord = computed(() => {
   width: 100%;
   height: 160px;
   padding: 10px;
-  background-color: #454545;
+  background-color: @black-700;
   border-radius: 10px;
 
   &-text {
@@ -211,7 +211,7 @@ const isNewRecord = computed(() => {
   gap: 10px;
   width: 100%;
   height: 100px;
-  background-color: #454545;
+  background-color: @black-700;
   border-radius: 10px;
 
   &-img {

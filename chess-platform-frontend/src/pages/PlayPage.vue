@@ -88,10 +88,10 @@ watch(() => game.playerColor, (newColor, oldColor) => {
   display: flex;
   justify-content: center;
   width: 100%;
-  padding: 10px;
+  padding: 0 20px;
   min-height: calc(100vh - 60px);
   box-sizing: border-box;
-  background-color: @gray-100;
+  background-color: @gray-200;
 }
 
 .play-content {
@@ -128,6 +128,10 @@ watch(() => game.playerColor, (newColor, oldColor) => {
 }
 
 @media (max-width: 768px) {
+  .play {
+    padding: 0 10px;
+  }
+
   .board_chess {
     flex-direction: column;
     align-items: center;

@@ -26,7 +26,7 @@
     
     <NewsFeed></NewsFeed>
 
-    <InviteModal
+    <GameSettingsModal
       v-if="showInvite"
       @close="showInvite = false"
       @created="onRoomCreated"
@@ -39,7 +39,7 @@ import { ref } from "vue";
 import { useUserStore } from "@/store/userStore";
 import { RouterLink } from "vue-router";
 
-import InviteModal from "@/components/modals/InviteModal.vue";
+import GameSettingsModal from "@/components/modals/GameSettingsModal .vue";
 import NewsFeed from "@/components/news/NewsFeed.vue";
 import Button from "@/UI/Button.vue";
 import AuthPrompt from "@/UI/AuthPrompt.vue";
@@ -60,13 +60,17 @@ function onRoomCreated(roomData) {
 }
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .main {
-  background: #1c1c1c;
-  width: calc(100% - 60px); 
-  height: 100%;
-  padding-top: 100px;
-  margin: 0 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  background: @black-900;
+  min-height: calc(100vh - 60px);
+  width: 100%;
+  padding: 0 20px;
+  padding-top: 80px;
   color: #ecf0f1;
 }
 
@@ -76,7 +80,7 @@ function onRoomCreated(roomData) {
   margin: 0 auto;
   gap: 20px;
   padding: 20px;
-  background-color: #2a2a2a;
+  background-color: @black-800;
   border: 1px solid #444;
   border-radius: 15px;
   max-width: 600px;
@@ -85,8 +89,7 @@ function onRoomCreated(roomData) {
 
 @media (max-width: 768px) {
   .main {
-    width: calc(100% - 30px); 
-    margin: 0 15px;
+    padding: 0 10px;
   }
 }
 </style>

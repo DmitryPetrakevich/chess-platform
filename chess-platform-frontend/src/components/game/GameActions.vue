@@ -32,9 +32,9 @@
 import { useGameStore } from "@/store/gameStore";
 import { ref, watch, onMounted, onBeforeUnmount } from "vue";
 
-import undoMoveIcon from "@/assets/game/gameActions/undoMove.svg";
-import drawIcon from "@/assets/game/gameActions/draw.svg";
-import resignIcon from "@/assets/game/gameActions/resign.svg";
+import undoMoveIcon from "@/assets/icons/game-actions/undoMove.svg";
+import drawIcon from "@/assets/icons/game-actions/draw.svg";
+import resignIcon from "@/assets/icons/game-actions/resign.svg";
 
 const gameStore = useGameStore();
 

@@ -87,13 +87,13 @@ function handleConnection(ws) {
   }
 
   function handleJoin(data, ws) {
-    const { roomId, name, color: preferredColor, userId  } = data;
+    const { roomId, name, color: preferredColor, userId, time  } = data;
 
     ws.name = name || "Player";
     ws.color = preferredColor;
     ws.userId = userId || null;
 
-    const playersCount = addClientToRoom(roomId, ws, preferredColor);
+    const playersCount = addClientToRoom(roomId, ws, preferredColor, time);
     const room = rooms.get(roomId);
 
     ws.send(
@@ -103,6 +103,7 @@ function handleConnection(ws) {
         clientId: ws.id,
         color: ws.color,
         playersCount,
+        time
       })
     );
 

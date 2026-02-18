@@ -113,9 +113,10 @@ const showMessage = (text, type) => {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  min-height: calc(100vh - 100px);
+  box-sizing: border-box;
+  min-height: calc(100vh - 60px);
   padding: 40px 20px;
-  background: #2c2c2c;
+  background: @black-900;
 }
 
 .login-form {
@@ -123,7 +124,8 @@ const showMessage = (text, type) => {
   max-width: 450px;
   padding: 40px 30px;
   border-radius: 12px;
-  background-color: #353535;
+  box-sizing: border-box;
+  background-color: @black-800;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
 }
 
@@ -180,7 +182,7 @@ const showMessage = (text, type) => {
 
 .submit-btn {
   padding: 14px;
-  background: #e74c3c;
+  background: @red-500;
   color: white;
   border: none;
   border-radius: 8px;
@@ -193,8 +195,7 @@ const showMessage = (text, type) => {
   margin-top: 10px;
 
   &:hover:not(:disabled) {
-    background: #c0392b;
-    transform: translateY(-1px);
+    background: @red-600;
     box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
   }
 
@@ -242,7 +243,7 @@ const showMessage = (text, type) => {
 }
 
 .footer-link {
-  color: #3498db;
+  color: @blue-500;
   text-decoration: none;
   font-size: 18px;
   transition: all 0.3s ease;

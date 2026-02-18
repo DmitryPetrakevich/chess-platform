@@ -45,7 +45,7 @@ defineEmits<{
   border: 2px solid #777;
   border-radius: 8px;
   font-size: 16px;
-  background: #343434;
+  background: @black-700;
   color: #fff;
   transition: all 0.3s ease;
 
@@ -55,7 +55,7 @@ defineEmits<{
 
   &:focus {
     outline: none;
-    border-color: #e74c3c;
+    border-color: @red-600;
     background: #282828;
     box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
   }

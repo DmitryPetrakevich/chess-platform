@@ -8,8 +8,10 @@
       'btn-disabled': disabled,
       'btn-sm': size === 'sm',
       'btn-lg': size === 'lg',
-      'btn-full': fullWidth
+      'btn-full': fullWidth,
+      'has-custom-bg': !!bgColor
     }"
+    :style="customStyles"
     :disabled="disabled || loading"
     @click="$emit('click', $event)"
   >
@@ -27,16 +29,39 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue';
+
+const props  = defineProps<{
   variant?: 'primary' | 'secondary' | 'outline'
   size?: 'sm' | 'md' | 'lg'
   disabled?: boolean
   loading?: boolean
   fullWidth?: boolean
   icon?: string
+  bgColor?: string
+  textColor?: string
+  hoverBgColor?: string 
 }>()
 
 defineEmits(['click'])
+
+const customStyles = computed(() => {
+  const styles: Record<string, string> = {}
+  
+  if (props.bgColor) {
+    styles.backgroundColor = props.bgColor
+  }
+  
+  if (props.textColor) {
+    styles.color = props.textColor
+  }
+  
+  if (props.variant === 'outline' && props.bgColor) {
+    styles.borderColor = props.bgColor
+  }
+  
+  return styles
+})
 </script>
 
 <style lang="less" scoped>
@@ -67,8 +92,7 @@ defineEmits(['click'])
 }
 
 .btn-primary:hover:not(.btn-disabled):not(:disabled) {
-  background-color: @gray-700;
-  box-shadow: 0 4px 12px rgba(91, 91, 195, 0.3);
+  background-color: @gray-600;
 }
 
 .btn-secondary {
@@ -78,7 +102,6 @@ defineEmits(['click'])
 
 .btn-secondary:hover:not(.btn-disabled):not(:disabled) {
   background-color: #666;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .btn-outline {
@@ -89,7 +112,6 @@ defineEmits(['click'])
 
 .btn-outline:hover:not(.btn-disabled):not(:disabled) {
   background-color: rgba(91, 91, 195, 0.1);
-  box-shadow: 0 4px 12px rgba(91, 91, 195, 0.2);
 }
 
 .btn-sm {
@@ -181,6 +203,26 @@ defineEmits(['click'])
 .btn-primary .btn-icon img,
 .btn-secondary .btn-icon img {
   filter: invert(1);
+}
+
+.btn.has-custom-bg {
+  border: none; 
+  
+  &:hover:not(.btn-disabled):not(:disabled) {
+    background-color: v-bind('props.hoverBgColor || props.bgColor') !important;
+    filter: brightness(0.9); 
+  }
+}
+
+.btn-outline.has-custom-bg {
+  background-color: transparent;
+  border: 2px solid v-bind('props.bgColor');
+  color: v-bind('props.bgColor');
+  
+  &:hover:not(.btn-disabled):not(:disabled) {
+    background-color: v-bind('props.bgColor');
+    color: white;
+  }
 }
 
 @media (max-width: 1024px) {
