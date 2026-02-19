@@ -1,7 +1,11 @@
 <template>
   <div class="board-wrapper">
     <div class="board">
-      <div v-for="(row, rIndex) in squares" :key="rIndex" class="rank-row">
+      <div v-for="(row, rIndex) in squares" 
+      :key="rIndex" 
+      class="rank-row"
+      v-memo="[game.pieces, game.lastMove, squareClick.selectedSquare.value, squareClick.highlightedSquares.value]"
+      >
         <div 
           v-for="cell in row" 
           :key="cell.id" 
@@ -16,8 +20,8 @@
           @dragover.prevent
           @drop="dragDrop.handleDrop(cell.id, $event)" 
         >
-          <img v-if="pieceImage(cell.id)" 
-            :src="pieceImage(cell.id)" 
+          <img v-if="pieceImages[cell.id]" 
+            :src="pieceImages[cell.id]" 
             class="piece" 
             draggable="true"
             @dragstart="dragDrop.handleDragStart(cell.id, $event)" 
@@ -80,12 +84,14 @@ const squares = computed(() =>
 
 game.setInitialPosition()
 
-function pieceImage(squareId) {
-  const code = game.pieces[squareId] 
-  if (!code) return null
-
-  return new URL(`../../assets/icons/chess-pieces/${code}.svg`, import.meta.url).href
-}
+const pieceImages = computed(() => {
+  const images = {}
+  for (const squareId in game.pieces) {
+    const code = game.pieces[squareId]
+    images[squareId] = new URL(`../../assets/icons/chess-pieces/${code}.svg`, import.meta.url).href
+  }
+  return images
+})
 
 watch(() => game.result.type, (newResult) => {
   if (newResult) {

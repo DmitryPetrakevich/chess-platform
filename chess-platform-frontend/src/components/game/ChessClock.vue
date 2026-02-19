@@ -478,6 +478,7 @@ watch(
   font-weight: 400;
   background-color: rgb(212, 211, 211);
   text-align: center;
+  will-change: background-color; /* ДОБАВИТЬ! */
 
   &.active {
     background-color: @green-100;
