@@ -37,6 +37,7 @@
 <script setup>
 import { ref } from "vue";
 import { useUserStore } from "@/store/userStore";
+import { useGameStore } from "@/store/gameStore";
 import { RouterLink } from "vue-router";
 
 import GameSettingsModal from "@/components/modals/GameSettingsModal .vue";
@@ -48,10 +49,12 @@ import cpuIcon from "@/assets/icons/main-page/cpu.svg"
 import personIcon from "@/assets/icons/main-page/person.svg"
 
 const userStore = useUserStore();
+const game = useGameStore()
 
 const showInvite = ref(false);
 
 function openInvite() {
+  game.leaveCurrentGame()
   showInvite.value = true;
 }
 
