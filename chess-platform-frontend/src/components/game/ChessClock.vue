@@ -417,10 +417,6 @@ watch(
   transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
   border: 1px solid #e6eefb;
 }
-.player-info.active {
-  // box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
-  // transform: translateY(-2px);
-}
 
 .player-top {
   border-radius: 10px 10px 0 0;
@@ -477,12 +473,12 @@ watch(
 .timer {
   padding: 3px 5px;
   border-radius: 5px;
-  font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   font-weight: 400;
   background-color: rgb(212, 211, 211);
   text-align: center;
+  will-change: background-color; /* ДОБАВИТЬ! */
 
   &.active {
     background-color: @green-100;
@@ -620,7 +616,6 @@ watch(
     width: 40px;
     height: 40px;
     border-radius: 7px;
-    font-weight: 500;
     font-size: 16px;
   }
 
@@ -634,7 +629,6 @@ watch(
 
   .timer {
     padding: 4px 8px;
-    font-weight: 600;
   }
 }
 

@@ -76,7 +76,11 @@ const inviteParams = computed(
     },
 );
 
-const roomId = ref(game.roomId || genId());
+const updateQrSize = () => {
+  qrSize.value = window.innerWidth < 500 ? 150 : 200
+}
+
+const roomId = ref('')
 
 const inviteLink = computed(() => {
   const params = new URLSearchParams({
@@ -111,13 +115,10 @@ watch(
 );
 
 onMounted(() => {
-  const handleResize = () => {
-    qrSize.value = window.innerWidth < 500 ? 150 : 200
-  }
+  roomId.value = genId()
 
-  handleResize()
-
-  window.addEventListener('resize', handleResize)
+  updateQrSize()
+  window.addEventListener('resize', updateQrSize)
 
   game.connectToServer(
     roomId.value, 

@@ -345,7 +345,12 @@ export const useGameStore = defineStore("game", () => {
    * Подключается к серверу WebSocket и слушает события.
    * @param {string} roomId - ID комнаты (например "game123")
    */
-  function connectToServer(roomId = "game123", color = null, name = "Player", time = "3+0") {
+  function connectToServer(
+    roomId = "game123",
+    color = null,
+    name = "Player",
+    time = "3+0",
+  ) {
     if (ws && ws.readyState === WebSocket.OPEN && ws.roomId === roomId) return;
 
     if (ws) {
@@ -378,7 +383,7 @@ export const useGameStore = defineStore("game", () => {
         color: color || "random",
         name: usernameToSend || "Player",
         userId: userId || null,
-        time: time
+        time: time,
       };
 
       console.log("Отправляю payload:", payload); // лог перед отправкой
@@ -746,6 +751,32 @@ export const useGameStore = defineStore("game", () => {
     offerUndo.value = false;
   }
 
+  /**
+   * Полностью очищает состояние игры и закрывает соединение
+   */
+  function leaveCurrentGame() {
+    if (ws) {
+      try {
+        ws.close();
+      } catch (e) {}
+      ws = null;
+    }
+
+    currentRoomId.value = null;
+    playerColor.value = null;
+    playersCount.value = 0;
+    result.value = { type: null, reason: null };
+    gameStarted.value = false;
+    moveHistory.value = [];
+    resetBoard();
+
+    opponent.value = {
+      id: null,
+      username: "Opponent",
+      blitzRating: 1200,
+    };
+  }
+
   return {
     pieces,
     currentTurn,
@@ -781,5 +812,6 @@ export const useGameStore = defineStore("game", () => {
     rejectUndo,
     completePromotion,
     cancelPromotion,
+    leaveCurrentGame,
   };
 });
