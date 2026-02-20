@@ -4,7 +4,7 @@
       <template v-if="userStore.isLoggedIn">
         <Button 
         variant="primary" 
-        @click="playWithComputer"
+        @click="openBotModal"
         :icon="cpuIcon"
         >
           Сыграть с компьютером
@@ -31,6 +31,11 @@
       @close="showInvite = false"
       @created="onRoomCreated"
     />
+
+    <BotGameSettingsModal
+    v-if="showBotModal"
+    @close="showBotModal = false"
+    />
   </div>
 </template>
 
@@ -39,6 +44,7 @@ import { ref } from "vue";
 import { useUserStore } from "@/store/userStore";
 import { useGameStore } from "@/store/gameStore";
 import { RouterLink } from "vue-router";
+import { useRouter } from "vue-router";
 
 import GameSettingsModal from "@/components/modals/GameSettingsModal .vue";
 import NewsFeed from "@/components/news/NewsFeed.vue";
@@ -47,11 +53,14 @@ import AuthPrompt from "@/UI/AuthPrompt.vue";
 
 import cpuIcon from "@/assets/icons/main-page/cpu.svg"
 import personIcon from "@/assets/icons/main-page/person.svg"
+import BotGameSettingsModal from "@/components/modals/BotGameSettingsModal.vue";
 
 const userStore = useUserStore();
 const game = useGameStore()
+const router = useRouter()
 
 const showInvite = ref(false);
+const showBotModal = ref(false)
 
 function openInvite() {
   game.leaveCurrentGame()
@@ -60,6 +69,10 @@ function openInvite() {
 
 function onRoomCreated(roomData) {
   console.log("Создана комната:", roomData); // roomData = { roomId: '...', color: '...' }
+}
+
+function openBotModal () {
+  showBotModal.value = true;
 }
 </script>
 
