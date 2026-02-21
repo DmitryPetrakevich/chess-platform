@@ -7,13 +7,8 @@
       <div class="game-difficulty__wrapper">
         <h3 class="game-difficulty-title">Уровень сложности</h3>
         <div class="game-difficulty">
-          <button
-            v-for="mode in gameModes"
-            :key="mode.value"
-            class="btn-difficulty"
-            :class="{ active: selectedDifficulty  === mode.value }"
-            @click="selectedDifficulty  = mode.value"
-          >
+          <button v-for="mode in gameModes" :key="mode.value" class="btn-difficulty"
+            :class="{ active: selectedDifficulty === mode.value }" @click="selectedDifficulty = mode.value">
             {{ mode.label }}
           </button>
         </div>
@@ -23,15 +18,9 @@
         <div class="color-select">
           <h3 class="color-select-title">Сторона</h3>
           <div class="color-buttons">
-            <button
-              v-for="option in colorOptions"
-              :key="option.value"
-              class="btn color-btn"
-              :class="{
-                active: selectedColor === option.value,
-              }"
-             @click="selectedColor = option.value " 
-            >
+            <button v-for="option in colorOptions" :key="option.value" class="btn color-btn" :class="{
+              active: selectedColor === option.value,
+            }" @click="selectedColor = option.value">
               <div class="color-btn-content">
                 <img :src="option.src" :alt="option.label" class="color-icon" />
                 <span class="color-label">{{ option.text }}</span>
@@ -41,13 +30,8 @@
         </div>
       </div>
 
-      <Button
-      variant="primary"
-      :icon="personIcom"
-      size="sm"
-      bgColor="#333333"
-      hoverBgColor="#3b82f6"
-      >
+      <Button variant="primary" :icon="personIcom" size="sm" bgColor="#333333" hoverBgColor="#3b82f6"
+        @click="startBotGame">
         Сыграть с компьютером
       </Button>
     </div>
@@ -60,6 +44,7 @@ import { useRouter } from "vue-router";
 import { useGameStore } from "@/store/gameStore";
 import { useUserStore } from "@/store/userStore";
 import { useBodyScrollLock } from "@/composables/useBodyScrollLock";
+import { useBotGameStore } from "@/store/gameBotStore";
 
 import whiteIcon from "@/assets/icons/inviteModel/choice-white.svg";
 import blackIcon from "@/assets/icons/inviteModel/choice-black.svg";
@@ -69,6 +54,7 @@ import personIcom from "@/assets/icons/main-page/person.svg"
 import Button from "@/UI/Button.vue";
 
 const game = useGameStore();
+const gameBot = useBotGameStore();
 const router = useRouter();
 
 const { lock, unlock } = useBodyScrollLock();
@@ -98,7 +84,7 @@ const selectedColor = ref("random");
 /**
  * Выбраннная сложность
  */
-const selectedDifficulty  = ref('4')
+const selectedDifficulty = ref('4')
 
 /**
  * Опции выбора цвета фигур
@@ -109,7 +95,7 @@ const colorOptions = [
   { value: "w", label: "Белые", src: whiteIcon, text: "Белые фигуры" },
 ];
 
-const gameModes = ref([  
+const gameModes = ref([
   { value: "1", label: "1" },
   { value: "2", label: "2" },
   { value: "3", label: "3" },
@@ -120,7 +106,17 @@ const gameModes = ref([
   { value: "8", label: "8" },
 ]);
 
+function startBotGame() {
+  gameBot.botParams = {
+    difficulty: selectedDifficulty.value
+  }
 
+  selectedColor.value === "random" 
+  ? Math.random() > 0.5 ? gameBot.playerColor = "w" : gameBot.playerColor = "b" 
+  : gameBot.playerColor = selectedColor.value
+
+  router.push('/play-with-bot')
+}
 
 onMounted(() => {
   lock();
@@ -194,11 +190,11 @@ onBeforeUnmount(() => {
   flex-direction: row;
   width: 100%;
 
-  & > :first-child {
+  &> :first-child {
     border-radius: 5px 0 0 5px;
   }
 
-  & > :last-child {
+  &> :last-child {
     border-radius: 0 5px 5px 0;
 
   }
@@ -228,7 +224,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px; 
+  gap: 5px;
 }
 
 .time-controls-title,
@@ -255,7 +251,7 @@ onBeforeUnmount(() => {
   }
 
   &.active {
-  background-color: @blue-500;
+    background-color: @blue-500;
   }
 }
 
@@ -277,11 +273,11 @@ onBeforeUnmount(() => {
   justify-content: center;
   margin-top: 6px;
 
-  & > :first-child {
+  &> :first-child {
     border-radius: 5px 0 0 5px;
   }
 
-  & > :last-child {
+  &> :last-child {
     border-radius: 0 5px 5px 0;
   }
 }
@@ -324,6 +320,6 @@ onBeforeUnmount(() => {
   padding: 0;
   margin: 0;
   border: none;
-  border-top: 1px solid @text-light;  
+  border-top: 1px solid @text-light;
 }
 </style>

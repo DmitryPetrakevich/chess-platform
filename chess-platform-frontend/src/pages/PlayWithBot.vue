@@ -1,14 +1,174 @@
 <template>
-    <div class="play-with-bot">
-        <h1 style="text-align: center;">Страница игры с ботом</h1>
+  <div class="play">
+    <div class="play-content">
+      <div class="board-section">
+        <BotClock
+          v-if="isMobile"
+          class="mobile-clock mobile-clock-top"
+          mode="top"
+          :managePrestart="false"
+        />
 
+        <BotBoard 
+          :flipped="game.playerColor === 'b'" 
+          :playerColor="game.playerColor" 
+        /> 
+
+        <BotClock
+          v-if="isMobile"
+          class="mobile-clock mobile-clock-bottom"
+          mode="bottom"
+          :managePrestart="false"
+        />
+      </div>
+
+      <BotClock 
+        v-if="!isMobile"
+        class="desktop-clock"
+        mode="both"
+        :managePrestart="true"
+      />
     </div>
-  
+  </div>
 </template>
 
 <script setup>
+import { ref, onMounted, onBeforeUnmount, watch } from "vue";
+import { useRoute } from "vue-router";
+import { useGameStore } from "@/store/gameStore";
+import BotBoard from "@/components/bot-game/BotBoard.vue";
+import BotClock from "@/components/bot-game/BotClock.vue";
+import { useUserStore } from "@/store/userStore";
 
+import { useBotGameStore } from "@/store/gameBotStore";
+
+const game = useGameStore();
+const user = useUserStore();
+const route = useRoute();
+const botStore = useBotGameStore();
+
+const isMobile = ref(false);
+
+function checkMobile() {
+  isMobile.value = window.innerWidth <= 768;
+}
+
+onMounted(() => {
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+
+  const roomId = route.params.roomId;
+  const colorQuery = route.query.color;
+
+  let finalColor;
+  if (colorQuery === "w") finalColor = "b";
+  else if (colorQuery === "b") finalColor = "w";
+  else finalColor = Math.random() > 0.5 ? "w" : "b"; // если "random" или нет параметра
+
+  if (roomId) {
+    game.connectToServer(roomId, finalColor, user.username);
+  } else {
+  }
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", checkMobile);
+  game.disconnect();
+});
+
+watch(() => game.playerColor, (newColor, oldColor) => {
+  console.log(" playerColor ИЗМЕНИЛСЯ:", { 
+    from: oldColor, 
+    to: newColor,
+    timestamp: new Date().toISOString()
+  });
+}, { immediate: true });
 </script>
 
-<style scoped lang="less">
+<style lang="less" scoped>
+.play {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 0 20px;
+  min-height: calc(100vh - 60px);
+  box-sizing: border-box;
+  background-color: @gray-200;
+}
+
+.play-content {
+  display: flex;
+  align-items: center;     
+  justify-content: center; 
+  width: 100%;
+  max-width: 1200px;
+}
+
+.board_chess {
+  display: flex;
+  flex-direction: row;
+  max-width: 1800px;
+}
+
+.board-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.desktop-clock {
+  margin: auto 0;
+  width:  min(800px, 60%);
+  max-width: 430px;
+}
+
+.mobile-clock {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .play {
+    padding: 0 10px;
+  }
+
+  .board_chess {
+    flex-direction: column;
+    align-items: center;
+    padding: 8px;
+    gap: 10px;
+  }
+
+  .play-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .desktop-clock {
+    display: none;
+  }
+
+  .board-section {
+    max-width: 100%;
+    width: 100%;
+    padding: 0 8px;
+    gap: 0;
+  }
+
+  .mobile-clock {
+    display: block;
+    width: 100%;
+    max-width: 430px;
+  }
+
+  .mobile-clock-top {
+    margin-bottom: 4px;
+  }
+  .mobile-clock-bottom {
+    margin-top: 4px;
+  }
+}
 </style>
