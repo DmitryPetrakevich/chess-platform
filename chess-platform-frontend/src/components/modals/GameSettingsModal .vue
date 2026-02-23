@@ -120,6 +120,7 @@ const selectedTime = ref("3+0")
  */
 const selectedMode = ref('rated')
 
+
 /**
  * Опции выбора цвета фигур
  */

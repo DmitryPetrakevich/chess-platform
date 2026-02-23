@@ -58,14 +58,12 @@ const gameBot = useBotGameStore();
 const router = useRouter();
 
 const { lock, unlock } = useBodyScrollLock();
-
 /**
  * Emits компонента InviteModal
  * @emits {close} - Закрытие модального окна
  * @emits {created} - Создание новой комнаты с данными {roomId, color}
  */
 const emit = defineEmits(["close"]);
-
 
 /**
  * Закрывает модальное окно приглашения
@@ -74,7 +72,6 @@ const emit = defineEmits(["close"]);
 function close() {
   emit('close');
 }
-
 /**
  * Выбранный цвет фигур игрока
  *
@@ -85,7 +82,6 @@ const selectedColor = ref("random");
  * Выбраннная сложность
  */
 const selectedDifficulty = ref('4')
-
 /**
  * Опции выбора цвета фигур
  */
