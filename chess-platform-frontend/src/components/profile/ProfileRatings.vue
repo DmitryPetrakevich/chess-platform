@@ -1,8 +1,8 @@
 <template>
   <div class="ratings-card">
-    <div class="card-header">
+    <!-- <div class="card-header">
       <h3 class="card-title">Рейтинги</h3>
-    </div>
+    </div> -->
     
     <div class="ratings-list">
       <div 
@@ -18,7 +18,7 @@
         <div class="rating-info">
           <div class="rating-header">
             <span class="rating-type">{{ rating.name }}</span>
-            <span class="rating-time">{{ rating.time }}</span>
+            <!-- <span class="rating-time">{{ rating.time }}</span> -->
           </div>
           <div class="rating-value">{{ rating.value }}</div>
         </div>
@@ -69,7 +69,7 @@ const ratings = computed(() => [
 
 <style scoped lang="less">
 .ratings-card {
-  background: white;
+  background-color: @black-800;
   border-radius: 16px;
   padding: 24px;
   height: 100%;
@@ -88,7 +88,7 @@ const ratings = computed(() => [
 .card-title {
   font-size: 20px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: @text-light;
   margin: 0;
 }
 
@@ -102,23 +102,21 @@ const ratings = computed(() => [
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 16px;
+  padding: 3px;
   border-radius: 12px;
-  background: #f9fafb;
-  transition: all 0.2s ease;
-  cursor: pointer;
+  background: @black-700;
   
-  &:hover {
-    background: #f3f4f6;
-    transform: translateY(-1px);
-  }
+  // &:hover {
+  //   background: #f3f4f6;
+  //   transform: translateY(-1px);
+  // }
 }
 
 .rating-icon {
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: white;
+  background: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -145,21 +143,21 @@ const ratings = computed(() => [
 .rating-type {
   font-size: 16px;
   font-weight: 600;
-  color: #374151;
+  color: @gray-300;;
 }
 
-.rating-time {
-  font-size: 14px;
-  color: #9ca3af;
-  background: #f3f4f6;
-  padding: 2px 8px;
-  border-radius: 12px;
-}
+// .rating-time {
+//   font-size: 14px;
+//   color: #9ca3af;
+//   background: #f3f4f6;
+//   // padding: 2px 8px;
+//   border-radius: 12px;
+// }
 
 .rating-value {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: @gray-300;
   margin-bottom: 4px;
 }
 

@@ -23,6 +23,7 @@ const userStore = useUserStore();
 <style scoped lang="less">
 .profile-header {
   margin-bottom: 10px;
+  background-color: @black-800;
 }
 
 .profile-info {
@@ -67,7 +68,7 @@ const userStore = useUserStore();
 .username {
   font-size: 36px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: @gray-300;
   margin: 0 0 8px 0;
 }
 
