@@ -50,6 +50,7 @@ async function saveGameAndCleanup(roomId, reason, winner = null) {
       moves: room.history.map(h => h.san).join(" ") || "",
       finalFen: room.game.fen(),
       duration: 0,
+      timeControl: room.timeControl || "10+0",
     };
 
     try {

@@ -6,7 +6,7 @@
 
     <div class="games-list">
       <div v-if="loading" class="loading-state">
-        <div class="loading-spinner"></div>
+        <div class="material-spinner"></div>
         <div class="loading-text">Загружаем партии...</div>
       </div>
 
@@ -14,20 +14,14 @@
         <div class="empty-icon">♔</div>
         <h3 class="empty-title">Партии скоро появятся</h3>
         <p class="empty-description">
-          Здесь будут отображаться ваши последние партии.<br>
+          Здесь будут отображаться ваши последние партии.<br />
           Начните играть, чтобы увидеть их здесь.
         </p>
-        <button class="play-button" @click="$router.push('/')">
-          Играть
-        </button>
+        <button class="play-button" @click="$router.push('/')">Играть</button>
       </div>
 
       <div v-else class="games-grid">
-        <div
-          v-for="game in filteredGames"
-          :key="game.id"
-          class="game-card"
-        >
+        <div v-for="game in filteredGames" :key="game.id" class="game-card">
           <div class="mini-board-wrapper">
             <MiniChessBoard :fen="game.finalFen" :size="200" />
           </div>
@@ -35,27 +29,48 @@
           <div class="game-info">
             <div class="game-mode">
               <span class="mode-time">{{ game.timeControl || "5+0" }}</span>
-              • БЛИЦ • {{ game.mode || "ТОВАРИЩЕСКАЯ" }}
+              • {{ getGameMode(game.timeControl) }} • {{ game.mode || "ТОВАРИЩЕСКАЯ" }}
             </div>
 
             <div class="game-players">
               <div class="player white">
-                <span class="player-name">{{ game.whiteUsername || "Anonymous" }}</span>
-                <span class="player-rating">({{ game.whiteRating || "1500" }})</span>
+                <span class="player-name">{{
+                  game.whiteUsername || "Anonymous"
+                }}</span>
+                <span class="player-rating"
+                  >({{ game.whiteRating || "1500" }})</span
+                >
               </div>
-              <div class="vs">♟️</div>
+              <div class="vs">VS</div>
               <div class="player black">
-                <span class="player-name">{{ game.blackUsername || "Anonymous" }}</span>
-                <span class="player-rating">({{ game.blackRating || "1500" }})</span>
+                <span class="player-name">{{
+                  game.blackUsername || "Anonymous"
+                }}</span>
+                <span class="player-rating"
+                  >({{ game.blackRating || "1500" }})</span
+                >
               </div>
             </div>
 
-            <div class="game-result">
-              {{ getResultText(game) }} • {{ getReasonText(game.reason) }}
+            <div
+              class="game-result"
+              :class="{
+                win:
+                  (game.result === 'whiteWin' && game.playerColor === 'white') 
+                  ||
+                  (game.result === 'blackWin' && game.playerColor === 'black'),
+                lose:
+                  (game.result === 'whiteWin' && game.playerColor === 'black') 
+                  ||
+                  (game.result === 'blackWin' && game.playerColor === 'white'),
+              }"
+            >
+              {{ getResultText(game) }}  {{ getReasonText(game.reason) }}
             </div>
 
             <div class="game-opening">
-              {{ getOpeningText(game) }} • {{ Math.ceil(game.moves.length / 2) }} ходов
+              {{ getOpeningText(game) }} •
+              {{ Math.ceil(game.moves.length / 2) }} ходов
             </div>
 
             <div class="game-date">
@@ -88,7 +103,7 @@ const fetchGames = async () => {
   loading.value = true;
   try {
     const response = await fetch(
-      `http://localhost:3000/api/games?userId=${userStore.userId}`
+      `http://localhost:3000/api/games?userId=${userStore.userId}`,
     );
     if (response.ok) {
       games.value = await response.json();
@@ -117,9 +132,9 @@ const getResultClass = (game) => {
 };
 
 const getResultText = (game) => {
-  if (game.result === "draw") return "Ничья";
+  if (game.result === "draw") return "";
   const userWon = getResultClass(game) === "win";
-  return userWon ? "Победа" : "Поражение";
+  return userWon ? "Победа •" : "Поражение •";
 };
 
 const getReasonText = (reason) => {
@@ -137,11 +152,39 @@ const getReasonText = (reason) => {
   return reasons[reason] || reason;
 };
 
+const getGameMode = (timeControl) => {
+  if(!timeControl) return "10+0"
+
+  const [minutes] = timeControl.split("+").map(Number)
+
+  if(minutes <= 2) {
+    return "ПУЛЯ"
+  } else if(minutes < 10) {
+    return "БЛИЦ"
+  } else if(minutes < 60) {
+    return "РАПИД"
+  } else {
+    return "КЛАССИКА"
+  }
+}
+
 const getOpeningText = (game) => {
-  if (game.opening) return game.opening;
-  // Простой пример, можно расширить
-  const firstMoves = game.moves.slice(0, 6).join(' ');
-  return `1. ${firstMoves} ...`;
+  const movesToShow = game.moves.slice(0, 6);
+  
+  const formattedMoves = [];
+  for (let i = 0; i < movesToShow.length; i += 2) {
+    const moveNumber = Math.floor(i / 2) + 1;
+    const whiteMove = movesToShow[i];
+    const blackMove = movesToShow[i + 1] ? movesToShow[i + 1] : '';
+    
+    if (blackMove) {
+      formattedMoves.push(`${moveNumber}. ${whiteMove} ${blackMove}`);
+    } else {
+      formattedMoves.push(`${moveNumber}. ${whiteMove}...`);
+    }
+  }
+  
+  return formattedMoves.join(' ') + (game.moves.length > 6 ? ' ...' : '');
 };
 
 const formatDate = (dateStr) => {
@@ -152,24 +195,31 @@ const formatDate = (dateStr) => {
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) {
-    return "Сегодня " + date.toLocaleTimeString("ru-RU", { 
-      hour: "2-digit", 
-      minute: "2-digit" 
-    });
+    return (
+      "Сегодня " +
+      date.toLocaleTimeString("ru-RU", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    );
   } else if (diffDays === 1) {
-    return "Вчера " + date.toLocaleTimeString("ru-RU", { 
-      hour: "2-digit", 
-      minute: "2-digit" 
-    });
+    return (
+      "Вчера " +
+      date.toLocaleTimeString("ru-RU", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    );
   } else if (diffDays < 7) {
     return `${diffDays} дн. назад`;
   } else {
     return date.toLocaleDateString("ru-RU", {
       day: "numeric",
-      month: "short"
+      month: "short",
     });
   }
 };
+
 </script>
 
 <style scoped lang="less">
@@ -242,15 +292,15 @@ const formatDate = (dateStr) => {
 }
 
 .mode-time {
-  // color: #ffd700;
   font-size: 25px;
   font-weight: 600;
 }
 
 .game-players {
   display: flex;
-  align-items: center;
+  align-self: center;
   gap: 8px;
+  margin-top: 40px;
   font-size: 15px;
   font-weight: 500;
   color: #ddd;
@@ -266,6 +316,7 @@ const formatDate = (dateStr) => {
   max-width: 100px;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 20px;
 }
 
 .player-rating {
@@ -282,21 +333,23 @@ const formatDate = (dateStr) => {
 .game-result {
   display: flex;
   align-items: center;
+  align-self: center;
   gap: 8px;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 15px;
-  color: #4caf50;
+  color: @gray-400;;
 
-  &.loss {
-    color: #f44336;
+  &.win {
+    color: @green-500;
   }
 
-  &.draw {
-    color: #ffeb3b;
+  &.lose {
+    color: @red-500;
   }
 }
 
 .game-opening {
+  margin-top: auto;
   font-size: 13px;
   color: #888;
   font-style: italic;
@@ -305,7 +358,96 @@ const formatDate = (dateStr) => {
 .game-date {
   font-size: 12px;
   color: #666;
-  margin-top: auto;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 16px;
+}
+
+.material-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #333;
+  border-top-color: @green-500;  
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 14px;
+  color: #888;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  padding: 48px 24px;
+  text-align: center;
+  background: #1a1a1a;
+  border-radius: 16px;
+  border: 1px solid #2a2a2a;
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: #3a3a3a;
+  }
+}
+
+.empty-icon {
+  font-size: 48px;
+  color: #444;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.empty-title {
+  font-size: 20px;
+  font-weight: 500;
+  color: #999;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.3px;
+}
+
+.empty-description {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 24px 0;
+  line-height: 1.6;
+  max-width: 300px;
+}
+
+.play-button {
+  background: transparent;
+  color: #888;
+  border: 1px solid #333;
+  border-radius: 30px;
+  padding: 10px 32px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: @green-500;
+    border-color: @green-500;
+    background: rgba(@green-500, 0.05);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
 }
 
 @media (max-width: 768px) {

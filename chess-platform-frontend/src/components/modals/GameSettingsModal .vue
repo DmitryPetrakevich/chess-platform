@@ -144,7 +144,7 @@ const timeControls = ref([
   { value: "10+5", minutes: 10, increment: 5 },
   { value: "15+10", minutes: 15, increment: 10 },
   { value: "30+0", minutes: 30, increment: 0 },
-  { value: "30+20", minutes: 30, increment: 20 },
+  { value: "60+30", minutes: 30, increment: 20 },
 ]);
 
 const gameModes = ref([  
