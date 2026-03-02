@@ -40,7 +40,7 @@ async function saveGameToDB(gameData) {
       gameData.reason || null,
       gameData.moves || "",
       gameData.finalFen,
-      gameData.timeControl || "10+0",
+      gameData.timeControl,
       gameData.duration || 0
     ];
 
