@@ -21,7 +21,12 @@
       </div>
 
       <div v-else class="games-grid">
-        <div v-for="game in filteredGames" :key="game.id" class="game-card">
+        <div 
+        v-for="game in filteredGames" 
+        :key="game.id" 
+        class="game-card"
+        @click="goToGameReview(game.id)"
+        >
           <div class="mini-board-wrapper">
             <MiniChessBoard :fen="game.finalFen" :size="200" />
           </div>
@@ -87,33 +92,17 @@
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/userStore";
+import { useGames } from "@/composables/utils/useGames";
 
 import MiniChessBoard from "./MiniChessBoard.vue";
 
 const router = useRouter();
 const userStore = useUserStore();
 
+const {games, loading, filteredGames, fetchGames} = useGames()
+
 const activeTab = ref("all");
-const games = ref([]);
-const loading = ref(true);
 
-const filteredGames = computed(() => games.value);
-
-const fetchGames = async () => {
-  loading.value = true;
-  try {
-    const response = await fetch(
-      `http://localhost:3000/api/games?userId=${userStore.userId}`,
-    );
-    if (response.ok) {
-      games.value = await response.json();
-    }
-  } catch (err) {
-    console.error("Ошибка загрузки партий:", err);
-  } finally {
-    loading.value = false;
-  }
-};
 
 onMounted(() => {
   if (userStore.userId) {
@@ -219,6 +208,10 @@ const formatDate = (dateStr) => {
     });
   }
 };
+
+const goToGameReview = (gameId) => {
+  router.push(`/game/${gameId}`)
+}
 
 </script>
 
@@ -395,7 +388,7 @@ const formatDate = (dateStr) => {
   min-height: 300px;
   padding: 48px 24px;
   text-align: center;
-  background: #1a1a1a;
+  background: @black-800;
   border-radius: 16px;
   border: 1px solid #2a2a2a;
   transition: border-color 0.2s ease;

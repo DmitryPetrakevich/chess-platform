@@ -9,6 +9,7 @@ import ChessPuzzles from '@/pages/ChessPuzzles.vue'
 import Profile from '@/pages/ProfilePage.vue'
 import PrivacyPolicy from '@/components/auth/PrivacyPolicy.vue'
 import InviteShare from '@/pages/InviteShare.vue'
+import GameReview from '@/pages/GameReview.vue'
 
 const routes = [
   { path: '/', component: MainPage },
@@ -21,6 +22,7 @@ const routes = [
   { path: '/profile', component: Profile },
   { path: '/privacy-policy', component: PrivacyPolicy },
   { path: '/inviteShare', component: InviteShare },
+  { path: '/game/:id', name: 'GameReview', component: GameReview, props: true },
 ]
 
 export const router = createRouter({
