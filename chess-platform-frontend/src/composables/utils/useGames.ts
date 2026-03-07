@@ -1,4 +1,3 @@
-// composables/utils/useGames.js
 import { computed, ref } from "vue";
 import { useUserStore } from "@/store/userStore";
 
@@ -15,7 +14,7 @@ export function useGames() {
 
   const fetchGames = async () => {
     if(!userStore.userId) {
-      error.value = "Пользователь не найден!"  // ← исправил!
+      error.value = "Пользователь не найден!"  
       return
     }
 
@@ -53,10 +52,10 @@ export function useGames() {
     try {
       const response = await fetch(`http://localhost:3000/api/games/${gameId}`)
       
-      const data = await response.json()  // ← читаем ответ даже при ошибке
+      const data = await response.json()  
       
       if (!response.ok) {
-        throw new Error(data.error || 'Game not found')  // ← берем сообщение из ответа
+        throw new Error(data.error || 'Game not found')  
       }
       
       currentGame.value = data
@@ -70,7 +69,6 @@ export function useGames() {
     }
   }
 
-  // Очистка текущей игры
   const clearCurrentGame = () => {
     currentGame.value = null
     gameError.value = null

@@ -2,21 +2,22 @@
   <div class="review">
     <div class="review-content">
       <div class="board-section">
-        <!-- <h1>Просмотр партии {{ id }}</h1> -->
-        <pre v-if="currentGame" style="text-align: center;">{{currentGame }}</pre>
+        <!-- <h1>Просмотр партии {{ id }}</h1>
+        <h2>CurrentgameId from store {{ review.currentGameId }}</h2>
+        <h2>CurrentFen from store {{ review.currentFen }}</h2>
+        <h2>Flipped from store {{ review.flipped }}</h2> -->
         <ReviewClock
           v-if="isMobile"
           class="mobile-clock mobile-clock-top"
           mode="top"
           :managePrestart="false"
           :id="id"
-          :currentGame="currentGame"
-
+          :currentGame="review.currentGame"
         />
 
         <ReviewBoard 
-          :fen="currentFen"
-          :flipped="flipped"
+          :fen="review.currentFen"
+          :flipped="review.flipped"
         />
 
         <ReviewClock
@@ -25,8 +26,7 @@
           mode="bottom"
           :managePrestart="false"
           :id="id"
-          :currentGame="currentGame"
-
+          :currentGame="review.currentGame"
         />
       </div>
 
@@ -36,24 +36,16 @@
         mode="both"
         :managePrestart="false"
         :id="id"
-        :currentGame="currentGame"
-
+        :currentGame="review.currentGame"
       />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, onUnmounted, defineProps, computed, watch } from "vue";
-import { useRoute } from "vue-router";
-import { useGameStore } from "@/store/gameStore";
-import { useUserStore } from "@/store/userStore";
-import { useGames } from "@/composables/utils/useGames";
-import { Chess } from "chess.js";
+import { ref, onMounted, onBeforeUnmount, onUnmounted, defineProps } from "vue";
+import { useReviewStore } from "@/store/reviewStore";
 
-import ChessBoard from "@/components/game/ChessBoard.vue";
-import ChessClock from "@/components/game/ChessClock.vue";
-import GameReplayer from "@/components/game/GameReplayer.vue"; 
 import ReviewClock from "@/components/review/ReviewClock.vue";
 import ReviewBoard from "@/components/review/ReviewBoard.vue";
 
@@ -61,65 +53,19 @@ const props = defineProps({
   id: String
 })
 
-const game = useGameStore();
-const user = useUserStore();
-const route = useRoute();
-
+const review = useReviewStore()
 const isMobile = ref(false)
-const currentMoveIndex = ref(0);
 
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768
 }
-
-const { 
-  currentGame, 
-  loadingGame, 
-  gameError, 
-  fetchGameById,
-  clearCurrentGame 
-} = useGames()
-
-const currentFen = computed(() => {
-  if (!currentGame.value) return undefined;
-  
-  if (currentMoveIndex.value === 0) {
-    return 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-  }
-  
-  const chess = new Chess();
-  const movesToPlay = currentGame.value.moves.slice(0, currentMoveIndex.value);
-  
-  try {
-    for (const move of movesToPlay) {
-      chess.move(move);
-    }
-  } catch (e) {
-    console.error('Ошибка при воспроизведении хода:', e);
-  }
-  
-  return chess.fen();
-});
-
-const flipped = computed(() => {
-  if(!currentGame.value || !user.userId) return false;
-
-  return currentGame.value.blackUserId  === user.userId
-})
-
-watch(currentGame, (newGame) => {
-  if (newGame && newGame.moves) {
-    currentMoveIndex.value = newGame.moves.length;  // ← последний ход
-    console.log('🏁 Установлен индекс на последний ход:', newGame.moves.length);
-  }
-});
 
 onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
   
   if (props.id) {
-    fetchGameById(props.id)
+    review.loadGame(props.id)
     
   }
 })
@@ -129,7 +75,7 @@ onBeforeUnmount(() => {
 })
 
 onUnmounted(() => {
-  clearCurrentGame()
+  review.clearCurrentGame()
 })
 </script>
 
