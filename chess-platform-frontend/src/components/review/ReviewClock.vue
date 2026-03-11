@@ -9,17 +9,16 @@
                     </div>
                     <div class="player-details">
                         <div class="player-name" :title="topPlayer.username">
-                            {{ currentGame?.blackUsername || "Загрузка..." }}
+                            {{ topPlayer.username }}
                         </div>
-                        <div class="player-rating">⟡ {{ currentGame?.blackRating || "Загрузка..." }}</div>
-
+                        <div class="player-rating">{{ topPlayer.blitzRating }}</div>
                     </div>
                 </div>
             </div>
 
             <div class="middle">
-                <GameReplayer v-if="mode === 'both'" />
-                <MoveHistory v-if="mode === 'both'" />
+                <ReviewReplayer v-if="mode === 'both'" />
+                <ReviewHistory v-if="mode === 'both'" />
 
                 <div v-if="mode === 'both' && gameStore.result.type" class="game-status" role="status"
                     aria-live="polite">
@@ -40,9 +39,9 @@
                     </div>
                     <div class="player-details">
                         <div class="player-name" :title="bottomPlayer.username">
-                            {{ currentGame?.whiteUsername || "Загрузка..." }}
+                            {{ bottomPlayer.username }}
                         </div>
-                        <div class="player-rating">⟡ {{ currentGame?.whiteRating || "Загрузка..." }}</div>
+                        <div class="player-rating">{{ bottomPlayer.blitzRating }}</div>
                     </div>
                 </div>
             </div>
@@ -56,8 +55,7 @@
                     Вернуться на главную
                 </router-link>
             </div>
-
-            <GameReplayer v-if="mode === 'bottom'" />
+            <ReviewReplayer v-if="mode === 'bottom'" />
         </div>
     </div>
 </template>
@@ -68,8 +66,8 @@ import { useUserStore } from "@/store/userStore";
 import { useGameStore } from "@/store/gameStore";
 import { useTimerStore } from "@/store/timerStore";
 
-import MoveHistory from "../game/MoveHistory.vue";
-import GameReplayer from "../game/GameReplayer.vue";
+import ReviewHistory from "./ReviewHistory.vue";
+import ReviewReplayer from "./ReviewReplayer.vue";
 
 const userStore = useUserStore();
 const gameStore = useGameStore();
@@ -86,6 +84,10 @@ const props = defineProps({
     },
     currentGame: {
         type: Object
+    },
+    flipped: {
+        type: Boolean,
+        default: false
     }
 });
 
@@ -93,35 +95,47 @@ const props = defineProps({
  * Определяет данные верхнего игрока (оппонента)
  */
 const topPlayer = computed(() => {
-    if (gameStore.opponent && Object.keys(gameStore.opponent).length) {
-        return {
-            username: gameStore.opponent.username || "Opponent",
-            blitzRating: gameStore.opponent.blitzRating ?? 1200,
-            color:
-                gameStore.opponent.color || (gameStore.playerColor === "w" ? "b" : "w"),
-        };
-    }
-    const fallbackColor = gameStore.playerColor === "b" ? "w" : "b";
-    return { username: "Opponent", blitzRating: 1200, color: fallbackColor };
+  if (props.flipped) {
+    return {
+      username: props.currentGame?.whiteUsername || "Opponent",
+      blitzRating: props.currentGame?.whiteRating ?? 1200,
+      color: "w"
+    };
+  }
+  
+  return {
+    username: props.currentGame?.blackUsername || "Opponent",
+    blitzRating: props.currentGame?.blackRating ?? 1200,
+    color: "b"
+  };
 });
 
 /**
  * Данные нижнего игрока (пользователь)
  */
-const bottomPlayer = computed(() => ({
-    username: userStore.username || "You",
-    blitzRating: userStore.blitzRating ?? 1200,
-    color: gameStore.playerColor || "w",
-}));
+const bottomPlayer = computed(() => {
+  if (props.flipped) {
+    return {
+      username: props.currentGame?.blackUsername || userStore.username || "You",
+      blitzRating: props.currentGame?.blackRating ?? userStore.blitzRating ?? 1200,
+      color: "b"
+    };
+  }
+  
+  return {
+    username: props.currentGame?.whiteUsername || userStore.username || "You",
+    blitzRating: props.currentGame?.whiteRating ?? userStore.blitzRating ?? 1200,
+    color: "w"
+  };
+});
 
 const bottomInitial = computed(() =>
-    (props.currentGame?.blackUsername ?.[0] || "Y").toUpperCase(),
+  (bottomPlayer.value.username?.[0] || "Y").toUpperCase()
 );
 
 const topInitial = computed(() =>
-    (props.currentGame?.whiteUsername ?.[0] || "Y").toUpperCase(),
+  (topPlayer.value.username?.[0] || "O").toUpperCase()
 );
-
 
 /**
  * Статус игры
@@ -196,6 +210,10 @@ const gameStatusText = computed(() => {
         height: 100%;
         width: 100%;
     }
+}
+
+.chess-timer.flipped {
+  transform: rotate(180deg);
 }
 
 .player-info {

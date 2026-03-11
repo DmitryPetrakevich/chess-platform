@@ -99,16 +99,6 @@ const getPieceImage = (code) => {
   return new URL(`../../assets/icons/chess-pieces/${code}.svg`, import.meta.url)
     .href;
 };
-
-watch(() => props.fen, (newFen) => {
-  if (newFen) {
-    console.log("✅ FEN получен:", newFen);
-    console.log("✅ pieces:", pieces.value);
-     console.log("✅ FLIPPED:", props.flipped);
-  } else {
-    console.log("⏳ FEN еще undefined");
-  }
-}, { immediate: true });
 </script>
 
 <style>
@@ -147,10 +137,10 @@ watch(() => props.fen, (newFen) => {
 }
 
 .rank-label {
-  width: clamp(20px, 3vw, 30px);
   display: flex;
   align-items: center;
   justify-content: center;
+  width: clamp(20px, 3vw, 30px);
   font-weight: 600;
   margin-left: 2px;
   font-size: clamp(12px, 2vw, 16px);
@@ -222,7 +212,7 @@ watch(() => props.fen, (newFen) => {
   background: rgba(255, 255, 0, 0.435) !important;
 }
 
-.board.flipped {
+/* .board.flipped {
   transform: rotate(180deg);
 }
 
@@ -230,7 +220,7 @@ watch(() => props.fen, (newFen) => {
 .board.flipped .file-label,
 .board.flipped .rank-label {
   transform: rotate(180deg);
-}
+} */
 
 @media (max-width: 768px) {
   .board-wrapper {

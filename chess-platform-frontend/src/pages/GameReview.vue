@@ -2,10 +2,6 @@
   <div class="review">
     <div class="review-content">
       <div class="board-section">
-        <!-- <h1>Просмотр партии {{ id }}</h1>
-        <h2>CurrentgameId from store {{ review.currentGameId }}</h2>
-        <h2>CurrentFen from store {{ review.currentFen }}</h2>
-        <h2>Flipped from store {{ review.flipped }}</h2> -->
         <ReviewClock
           v-if="isMobile"
           class="mobile-clock mobile-clock-top"
@@ -13,6 +9,7 @@
           :managePrestart="false"
           :id="id"
           :currentGame="review.currentGame"
+          :flipped="review.flipped"
         />
 
         <ReviewBoard 
@@ -27,6 +24,7 @@
           :managePrestart="false"
           :id="id"
           :currentGame="review.currentGame"
+           :flipped="review.flipped"
         />
       </div>
 
@@ -37,6 +35,7 @@
         :managePrestart="false"
         :id="id"
         :currentGame="review.currentGame"
+        :flipped="review.flipped"
       />
     </div>
   </div>
@@ -85,7 +84,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  padding: 20px;
+  padding: 10px;
   min-height: calc(100vh - 60px);
   box-sizing: border-box;
   background-color: @gray-200;
