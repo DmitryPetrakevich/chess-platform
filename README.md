@@ -1,29 +1,29 @@
-# chess-platform
+♟️ Шахматная платформа
+ Веб-платформа для шахмат.
 
-This template should help get you started developing with Vue 3 in Vite.
+✨ Основные возможности
+🎮 Игра с соперником
+Создание игр с гибким выбором контроля времени и цветом.
+Реальные игры через WebSocket соединение
+Шахматный таймер 
+Предстартовый отсчет для первого хода
 
-## Recommended IDE Setup
+👤 Авторизация и профиль
+Регистрация и вход в систему
+Профиль с историей всех сыгранных партий
+Просмотр сыгранных партий с возможностью перемотки по ходам
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+📊 Просмотр партий
+Детальный просмотр любой сыгранной партии
+Перемотка по ходам с помощью удобного реплеера
 
-## Customize configuration
+🎯 Тренировка координат
+Специальный режим для развития навыков ориентации на доске
+Возможность скрывать фигуры для тренировки памяти
 
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Compile and Minify for Production
-
-```sh
-npm run build
-```
+Режимы игры:
+Бесконечный режим (без ограничения времени)
+Режим с таймером (30 секунд на ответ)
+Отображение текущей и следующей цели
+Статистика по каждому цвету
+Возможность переворачивать доску
