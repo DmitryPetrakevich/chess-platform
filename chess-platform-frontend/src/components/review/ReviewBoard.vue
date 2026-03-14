@@ -84,13 +84,13 @@ const ranks = computed(() => {
 });
 
 const squares = computed(() =>
-  ranks.value.map((rank) =>
-    files.value.map((file) => ({
-      id: `${file}${rank}`,
-      color: (file.charCodeAt(0) - 97 + rank) % 2 === 0 ? "light" : "dark",
-    })),
-  ),
-);
+  ranks.value.map((rank, rIdx) =>
+    files.value.map((file, fIdx) => {
+      const color = (rIdx + fIdx) % 2 === 0 ? "light" : "dark"
+      return { id: `${file}${rank}`, file, rank, color }
+    })
+  )
+)
 
 const isLastMove = (squareId) =>
   squareId === props.lastMove.from || squareId === props.lastMove.to;

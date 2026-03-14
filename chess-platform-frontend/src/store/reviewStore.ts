@@ -7,6 +7,14 @@ import { Chess } from "chess.js";
 export const useReviewStore = defineStore("review", () => {
   const user = useUserStore();
 
+  const {
+    currentGame,
+    loadingGame,
+    gameError,
+    fetchGameById,
+    clearCurrentGame,
+  } = useGames();
+
   /**
    * Индекс текущего отображаемого хода
    */
@@ -16,13 +24,8 @@ export const useReviewStore = defineStore("review", () => {
    */
   const currentGameId = ref("");
 
-  const {
-    currentGame,
-    loadingGame,
-    gameError,
-    fetchGameById,
-    clearCurrentGame,
-  } = useGames();
+  const reason = computed(() => currentGame.value?.reason || '')
+  const result = computed(() => currentGame.value?.result || '')
 
   /**
    * Общее количество ходов в партии
@@ -130,6 +133,8 @@ export const useReviewStore = defineStore("review", () => {
     totalMoves,
     loadingGame,
     gameError,
+    reason,
+    result,
     loadGame,
     clearCurrentGame,
     nextMove,

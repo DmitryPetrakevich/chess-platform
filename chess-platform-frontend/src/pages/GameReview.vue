@@ -2,6 +2,7 @@
   <div class="review">
     <div class="review-content">
       <div class="board-section">
+         <!-- <div> {{ review.currentGame }}</div> -->
         <ReviewClock
           v-if="isMobile"
           class="mobile-clock mobile-clock-top"
@@ -87,7 +88,7 @@ onUnmounted(() => {
   padding: 10px;
   min-height: calc(100vh - 60px);
   box-sizing: border-box;
-  background-color: @gray-200;
+  background-color: @gray-300;
 
   &-content {
     display: flex;

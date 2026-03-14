@@ -49,13 +49,13 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const gameId = req.params.id;
-    console.log("🔍 Запрос игры по ID:", gameId);  // ← добавить лог
+    console.log("Запрос игры по ID:", gameId);  // ← добавить лог
     
     const game = await getGameById(gameId);
-    console.log("📦 Данные из БД:", game);  // ← добавить лог
+    console.log("Данные из БД:", game);  // ← добавить лог
 
     if (!game) {
-      console.log("❌ Игра не найдена");  // ← добавить лог
+      console.log("Игра не найдена");  // ← добавить лог
       return res.status(404).json({ error: "Game not found" });
     }
 
@@ -76,10 +76,10 @@ router.get("/:id", async (req, res) => {
       blackUserId: game.blackUserId
     };
 
-    console.log("✅ Отправляю клиенту:", formattedGame);  // ← добавить лог
+    console.log("Отправляю клиенту:", formattedGame);  // ← добавить лог
     res.json(formattedGame);
   } catch (err) {
-    console.error("❌ Ошибка при загрузке партии:", err);
+    console.error("Ошибка при загрузке партии:", err);
     res.status(500).json({ error: "Server error" });
   }
 });

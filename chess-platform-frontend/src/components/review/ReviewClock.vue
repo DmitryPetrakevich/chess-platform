@@ -20,16 +20,16 @@
                 <ReviewReplayer v-if="mode === 'both'" />
                 <ReviewHistory v-if="mode === 'both'" />
 
-                <div v-if="mode === 'both' && gameStore.result.type" class="game-status" role="status"
+                <div v-if="mode === 'both'" class="game-status" role="status"
                     aria-live="polite">
                     {{ gameStatusText }}
                 </div>
 
-                <div v-if="gameStore.result.type && mode === 'both'">
+                <!-- <div v-if="gameStore.result.type && mode === 'both'">
                     <router-link class="back-to-main" to="/">
                         Вернуться на главную
                     </router-link>
-                </div>
+                </div> -->
             </div>
 
             <div v-if="mode !== 'top'" class="player-info player-bottom">
@@ -65,6 +65,7 @@ import {ref,computed,watch,onMounted,onBeforeUnmount,defineProps,} from "vue";
 import { useUserStore } from "@/store/userStore";
 import { useGameStore } from "@/store/gameStore";
 import { useTimerStore } from "@/store/timerStore";
+import { useReviewStore } from "@/store/reviewStore";
 
 import ReviewHistory from "./ReviewHistory.vue";
 import ReviewReplayer from "./ReviewReplayer.vue";
@@ -72,6 +73,7 @@ import ReviewReplayer from "./ReviewReplayer.vue";
 const userStore = useUserStore();
 const gameStore = useGameStore();
 const timerStore = useTimerStore();
+const reviewStore = useReviewStore();
 
 const props = defineProps({
     mode: {
@@ -141,60 +143,61 @@ const topInitial = computed(() =>
  * Статус игры
  */
 const gameStatusText = computed(() => {
-    if (gameStore.result && gameStore.result.type) {
-        if (gameStore.result.type === "draw") {
-            if (gameStore.result.reason === "stalemate") {
+    if (reviewStore.result) {
+        if (reviewStore.result === "draw") {
+            if (reviewStore.reason === "stalemate") {
                 return "Пат, ничья";
             }
 
-            if (gameStore.result.reason === "50-move-rule") {
+            if (reviewStore.reason === "50-move-rule") {
                 return "Ничья по правилу 50 ходов";
             }
 
-            if (gameStore.result.reason === "threefold-repetition") {
+            if (reviewStore.reason === "threefold-repetition") {
                 return "Ничья, троекратное повторение";
             }
 
-            if (gameStore.result.reason === "insufficient-material") {
+            if (reviewStore.reason === "insufficient-material") {
                 return "Ничья, недостаточно материала";
             }
 
-            if (gameStore.result.reason === "agreed-draw") {
+            if (reviewStore.reason === "agreed-draw") {
                 return "Ничья, сопернки согласилсь на ничью ";
             }
         }
 
-        if (gameStore.result.type === "whiteWin") {
-            if (gameStore.result.reason === "timeOut") {
+        if (reviewStore.result === "whiteWin") {
+            if (reviewStore.reason === "timeOut") {
                 return "Время истекло, победа белых";
             }
 
-            if (gameStore.result.reason === "checkMate") {
+            if (reviewStore.reason === "checkMate") {
                 return "Мат, победа белых";
             }
 
-            if (gameStore.result.reason === "give-up") {
+            if (reviewStore.reason === "give-up") {
                 return "Черные сдались, победа белых";
             }
         }
-        if (gameStore.result.type === "blackWin") {
-            if (gameStore.result.reason === "timeOut") {
+        if (reviewStore.result === "blackWin") {
+            if (reviewStore.reason === "timeOut") {
                 return "Время истекло, победа черных";
             }
 
-            if (gameStore.result.reason === "checkMate") {
+            if (reviewStore.reason === "checkMate") {
                 return "Мат, победа черных";
             }
 
-            if (gameStore.result.reason === "give-up") {
+            if (reviewStore.reason === "give-up") {
                 return "Белые сдались, победа черных";
             }
         }
-        if (gameStore.result.type === "canceledGame") {
+        if (reviewStore.result === "canceledGame") {
             return "Игра отменена";
         }
     }
 });
+
 </script>
 
 <style scoped lang="less">
