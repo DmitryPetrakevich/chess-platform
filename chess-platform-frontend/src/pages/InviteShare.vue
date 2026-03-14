@@ -30,7 +30,7 @@
 
           <div class="link-row">
             <input class="link-input" :value="inviteLink" readonly />
-            <button class="btn" @click="copyLink">
+            <button class="btn" @click="handleCopy">
                 <img :src="copied ? checkMarkIcon : copyIcon" class="link-svg">
             </button>
           </div>
@@ -53,6 +53,8 @@ import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useGameStore } from "@/store/gameStore";
 import { useUserStore } from "@/store/userStore";
+import { useIdGenerator } from "@/composables/utils/useIdGenerator";
+import { useClipboard } from "@/composables/utils/useClipboard";
 import Qrcode from "qrcode.vue";
 
 import blitzIcon from "@/assets/icons/profile/blitz.svg";
@@ -63,24 +65,23 @@ const game = useGameStore();
 const router = useRouter();
 const user = useUserStore();
 
+const {generateId} = useIdGenerator()
+const {copied, copyToClipboard } = useClipboard()
+
 const qrSize = ref(200)
+const roomId = ref('')
 
-const copied = ref(false);
-
-const inviteParams = computed(
-  () =>
-    game.inviteParams || {
-      time: "3+0",
-      mode: "friendly",
-      color: "random",
-    },
+const inviteParams = computed(() =>
+  game.inviteParams || {
+    time: "3+0",
+    mode: "friendly",
+    color: "random",
+  },
 );
 
 const updateQrSize = () => {
   qrSize.value = window.innerWidth < 500 ? 150 : 200
 }
-
-const roomId = ref('')
 
 const inviteLink = computed(() => {
   const params = new URLSearchParams({
@@ -91,18 +92,8 @@ const inviteLink = computed(() => {
   return `${window.location.origin}/play/${roomId.value}?${params.toString()}`;
 });
 
-const copyLink = async () => {
-  try {
-    await navigator.clipboard.writeText(inviteLink.value);
-    copied.value = true;
-    setTimeout(() => (copied.value = false), 1000);
-  } catch (err) {
-    console.error("Не удалось скопировать");
-  }
-};
-
-function genId() {
-  return Math.random().toString(36).slice(2, 10);
+const handleCopy = () => {
+  copyToClipboard(inviteLink.value)
 }
 
 watch(
@@ -115,7 +106,7 @@ watch(
 );
 
 onMounted(() => {
-  roomId.value = genId()
+  roomId.value = generateId()
 
   updateQrSize()
   window.addEventListener('resize', updateQrSize)

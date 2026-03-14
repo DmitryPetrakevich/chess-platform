@@ -2,8 +2,7 @@
   <div class="profile-header">
     <div class="profile-info">
       <div class="avatar-section">
-        <div class="avatar">
-        </div>
+        <div class="avatar"> </div>
       </div>
       
       <div class="user-details">
@@ -23,12 +22,13 @@ const userStore = useUserStore();
 <style scoped lang="less">
 .profile-header {
   margin-bottom: 10px;
+  background-color: @black-800;
 }
 
 .profile-info {
   display: flex;
-  align-items: flex-start;
-  gap: 30px;
+  align-items: center;
+  gap: 20px;
   padding-bottom: 20px;
   border-bottom: 2px solid #f0f2f5;
 }
@@ -41,8 +41,8 @@ const userStore = useUserStore();
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: linear-gradient(135deg, #5fc877 0%, #06855b 100%);
   display: flex;
@@ -67,7 +67,7 @@ const userStore = useUserStore();
 .username {
   font-size: 36px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: @gray-300;
   margin: 0 0 8px 0;
 }
 

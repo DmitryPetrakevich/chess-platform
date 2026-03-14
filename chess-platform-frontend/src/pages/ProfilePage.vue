@@ -26,7 +26,7 @@ const userStore = useUserStore();
 .profile-page {
   padding: 0 20px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background-color: @black-900;
 }
 
 .profile-container {
@@ -55,7 +55,7 @@ const userStore = useUserStore();
   display: flex;
   flex-direction: column;
   gap: 20px;
-  background: white;
+  background: @black-800;
   border-radius: 20px;
   padding: 30px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
