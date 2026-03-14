@@ -70,7 +70,7 @@ router.post("/register", async (req, res) => {
       token: token
     });
   } catch (err) {
-    console.error("❌ Ошибка при регистрации:", err);
+    console.error("Ошибка при регистрации:", err);
     res.status(500).json({
       success: false,
       error: "Внутренняя ошибка сервера",

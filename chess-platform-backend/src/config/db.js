@@ -83,8 +83,38 @@ async function getGamesForUser (userId) {
   }
 }
 
+async function getGameById(gameId) {
+  const query = `
+    SELECT 
+      room_id AS "roomId",
+      white_user_id AS "whiteUserId",
+      black_user_id AS "blackUserId",
+      white_username AS "whiteUsername",
+      black_username AS "blackUsername",
+      white_rating AS "whiteRating",
+      black_rating AS "blackRating",
+      result,
+      reason,
+      moves,
+      final_fen AS "finalFen",
+      created_at AS "createdAt",
+      time_control AS "timeControl"
+    FROM games
+    WHERE room_id = $1
+  `;
+
+  try {
+    const result = await pool.query(query, [gameId]);
+    return result.rows[0];
+  } catch(err) {
+    console.error("Ошибка запроса партии по ID:", err);
+    throw err;
+  }
+}
+
 module.exports = { 
   pool, 
   saveGameToDB,
-  getGamesForUser 
+  getGamesForUser,
+  getGameById
 };

@@ -1,7 +1,10 @@
 import { ref, computed } from "vue";
 import { defineStore } from "pinia";
+import { useRouter } from "vue-router";
 
 export const useUserStore = defineStore("user", () => {
+  const router = useRouter()
+
   /**
    * Флаг авторизации пользователя
    * @description Определяет, вошел ли пользователь в систему
@@ -95,6 +98,8 @@ export const useUserStore = defineStore("user", () => {
 
     localStorage.removeItem("authToken");
     localStorage.removeItem("user");
+
+    router.push('/')
   };
 
   /**

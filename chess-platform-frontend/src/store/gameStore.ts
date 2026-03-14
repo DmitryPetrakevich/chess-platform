@@ -374,8 +374,8 @@ export const useGameStore = defineStore("game", () => {
           : "Player";
 
     ws.onopen = () => {
-      console.log("✅ WebSocket подключен (client)");
-      console.log("🎨 Отправляю данные на сервер:");
+      console.log("WebSocket подключен (client)");
+      console.log("Отправляю данные на сервер:");
 
       const payload = {
         type: "join",

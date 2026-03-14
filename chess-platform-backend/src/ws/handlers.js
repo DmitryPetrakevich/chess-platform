@@ -18,7 +18,7 @@ async function saveGameAndCleanup(roomId, reason, winner = null) {
     return;
   }
 
-  console.log(`💾 Сохраняем партию ${roomId}, причина: ${reason}, победитель: ${winner}`);
+  console.log(`Сохраняем партию ${roomId}, причина: ${reason}, победитель: ${winner}`);
 
   if (room.timer) {
     room.timer.stop();
@@ -55,18 +55,18 @@ async function saveGameAndCleanup(roomId, reason, winner = null) {
 
     try {
       await saveGameToDB(gameData);
-      console.log(`✅ Партия сохранена в БД: ${white.name || 'White'} vs ${black.name || 'Black'}`);
+      console.log(`Партия сохранена в БД: ${white.name || 'White'} vs ${black.name || 'Black'}`);
     } catch (err) {
-      console.error("❌ Не удалось сохранить партию:", err);
+      console.error("Не удалось сохранить партию:", err);
     }
   } else {
-    console.log("⚠️ Не могу сохранить: один из игроков отсутствует");
+    console.log("Не могу сохранить: один из игроков отсутствует");
   }
 }
 
 function handleConnection(ws) {
   ws.id = generateClientId();
-  console.log(`🟢 WS connected: ${ws.id}`);
+  console.log(`WS connected: ${ws.id}`);
 
   function sendTimerUpdate(roomId) {
     const room = rooms.get(roomId);
@@ -358,7 +358,7 @@ function handleMove(data, ws) {
         sendTimerUpdate(roomId);
 
         if (timeCheck?.timeOut) {
-          console.log(`⏰ [${roomId}] Игра завершена по таймеру, победитель: ${timeCheck.winner}`);
+          console.log(` [${roomId}] Игра завершена по таймеру, победитель: ${timeCheck.winner}`);
 
           room.isGameOver = true;
           room.result = { reason: "timeOut", winner: timeCheck.winner };
@@ -417,12 +417,12 @@ function handleMove(data, ws) {
     const room = rooms.get(roomId);
     if (!room) return;
 
-    console.log("🔄 Запрос на отмену хода в комнате:", roomId);
+    console.log("Запрос на отмену хода в комнате:", roomId);
     console.log("История ходов на сервере:", room.game.history());
     console.log("Длина истории:", room.game.history().length);
 
     if (room.game.history().length === 0) {
-      console.warn("❌ Нет ходов для отмены на сервере");
+      console.warn("Нет ходов для отмены на сервере");
       ws.send(JSON.stringify({
         type: "error",
         message: "No moves to undo"
@@ -433,7 +433,7 @@ function handleMove(data, ws) {
     // Отменяем ход
     const undoneMove = room.game.undo();
     if (!undoneMove) {
-      console.warn("❌ Не удалось отменить ход на сервере");
+      console.warn("Не удалось отменить ход на сервере");
       ws.send(JSON.stringify({
         type: "error",
         message: "Failed to undo move"
@@ -441,7 +441,7 @@ function handleMove(data, ws) {
       return;
     }
 
-    console.log("✅ Ход отменен на сервере:", undoneMove);
+    console.log("Ход отменен на сервере:", undoneMove);
 
     if (room.history.length > 0) {
       room.history.pop();
@@ -464,7 +464,7 @@ function handleMove(data, ws) {
       type: "undo-accepted",
     });
 
-    console.log("📢 Разослано обновление позиции после отмены хода");
+    console.log("Разослано обновление позиции после отмены хода");
   }
 
 function handleGameOver(data, ws) {
@@ -472,7 +472,7 @@ function handleGameOver(data, ws) {
   const room = rooms.get(roomId);
   if (!room) return;
 
-  console.log(`🏁 Получен game_over от клиента: ${reason}, winner: ${winner}`);
+  console.log(`Получен game_over от клиента: ${reason}, winner: ${winner}`);
 
   room.isGameOver = true;
   room.result = { reason, winner };
@@ -496,7 +496,7 @@ function handleAcceptDraw(data, ws) {
     return;
   }
 
-  console.log("🤝 Ничья принята — завершаем игру");
+  console.log("Ничья принята — завершаем игру");
 
   room.isGameOver = true;
   room.result = { reason: "agreed-draw", winner: null };
@@ -513,7 +513,7 @@ function handleAcceptDraw(data, ws) {
   ws.on("message", (message) => {
     try {
       const data = JSON.parse(message.toString());
-      console.log("📩 Parsed data:", data);
+      console.log("Parsed data:", data);
 
       switch (data.type) {
         case "join":
@@ -546,14 +546,14 @@ function handleAcceptDraw(data, ws) {
           break;
       
         default:
-          console.warn(`⚠️ Неизвестный тип сообщения: ${data.type}`);
+          console.warn(`Неизвестный тип сообщения: ${data.type}`);
           ws.send(JSON.stringify({
             type: "error",
             message: "Unknown message type"
           }));
       }
     } catch (err) {
-      console.error("❌ Ошибка обработки сообщения:", err);
+      console.error("Ошибка обработки сообщения:", err);
       ws.send(JSON.stringify({
         type: "error",
         message: "Invalid JSON"
@@ -562,7 +562,7 @@ function handleAcceptDraw(data, ws) {
   });
 
   ws.on("close", () => {
-    console.log(`🔴 WS disconnected: ${ws.id}`);
+    console.log(`WS disconnected: ${ws.id}`);
 
     if (ws.roomId) {
       const room = rooms.get(ws.roomId);
@@ -588,7 +588,7 @@ function handleAcceptDraw(data, ws) {
   });
 
   ws.on("error", (err) => {
-    console.error(`⚠️ WS error (${ws.id}):`, err);
+    console.error(`WS error (${ws.id}):`, err);
   });
 }
 
