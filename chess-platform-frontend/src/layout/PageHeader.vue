@@ -14,19 +14,17 @@
             <span class="page-header__logo-text"> TUSUR Chess </span>
           </div>
         </router-link>
-      </div>
 
-      <nav class="page-header__nav">
-        <router-link to="coordinates" class="page-header__nav-link">
-          Координаты
-        </router-link>
-        <router-link to="#" class="page-header__nav-link">
-          Задачи
-        </router-link>
-        <a href="#news-section" class="page-header__nav-link">
-          Новости
-        </a>
-      </nav>
+        <nav class="page-header__nav">
+          <router-link to="coordinates" class="page-header__nav-link">
+            Координаты
+          </router-link>
+          <router-link to="#" class="page-header__nav-link">
+            Задачи
+          </router-link>
+          <a href="#news-section" class="page-header__nav-link"> Новости </a>
+        </nav>
+      </div>
 
       <nav v-if="!userStore.isLoggedIn" class="page-header__btns">
         <router-link
@@ -44,18 +42,57 @@
       </nav>
 
       <nav v-else class="page-header__user-menu">
-        <div>
+        <div
+          class="search-wrapper"
+          @mouseenter="handleMouseEnter"
+          @mouseleave="handleMouseLeave"
+        >
           <img :src="searchIcon" alt="Поиск" class="search-icon" />
+
+          <input
+            v-model="searchQuery"
+            :class="[
+              'search-input',
+              { active: isShowSearch || isSearchFocused || searchQuery },
+            ]"
+            @focus="isSearchFocused = true"
+            @blur="handleBlur"
+            @input="searchUsers(searchQuery)"
+            placeholder="Поиск игроков..."
+          />
+
+          <div
+            v-if="showResults && searchResults.length > 0"
+            class="search-results"
+          >
+            <div
+              v-for="user in searchResults"
+              :key="user.id"
+              class="search-result-item"
+              @click="selectUser(user)"
+            >
+              <span class="username"> {{ user.username }}</span>
+              <span class="rating"> {{ user.rating }}</span>
+            </div>
+          </div>
         </div>
         <div>
           <img
+            v-if="
+              !isMobile ||
+              (isMobile && !isShowSearch && !isSearchFocused && !searchQuery)
+            "
             :src="notificationIcon"
             alt="Оповещение"
             class="notification-icon"
           />
         </div>
 
-        <div class="page-header__user-name" @click="toggleMenu">
+        <div
+          v-if="!isMobile || (isMobile && !isShowSearch && !isSearchFocused && !searchQuery)"
+          class="page-header__user-name"
+          @click="toggleMenu"
+        >
           {{ userStore.username }}
           <img :src="profileNameIcon" alt="Профиль" class="profile-icon" />
         </div>
@@ -68,7 +105,7 @@
 
         <div v-if="isMenuOpen" class="page-header__dropdown">
           <router-link
-             to="/profile"
+            to="/profile"
             class="page-header__dropdown-item"
             @click="closeMenu"
           >
@@ -76,18 +113,12 @@
             Профиль
           </router-link>
 
-          <router-link
-            to="#"
-            class="page-header__dropdown-item"
-          >
+          <router-link to="#" class="page-header__dropdown-item">
             <img :src="messageIcon" alt="Входящие" class="profile-menu-icon" />
             Входящие
           </router-link>
 
-          <router-link
-            to="#"
-            class="page-header__dropdown-item"
-          >
+          <router-link to="#" class="page-header__dropdown-item">
             <img
               :src="settingsIcon"
               alt="Настройки"
@@ -106,18 +137,12 @@
 
           <hr class="divider" />
 
-          <router-link
-            to="#"
-            class="page-header__dropdown-item"
-          >
+          <router-link to="#" class="page-header__dropdown-item">
             <img :src="languageIcon" alt="Язык" class="profile-menu-icon" />
             Язык
           </router-link>
 
-          <router-link
-            to="#"
-            class="page-header__dropdown-item"
-          >
+          <router-link to="#" class="page-header__dropdown-item">
             <img :src="themeIcon" alt="Тема" class="profile-menu-icon" /> Тема
           </router-link>
         </div>
@@ -178,9 +203,10 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 import { useUserStore } from "@/store/userStore";
+import { searchUsers as apiSearchUsers } from "@/api/users";
 
 import logoIcon from "@/assets/icons/page-header/logo.svg";
 import profileNameIcon from "@/assets/icons/page-header/profile-name.svg";
@@ -192,32 +218,170 @@ import settingsIcon from "@/assets/icons/page-header/settings.svg";
 import logOutIcon from "@/assets/icons/page-header/logout.svg";
 import languageIcon from "@/assets/icons/page-header/language.svg";
 import themeIcon from "@/assets/icons/page-header/theme.svg";
+import Input from "@/UI/Input.vue";
 
 const route = useRoute();
 const userStore = useUserStore();
-const isMenuOpen = ref(false);
 
+/**
+ * Флаг выпадающего меню профиля
+ */
+const isMenuOpen = ref(false);
+/**
+ * Флаг видимости поля поиска при наведении мыши
+ */
+const isShowSearch = ref(false);
+/**
+ * Флаг фокуса поля посика игрока
+ */
+const isSearchFocused = ref(false);
+/**
+ * Текст поиского запроса игрока
+ */
+const searchQuery = ref("");
+/**
+ * Массив найденных пользователей
+ */
+const searchResults = ref([]);
+/**
+ * Флаг ввидимости выпадающего списка найденных игроков
+ */
+const showResults = ref(false);
+/**
+ * Определение мобильного устройства
+ * @description true если window.innerWidth ≤ 480px
+ */
+const isMobile = ref(false);
+/**
+ * Флаг мобильного меню (бургер-меню)
+ */
+const isMobileMenuOpen = ref(false);
+/**
+ * ID таймера для отложенного скрытия поиска
+ * @description Используется для предотвращения мерцания при быстром движении мыши
+ */
+let hideTimeout = null
+
+/**
+ * Открывает/закрывает выпадающее меню профиля
+ * @fires isMenuOpen - переключает состояние
+ */
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
 };
 
+/**
+ * Закрывает выпадающее меню профиля
+ * @FIRES isMenuOpen - устанавливает false
+ */
 const closeMenu = () => {
   isMenuOpen.value = false;
 };
-
-const isMobileMenuOpen = ref(false);
-
+/**
+ * Открывает/закрывает мобильное меню (бургер)
+ * @fires isMobileMenuOpen - переключает состояние
+ */
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value;
 };
-
+/**
+ * Закрывает мобильное меню
+ * @fires isMobileMenuOpen - устанавливает false
+ */
 const closeMobileMenu = () => {
   isMobileMenuOpen.value = false;
 };
+/**
+ * Определяет, является ли устройство мобильным
+ * @fires isMobile - устанавливает true/false на основе ширины экрана
+ */
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 480;
+};
+/**
+ * Обработчик выхода мыши из контейнера поиска
+ * @description Запускает таймер на 200мс. Если за это время мышь не вернулась
+ * и поле поиска не в фокусе, и нет текста — скрывает инпут поиска.
+ */
+const handleMouseLeave = () => {
+  hideTimeout = setTimeout(() => {
+    if (!isSearchFocused.value && !searchQuery.value) {
+      isShowSearch.value = false
+    }
+  }, 200)
+}
+/**
+ * Обработчик входа мыши в контейнер поиска
+ * @description Отменяет запланированное скрытие и показывает поле поиска
+ */
+const handleMouseEnter = () => {
+  if (hideTimeout) {
+    clearTimeout(hideTimeout)
+    hideTimeout = null
+  }
+  isShowSearch.value = true
+}
+/**
+ * Обработчик потери фокуса поля поиска
+ * @description Скрывает поле поиска, если нет введенного текста
+ * @fires isSearchFocused - устанавливает false
+ * @fires isShowSearch - устанавливает false если searchQuery пуст
+ */
+const handleBlur = () => {
+  isSearchFocused.value = false
+  
+  if (!searchQuery.value) {
+    isShowSearch.value = false
+    if (hideTimeout) {
+      clearTimeout(hideTimeout)
+      hideTimeout = null
+    }
+  }
+}
+/**
+ * Поиск пользователей
+ * @description Вызывает API поиска, обновляет результаты и управляет отображением списка
+ * @fires searchResults - обновляет массив найденных пользователей
+ * @fires showResults - true если есть результаты
+ * @param {string} query - Поисковый запрос
+ */
+const searchUsers = async (query) => {
+  const users = await apiSearchUsers(query, userStore.token);
+  searchResults.value = users;
+  showResults.value = users.length > 0;
+};
+/**
+ * Выбор пользователя из результатов поиска
+ * @description Очищает поиск и закрывает список результатов
+ * @param {object} user - Выбранный пользователь
+ * @fires searchQuery - очищает строку поиска
+ * @fires showResults - false
+ * @fires isSearchFocused - false
+ */
+const selectUser = (user) => {
+  searchQuery.value = "";
+  showResults.value = false;
+  isSearchFocused.value = false;
+};
 
+/**
+ * Закрывает выпадающее меню при изменении маршрута (переходе на другую страницу)
+ */
 watch(() => route.fullPath, closeMenu);
 
+/**
+ * Закрывает выпадающее меню при выходе пользователя из системы
+ */
 watch(() => userStore.isLoggedIn, closeMenu);
+
+onMounted(() => {
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", checkMobile);
+});
 </script>
 
 <style scoped lang="less">
@@ -252,6 +416,10 @@ watch(() => userStore.isLoggedIn, closeMenu);
   width: 30px;
   height: 30px;
   filter: invert(1);
+
+  &:hover {
+    filter: invert(0.7);
+  }
 }
 
 .profile-menu-icon {
@@ -271,6 +439,72 @@ watch(() => userStore.isLoggedIn, closeMenu);
   display: flex;
   align-items: center;
   gap: 15px;
+  width: 150px;
+  justify-content: flex-end;
+}
+
+.search-wrapper {
+  display: flex;
+  position: relative;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+}
+
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 5px;
+  background-color: @black-900;
+  border: 1px solid #333;
+  border-radius: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.search-result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  color: @text-light;
+
+  &:hover {
+    background-color: @black-700;
+  }
+}
+
+.search-icon:hover {
+  filter: invert(0.7);
+}
+
+.search-input {
+  border: 2px solid teal;
+  border-radius: 3px;
+  padding: 5px;
+  color: @text-light;
+  background: transparent;
+  width: 0;
+  opacity: 0;
+  transition: all 0.2s ease-in-out;
+  pointer-events: none;
+  padding: 0;
+  border-width: 0;
+  margin: 0;
+
+  &.active {
+    width: 150px;
+    opacity: 1;
+    pointer-events: auto;
+    padding: 5px;
+    border-width: 2px;
+  }
 }
 
 .page-header__user-name {
@@ -369,7 +603,7 @@ watch(() => userStore.isLoggedIn, closeMenu);
 
 .page-header__nav {
   display: flex;
-  gap: 40px;
+  gap: 30px;
 }
 
 .page-header__nav-link {
@@ -378,7 +612,6 @@ watch(() => userStore.isLoggedIn, closeMenu);
   font-size: 20px;
   font-family: "Poppins", sans-serif;
   font-weight: 500;
-  // padding: 8px 0;
   position: relative;
   transition: all 0.3s ease;
   cursor: pointer;
@@ -538,8 +771,8 @@ watch(() => userStore.isLoggedIn, closeMenu);
 
 @media (max-width: 768px) {
   .page-header {
-  padding: 0 10px;
-}
+    padding: 0 10px;
+  }
 
   .page-header__logo {
     font-size: 14px;

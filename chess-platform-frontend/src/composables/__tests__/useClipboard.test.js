@@ -39,7 +39,6 @@ describe('useClipboard', () => {
   })
 
   it('должен обрабатывать ошибки', async () => {
-    // Подменяем writeText на reject
     Object.defineProperty(navigator, 'clipboard', {
       value: {
         writeText: vi.fn().mockRejectedValue(new Error('Clipboard error'))

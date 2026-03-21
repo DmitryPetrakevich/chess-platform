@@ -43,7 +43,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useGameStore } from "@/store/gameStore";
 import { useUserStore } from "@/store/userStore";
-import { useBodyScrollLock } from "@/composables/useBodyScrollLock";
+import { useBodyScrollLock } from "@/composables/utils/useBodyScrollLock";
 import { useBotGameStore } from "@/store/gameBotStore";
 
 import whiteIcon from "@/assets/icons/inviteModel/choice-white.svg";

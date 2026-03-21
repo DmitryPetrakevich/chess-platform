@@ -13,9 +13,9 @@ import LogInPage from './components/auth/LogInPage.vue';
 import MainPage from './pages/MainPage.vue';
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .app {
-  background-color: #9d0c0c;
+  background-color: @black-900;
 }  
 
 

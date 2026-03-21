@@ -220,7 +220,7 @@ function addClientToRoom(roomId, ws, preferredColor = "random", timeString = nul
     }
   }
 
-  console.log(`🎨 Игроку ${ws.id} назначен цвет: ${ws.color} (room: ${roomId})`);
+  console.log(`Игроку ${ws.id} назначен цвет: ${ws.color} (room: ${roomId})`);
   return room.players.size;
 }
 
