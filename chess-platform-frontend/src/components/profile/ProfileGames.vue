@@ -21,11 +21,11 @@
       </div>
 
       <div v-else class="games-grid">
-        <div 
-        v-for="game in filteredGames" 
-        :key="game.id" 
-        class="game-card"
-        @click="goToGameReview(game.id)"
+        <div
+          v-for="game in filteredGames"
+          :key="game.id"
+          class="game-card"
+          @click="goToGameReview(game.id)"
         >
           <div class="mini-board-wrapper">
             <MiniChessBoard :fen="game.finalFen" :size="200" />
@@ -34,7 +34,8 @@
           <div class="game-info">
             <div class="game-mode">
               <span class="mode-time">{{ game.timeControl || "5+0" }}</span>
-              • {{ getGameMode(game.timeControl) }} • {{ game.mode || "ТОВАРИЩЕСКАЯ" }}
+              • {{ getGameMode(game.timeControl) }} •
+              {{ game.mode || "ТОВАРИЩЕСКАЯ" }}
             </div>
 
             <div class="game-players">
@@ -61,16 +62,16 @@
               class="game-result"
               :class="{
                 win:
-                  (game.result === 'whiteWin' && game.playerColor === 'white') 
-                  ||
+                  (game.result === 'whiteWin' &&
+                    game.playerColor === 'white') ||
                   (game.result === 'blackWin' && game.playerColor === 'black'),
                 lose:
-                  (game.result === 'whiteWin' && game.playerColor === 'black') 
-                  ||
+                  (game.result === 'whiteWin' &&
+                    game.playerColor === 'black') ||
                   (game.result === 'blackWin' && game.playerColor === 'white'),
               }"
             >
-              {{ getResultText(game) }}  {{ getReasonText(game.reason) }}
+              {{ getResultText(game) }} {{ getReasonText(game.reason) }}
             </div>
 
             <div class="game-opening">
@@ -99,10 +100,9 @@ import MiniChessBoard from "./MiniChessBoard.vue";
 const router = useRouter();
 const userStore = useUserStore();
 
-const {games, loading, filteredGames, fetchGames} = useGames()
+const { games, loading, filteredGames, fetchGames } = useGames();
 
 const activeTab = ref("all");
-
 
 onMounted(() => {
   if (userStore.userId) {
@@ -142,38 +142,38 @@ const getReasonText = (reason) => {
 };
 
 const getGameMode = (timeControl) => {
-  if(!timeControl) return "10+0"
+  if (!timeControl) return "10+0";
 
-  const [minutes] = timeControl.split("+").map(Number)
+  const [minutes] = timeControl.split("+").map(Number);
 
-  if(minutes <= 2) {
-    return "ПУЛЯ"
-  } else if(minutes < 10) {
-    return "БЛИЦ"
-  } else if(minutes < 60) {
-    return "РАПИД"
+  if (minutes <= 2) {
+    return "ПУЛЯ";
+  } else if (minutes < 10) {
+    return "БЛИЦ";
+  } else if (minutes < 60) {
+    return "РАПИД";
   } else {
-    return "КЛАССИКА"
+    return "КЛАССИКА";
   }
-}
+};
 
 const getOpeningText = (game) => {
   const movesToShow = game.moves.slice(0, 6);
-  
+
   const formattedMoves = [];
   for (let i = 0; i < movesToShow.length; i += 2) {
     const moveNumber = Math.floor(i / 2) + 1;
     const whiteMove = movesToShow[i];
-    const blackMove = movesToShow[i + 1] ? movesToShow[i + 1] : '';
-    
+    const blackMove = movesToShow[i + 1] ? movesToShow[i + 1] : "";
+
     if (blackMove) {
       formattedMoves.push(`${moveNumber}. ${whiteMove} ${blackMove}`);
     } else {
       formattedMoves.push(`${moveNumber}. ${whiteMove}...`);
     }
   }
-  
-  return formattedMoves.join(' ') + (game.moves.length > 6 ? ' ...' : '');
+
+  return formattedMoves.join(" ") + (game.moves.length > 6 ? " ..." : "");
 };
 
 const formatDate = (dateStr) => {
@@ -210,9 +210,8 @@ const formatDate = (dateStr) => {
 };
 
 const goToGameReview = (gameId) => {
-  router.push(`/game/${gameId}`)
-}
-
+  router.push(`/game/${gameId}`);
+};
 </script>
 
 <style scoped lang="less">
@@ -248,7 +247,7 @@ const goToGameReview = (gameId) => {
   background: #2a2a2a;
   border: 1px solid #3a3a3a;
   border-radius: 12px;
-  padding: 5px;
+  padding: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
 
@@ -262,9 +261,6 @@ const goToGameReview = (gameId) => {
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
-  // width: 140px;
-  // height: 140px;
-  // border: 2px solid #444;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -330,7 +326,7 @@ const goToGameReview = (gameId) => {
   gap: 8px;
   font-weight: 500;
   font-size: 15px;
-  color: @gray-400;;
+  color: @gray-400;
 
   &.win {
     color: @green-500;
@@ -366,13 +362,15 @@ const goToGameReview = (gameId) => {
   width: 48px;
   height: 48px;
   border: 4px solid #333;
-  border-top-color: @green-500;  
+  border-top-color: @green-500;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-text {
@@ -450,9 +448,38 @@ const goToGameReview = (gameId) => {
   }
 
   .mini-board-wrapper {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1 / 1;
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-mode {
+    gap: 4px;
+    font-size: 14px;
+  }
+
+  .mode-time {
+    font-size: 18px;
+  }
+
+  .player-name {
+    font-size: 18px;
+  }
+
+  .player-rating {
+    font-size: 12px;
+  }
+
+  .vs {
+    font-size: 12px;
+  }
+
+  .game-result {
+    font-size: 13px;
+  }
+
+  .game-opening {
+    font-size: 12px;
   }
 }
 </style>

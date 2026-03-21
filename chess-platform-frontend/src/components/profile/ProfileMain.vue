@@ -66,7 +66,7 @@ const userStore = useUserStore();
 
 .username {
   font-size: 36px;
-  font-weight: 700;
+  font-weight: 600;
   color: @gray-300;
   margin: 0 0 8px 0;
 }
@@ -99,20 +99,10 @@ const userStore = useUserStore();
   color: #6b7280;
 }
 
-@media (max-width: 768px) {
-  .profile-info {
-    // flex-direction: column;
-    // align-items: center;
-    // text-align: center;
-  }
-  
+@media (max-width: 480px) {
   .username {
-    // font-size: 28px;
-  }
-  
-  .stats-grid {
-    // justify-content: center;
-    // gap: 30px;
+    font-size: 30px;
+    font-weight: 500;
   }
 }
 </style>
