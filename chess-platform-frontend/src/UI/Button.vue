@@ -74,7 +74,7 @@ const customStyles = computed(() => {
   padding: 16px 30px;
   border: none;
   border-radius: 8px;
-  font-family: "Manrope", sans-serif;
+  font-family: @font-accent;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;

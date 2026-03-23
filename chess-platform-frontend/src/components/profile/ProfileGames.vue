@@ -5,10 +5,10 @@
     </div>
 
     <div class="games-list">
-      <div v-if="loading" class="loading-state">
-        <div class="material-spinner"></div>
-        <div class="loading-text">Загружаем партии...</div>
-      </div>
+      <Loader 
+      v-if="loading" 
+      text="Загрузка партий..."
+      />
 
       <div v-else-if="filteredGames.length === 0" class="empty-state">
         <div class="empty-icon">♔</div>
@@ -96,6 +96,7 @@ import { useUserStore } from "@/store/userStore";
 import { useGames } from "@/composables/utils/useGames";
 
 import MiniChessBoard from "./MiniChessBoard.vue";
+import Loader from "@/UI/Loader.vue";
 
 const router = useRouter();
 const userStore = useUserStore();

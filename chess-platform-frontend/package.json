@@ -10,8 +10,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest",           
-    "test:ui": "vitest --ui"     
+    "test": "vitest",
+    "test:ui": "vitest --ui"
   },
   "dependencies": {
     "chess.js": "^1.4.0",
@@ -19,6 +19,7 @@
     "qrcode.vue": "^3.8.0",
     "rss-parser": "^3.13.0",
     "stockfish.js": "^10.0.2",
+    "swiper": "^12.1.2",
     "vue": "^3.5.18",
     "vue-router": "^4.5.1"
   },

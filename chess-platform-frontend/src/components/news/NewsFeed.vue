@@ -2,40 +2,57 @@
   <div class="news-section" id="news-section">
     <h2 class="news-section__title">Новости</h2>
 
-    <div v-if="newsStore.loading" class="loading">Загрузка...</div>
+    <Loader 
+      v-if="newsStore.loading" 
+      text="Загружаем новости..."
+      size="middle"
+    />
     <div v-else-if="newsStore.error" class="error">
       {{ newsStore.error }}
       <button @click="newsStore.fetchNews">Повторить</button>
     </div>
     <div v-else-if="newsStore.news.length === 0" class="empty">Нет новостей</div>
 
-    <div v-else class="news-grid">
-      <a
-        v-for="item in newsStore.news"
-        :key="item.link"
-        :href="item.link"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="news-card"
+    <div v-else class="news-carousel">
+      <swiper
+        :modules="modules"
+        :slides-per-view="1"
+        :space-between="20"
+        :breakpoints="{
+          640: { slidesPerView: 2, spaceBetween: 20 },
+          1024: { slidesPerView: 3, spaceBetween: 30 }
+        }"
+        :navigation="true"
+        :pagination="{ clickable: true }"
+        :loop="false"
       >
-        <div class="news-image-container">
-          <img
-            v-if="item.thumbnail"
-            :src="item.thumbnail"
-            alt="Новость"
-            class="news-image"
-            loading="lazy"
-            @error="onImageError"
-          />
-          <div v-else class="no-image">Нет фото</div>
-        </div>
+        <swiper-slide v-for="item in newsStore.news" :key="item.link">
+          <a
+            :href="item.link"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="news-card"
+          >
+            <div class="news-image-container">
+              <img
+                v-if="item.thumbnail"
+                :src="item.thumbnail"
+                alt="Новость"
+                class="news-image"
+                loading="lazy"
+                @error="onImageError"
+              />
+              <div v-else class="no-image">Нет фото</div>
+            </div>
 
-        <div class="news-content">
-          <h3 class="news-title">{{ item.title }}</h3>
-          <p class="news-date">{{ formatDate(item.pubDate) }}</p>
-          <p class="news-snippet">{{ item.content.substring(0, 120) }}...</p>
-        </div>
-      </a>
+            <div class="news-content">
+              <h3 class="news-title">{{ item.title }}</h3>
+              <p class="news-date">{{ formatDate(item.pubDate) }}</p>
+              <p class="news-snippet">{{ item.content.substring(0, 120) }}...</p>
+            </div>
+          </a>
+        </swiper-slide>
+      </swiper>
     </div>
   </div>
 </template>
@@ -43,8 +60,17 @@
 <script setup>
 import { useNewsStore } from '@/store/newsStore'
 import { onMounted } from 'vue'
+import { Swiper, SwiperSlide } from 'swiper/vue'
+import { Navigation, Pagination } from 'swiper/modules'
+
+import Loader from '@/UI/Loader.vue'
+
+import 'swiper/css'
+import 'swiper/css/navigation'
+import 'swiper/css/pagination'
 
 const newsStore = useNewsStore()
+const modules = [Navigation, Pagination]
 
 onMounted(() => {
   newsStore.fetchNews()
@@ -67,37 +93,44 @@ const formatDate = (dateStr) => {
   border: 1px solid #444;
   box-sizing: border-box;
   width: 100%;
-  padding: 20px;
+  padding: 10px;
+  min-height: 300px;
 }
 
 .news-section__title {
-  color: #ecf0f1;
+  color: @text-light;
   font-size: 36px; 
   text-align: center;
   text-transform: uppercase;
   margin-bottom: 2rem; 
   font-weight: 600; 
+  font-family: @font-heading;
 }
 
-.news-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr); 
-  // width: 100%;
-  // max-width: 100%;
-  // box-sizing: border-box;
-  gap: 2rem; 
-}
-
-@media (max-width: 768px) {
-  .news-grid {
-    grid-template-columns: 1fr; 
+:deep(.swiper-button-next),
+:deep(.swiper-button-prev) {
+  color: @green-600;
+  background: rgba(0, 0, 0, 0.5);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  
+  &::after {
+    font-size: 20px;
   }
-
-  .news-section__title {
-    font-size: 30px; 
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
   }
 }
 
+:deep(.swiper-pagination-bullet) {
+  background: #888;
+  
+  &-active {
+    background: @green-600;
+  }
+}
 
 .news-card {
   display: flex;
@@ -108,8 +141,8 @@ const formatDate = (dateStr) => {
   text-decoration: none;
   color: #ecf0f1;
   transition: all 0.3s ease; 
-  height: 100%; 
   border: 1px solid #444; 
+  height: 100%;
 }
 
 .news-card:hover {
@@ -121,7 +154,7 @@ const formatDate = (dateStr) => {
 
 .news-image-container {
   width: 100%;
-  height: 220px; 
+  height: 180px; 
   overflow: hidden;
   position: relative;
   background: #222;
@@ -151,17 +184,20 @@ const formatDate = (dateStr) => {
   padding: 1rem; 
 }
 
-
 .news-content {
-  padding: 1.5rem; 
+  padding: 1rem; 
   flex-grow: 1; 
   display: flex;
   flex-direction: column; 
 }
 
+.swiper-slide {
+  height: auto;
+}
+
 .news-title {
-  margin: 0 0 0.75rem 0;
-  font-size: 1.3rem; 
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem; 
   font-weight: 600; 
   line-height: 1.4;
   color: #fff; 
@@ -172,30 +208,22 @@ const formatDate = (dateStr) => {
 }
 
 .news-date {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: #bdc3c7;
-  margin-bottom: 1rem; 
+  margin-bottom: 0.5rem; 
   font-weight: 500; 
 }
 
 .news-snippet {
-  font-size: 1rem; 
+  font-size: 0.9rem; 
   color: #aaa;
-  line-height: 1.5; 
+  line-height: 1.4; 
   flex-grow: 1; 
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 3; 
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-
-.loading, .error, .empty {
-  text-align: center;
-  padding: 3rem 2rem; 
-  color: #bdc3c7;
-  font-size: 1.1rem; 
 }
 
 .error {
@@ -220,5 +248,15 @@ const formatDate = (dateStr) => {
 
 .error button:hover {
   background: #2980b9; 
+}
+
+@media (max-width: 768px) {
+  .news-section__title {
+    font-size: 30px; 
+  }
+  
+  .news-carousel {
+    padding: 10px 30px;
+  }
 }
 </style>

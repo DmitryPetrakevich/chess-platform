@@ -129,7 +129,7 @@
 
           <button
             @click="userStore.logout()"
-            class="page-header__dropdown-item"
+            class="page-header__dropdown-item exit"
           >
             <img :src="logOutIcon" alt="Выйти" class="profile-menu-icon" />
             Выйти
@@ -416,6 +416,7 @@ onUnmounted(() => {
   width: 30px;
   height: 30px;
   filter: invert(1);
+  cursor: pointer;
 
   &:hover {
     filter: invert(0.7);
@@ -488,15 +489,16 @@ onUnmounted(() => {
   border: 2px solid teal;
   border-radius: 3px;
   padding: 5px;
-  color: @text-light;
-  background: transparent;
-  width: 0;
-  opacity: 0;
-  transition: all 0.2s ease-in-out;
-  pointer-events: none;
   padding: 0;
   border-width: 0;
   margin: 0;
+  width: 0;
+  opacity: 0;
+  color: @text-light;
+  background: transparent;
+  transition: all 0.2s ease-in-out;
+  pointer-events: none;
+  cursor: pointer;
 
   &.active {
     width: 150px;
@@ -515,7 +517,7 @@ onUnmounted(() => {
   color: white;
   font-size: 20px;
   font-weight: 400;
-  font-family: "Manrope", sans-serif;
+  font-family: @font-accent;
   border-radius: 5px;
   padding: 5px;
   cursor: pointer;
@@ -571,11 +573,17 @@ onUnmounted(() => {
   cursor: pointer;
   font-size: 20px;
   transition: all 0.3s ease;
+
+  &:hover {
+    background: @green-600;
+  }
 }
 
-.page-header__dropdown-item:hover {
-  background: @gray-700;
+.exit:hover {
+  background-color: @red-600;
 }
+
+
 
 .page-header__logo {
   display: block;
@@ -610,7 +618,7 @@ onUnmounted(() => {
   color: white;
   text-decoration: none;
   font-size: 20px;
-  font-family: "Poppins", sans-serif;
+  font-family: @font-accent;
   font-weight: 500;
   position: relative;
   transition: all 0.3s ease;
