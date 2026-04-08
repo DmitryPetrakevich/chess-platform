@@ -9,7 +9,12 @@
     />
     <div v-else-if="newsStore.error" class="error">
       {{ newsStore.error }}
-      <button @click="newsStore.fetchNews">Повторить</button>
+      <button 
+      class="error-btn"
+      @click="newsStore.fetchNews"
+      >
+      Повторить
+    </button>
     </div>
     <div v-else-if="newsStore.news.length === 0" class="empty">Нет новостей</div>
 
@@ -227,27 +232,34 @@ const formatDate = (dateStr) => {
 }
 
 .error {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
   background: rgba(231, 76, 60, 0.1); 
   border-radius: 8px;
   border: 1px solid rgba(231, 76, 60, 0.3);
-  padding: 2rem;
+  color: @text-light;
+  font-family: @font-main;
+  padding: 20px;
 }
 
-.error button {
-  margin-top: 1.5rem; 
-  padding: 0.8rem 1.5rem; 
-  background: #3498db;
-  color: white;
+.error-btn {
+  padding: 15px 30px; 
+  background-color: @blue-500;
   border: none;
-  border-radius: 8px; 
+  border-radius: 5px; 
   cursor: pointer;
   font-size: 1rem; 
+  color: @text-light;
+  font-family: @font-main;
   font-weight: 500; 
-  transition: background 0.2s; 
-}
+  transition: all 0.2s ease; 
 
-.error button:hover {
-  background: #2980b9; 
+  &:hover {
+    background-color: @blue-600;
+  }
 }
 
 @media (max-width: 768px) {

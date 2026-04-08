@@ -57,7 +57,10 @@
             ]"
             @focus="isSearchFocused = true"
             @blur="handleBlur"
-            @input="searchUsers(searchQuery)"
+            @input="(e) => {
+              searchQuery = e.target.value
+              debounceSearchUsers(e.target.value)
+            }"
             placeholder="Поиск игроков..."
           />
 
@@ -207,6 +210,7 @@ import { ref, watch, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 import { useUserStore } from "@/store/userStore";
 import { searchUsers as apiSearchUsers } from "@/api/users";
+import { useDebounce } from "@/composables/utils/useDebounce";
 
 import logoIcon from "@/assets/icons/page-header/logo.svg";
 import profileNameIcon from "@/assets/icons/page-header/profile-name.svg";
@@ -218,7 +222,6 @@ import settingsIcon from "@/assets/icons/page-header/settings.svg";
 import logOutIcon from "@/assets/icons/page-header/logout.svg";
 import languageIcon from "@/assets/icons/page-header/language.svg";
 import themeIcon from "@/assets/icons/page-header/theme.svg";
-import Input from "@/UI/Input.vue";
 
 const route = useRoute();
 const userStore = useUserStore();
@@ -350,6 +353,9 @@ const searchUsers = async (query) => {
   searchResults.value = users;
   showResults.value = users.length > 0;
 };
+
+const debounceSearchUsers = useDebounce(searchUsers, 300)
+
 /**
  * Выбор пользователя из результатов поиска
  * @description Очищает поиск и закрывает список результатов
