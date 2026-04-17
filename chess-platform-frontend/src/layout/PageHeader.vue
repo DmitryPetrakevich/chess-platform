@@ -601,6 +601,11 @@ onUnmounted(() => {
   letter-spacing: 3px;
   font-family: "Arial", sans-serif;
   text-decoration: none;
+  transition: all 0.2s ease;
+
+  &:hover {
+     color: @red-400;
+  }
 }
 
 .page-header__logo__container {

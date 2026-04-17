@@ -156,7 +156,7 @@ export const useGameStore = defineStore("game", () => {
    * @param {"w"|"b"} color - Цвет фигур игрока
    */
   function setPlayerColor(color) {
-    console.log("🎨 setPlayerColor:", color);
+    console.log("setPlayerColor:", color);
     playerColor.value = color;
   }
 
@@ -813,5 +813,6 @@ export const useGameStore = defineStore("game", () => {
     completePromotion,
     cancelPromotion,
     leaveCurrentGame,
+    chess: chess,
   };
 });

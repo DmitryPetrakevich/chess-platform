@@ -48,7 +48,6 @@
 import { useCoordinatesStore } from '@/store/coordinatesStore';
 
 const coordinatesStore = useCoordinatesStore();
-
 </script>
 
 <style scoped lang="less">

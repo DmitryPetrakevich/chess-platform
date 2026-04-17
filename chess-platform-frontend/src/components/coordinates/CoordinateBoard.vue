@@ -103,22 +103,9 @@ function pieceImage(squareId) {
 }
 
 function handleCellClick(squareId) {
-  console.log('=== КЛИК ПО КЛЕТКЕ ===')
-  console.log('Кликнули:', squareId)
-  console.log('Текущая цель:', coordinatesStore.targetSquare)
-  console.log('isActive:', coordinatesStore.isActive)
-  
   if (coordinatesStore.isActive) {
     const isCorrect = coordinatesStore.checkClick(squareId)
-    console.log('Правильно?', isCorrect)
-    
-    if (isCorrect) {
-      console.log('Новая цель:', coordinatesStore.targetSquare)
-      console.log('Счет:', coordinatesStore.score)
-    }
-  } else {
-    console.log('Тренировка не активна')
-  }
+  } 
 }
 </script>
 

@@ -1,36 +1,26 @@
 <template>
   <div class="board-wrapper">
-    <div class="board">
-      <div v-for="(row, rIndex) in squares" 
-      :key="rIndex" 
-      class="rank-row"
-      v-memo="[game.pieces, game.lastMove, squareClick.selectedSquare.value, squareClick.highlightedSquares.value]"
-      >
+    <div class="board" :class="{ flipped: botGame.playerColor === 'b' }">
+      <div v-for="(row, rIndex) in squares" :key="rIndex" class="rank-row">
         <div 
           v-for="cell in row" 
           :key="cell.id" 
           class="cell"
           :class="[
             cell.color, 
-            { selected: isSquareSelected(cell.id) },
-            { highlighted: isSquareHighlighted(cell.id) },
+            { selected: selectedSquare === cell.id },
+            { highlighted: highlightedSquares.has(cell.id) },
             { 'last-move': game.lastMove.from === cell.id || game.lastMove.to === cell.id }
           ]"
-          @click="squareClick.handleSquareClick(cell.id)"
-          @dragover.prevent
-          @drop="dragDrop.handleDrop(cell.id, $event)" 
+          @click="handleSquareClick(cell.id)"
         >
-          <img v-if="pieceImages[cell.id]" 
+          <img 
+            v-if="pieceImages[cell.id]" 
             :src="pieceImages[cell.id]" 
             class="piece" 
-            draggable="true"
-            @dragstart="dragDrop.handleDragStart(cell.id, $event)" 
-            @dragend="dragDrop.handleDragEnd"
           />
         </div>
-        <div class="rank-label">
-          {{ row[0].rank }}
-        </div>
+        <div class="rank-label">{{ row[0].rank }}</div>
       </div>
 
       <div class="files-row">
@@ -42,66 +32,81 @@
     <PromotionModal 
       v-if="game.showPromotionModal && game.promotionMove"
       :color="game.promotionMove.piece[0]"
-      @select="squareClick.handlePromotionSelect"
-      @cancel="squareClick.handlePromotionCancel"
+      @select="game.completePromotion"
+      @cancel="game.cancelPromotion"
     />
   </div>
 </template>
 
 <script setup>
-import { useGameStore } from "@/store/gameStore"
-import { useBotGameStore } from "@/store/gameBotStore"
-import { computed, onMounted, ref, watch } from "vue" 
-import { useSquareClick } from "@/composables/useSquareClick"
-import { useDragAndDrop } from "@/composables/useDragAndDrop"
+import { computed, ref } from "vue";
+import { useGameStore } from "@/store/gameStore";
+import { useBotGameStore } from "@/store/gameBotStore";
+import PromotionModal from "../game/PromotionModal.vue";
 
-import PromotionModal from "../game/PromotionModal.vue"
-
-const game = useGameStore()
+const game = useGameStore();
 const botGame = useBotGameStore();
 
-const squareClick = useSquareClick()
-const dragDrop = useDragAndDrop(squareClick)
+const selectedSquare = ref(null);
+const highlightedSquares = ref(new Set());
 
-const isSquareSelected = (id) => squareClick.selectedSquare.value === id
-const isSquareHighlighted = (id) => squareClick.highlightedSquares.value.has(id)
-
-const flipped = computed(() => botGame.playerColor === "b")
+const flipped = computed(() => botGame.playerColor === "b");
 
 const files = computed(() =>
   flipped.value ? ["h","g","f","e","d","c","b","a"] : ["a","b","c","d","e","f","g","h"]
-)
+);
 
 const ranks = computed(() =>
   flipped.value ? [1,2,3,4,5,6,7,8] : [8,7,6,5,4,3,2,1]
-)
+);
 
 const squares = computed(() =>
   ranks.value.map((rank, rIdx) =>
     files.value.map((file, fIdx) => {
-      const color = (rIdx + fIdx) % 2 === 0 ? "light" : "dark"
-      return { id: `${file}${rank}`, file, rank, color }
+      const color = (rIdx + fIdx) % 2 === 0 ? "light" : "dark";
+      return { id: `${file}${rank}`, file, rank, color };
     })
   )
-)
-
-game.setInitialPosition()
+);
 
 const pieceImages = computed(() => {
-  const images = {}
+  const images = {};
   for (const squareId in game.pieces) {
-    const code = game.pieces[squareId]
-    images[squareId] = new URL(`../../assets/icons/chess-pieces/${code}.svg`, import.meta.url).href
+    const code = game.pieces[squareId];
+    if (code) {
+      images[squareId] = new URL(`../../assets/icons/chess-pieces/${code}.svg`, import.meta.url).href;
+    }
   }
-  return images
-})
+  return images;
+});
 
-watch(() => game.result.type, (newResult) => {
-  if (newResult) {
-    squareClick.resetSelection()
-    dragDrop.resetDrag()
+const handleSquareClick = (id) => {
+  if (botGame.isBotThinking || game.result.type) return;
+
+  const clickedPiece = game.pieces[id];
+
+  if (clickedPiece && clickedPiece[0] === botGame.playerColor && game.currentTurn === botGame.playerColor) {
+    if (selectedSquare.value === id) {
+      selectedSquare.value = null;
+      highlightedSquares.value.clear();
+    } else {
+      selectedSquare.value = id;
+      highlightedSquares.value = game.getAvailableMoves ? game.getAvailableMoves(id) : new Set();
+    }
+    return;
   }
-})
+
+  if (selectedSquare.value && highlightedSquares.value.has(id)) {
+    botGame.onPlayerMove(selectedSquare.value, id);
+    selectedSquare.value = null;
+    highlightedSquares.value.clear();
+  } else {
+    selectedSquare.value = null;
+    highlightedSquares.value.clear();
+  }
+};
+
+game.setInitialPosition();
 </script>
 
 <style>

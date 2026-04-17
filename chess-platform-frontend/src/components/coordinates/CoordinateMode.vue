@@ -26,12 +26,11 @@
 
 <script setup>
 import { ref } from "vue";
-import infiniteIcon from "@/assets/icons/coordinate-page/infinite.svg"
-
 import { useCoordinatesStore } from "@/store/coordinatesStore";
 
-const coordinatesStore = useCoordinatesStore()
+import infiniteIcon from "@/assets/icons/coordinate-page/infinite.svg"
 
+const coordinatesStore = useCoordinatesStore()
 </script>
 
 <style lang="less" scoped>

@@ -32,7 +32,6 @@
 import { useCoordinatesStore } from '@/store/coordinatesStore';
 
 const coordinatesStore = useCoordinatesStore()
-
 </script>
 
 <style scoped lang="less">
@@ -69,13 +68,12 @@ li {
 }
 
 @media (max-width: 480px) {
-.text {
-    font-size: 13px;
-}
+    .text {
+        font-size: 13px;
+    }
 
-h2 {
-    font-size: 30px;
-}
-
+    h2 {
+        font-size: 30px;
+    }
 }
 </style>

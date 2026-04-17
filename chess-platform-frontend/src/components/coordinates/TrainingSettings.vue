@@ -6,7 +6,6 @@
 
         <Toggle v-model="coordinatesStore.showPieces">Показать фигуры</Toggle>
         <Toggle v-model="coordinatesStore.showCoordinates">Показать координаты</Toggle>
-
     </div>
 </template>
 
@@ -22,7 +21,6 @@ import Toggle from '@/UI/Toggle.vue';
 import { useCoordinatesStore } from '@/store/coordinatesStore';
 
 const coordinatesStore = useCoordinatesStore();
-
 </script>
 
 <style lang="less" scoped>

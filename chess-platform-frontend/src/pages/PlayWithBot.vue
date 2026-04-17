@@ -33,20 +33,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from "vue";
-import { useRoute } from "vue-router";
-import { useGameStore } from "@/store/gameStore";
-import BotBoard from "@/components/bot-game/BotBoard.vue";
-import BotClock from "@/components/bot-game/BotClock.vue";
-import { useUserStore } from "@/store/userStore";
-
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useBotGameStore } from "@/store/gameBotStore";
 
-const game = useGameStore();
-const user = useUserStore();
-const route = useRoute();
-const botStore = useBotGameStore();
+import BotBoard from "@/components/bot-game/BotBoard.vue";
+import BotClock from "@/components/bot-game/BotClock.vue";
 
+const botGame = useBotGameStore();
 const isMobile = ref(false);
 
 function checkMobile() {
@@ -57,32 +50,15 @@ onMounted(() => {
   checkMobile();
   window.addEventListener("resize", checkMobile);
 
-  const roomId = route.params.roomId;
-  const colorQuery = route.query.color;
-
-  let finalColor;
-  if (colorQuery === "w") finalColor = "b";
-  else if (colorQuery === "b") finalColor = "w";
-  else finalColor = Math.random() > 0.5 ? "w" : "b"; // если "random" или нет параметра
-
-  if (roomId) {
-    game.connectToServer(roomId, finalColor, user.username);
-  } else {
+  if (!botGame.isGameStarted) {
+    botGame.startBotGame();
   }
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", checkMobile);
-  game.disconnect();
+  botGame.resetBotGame();
 });
-
-watch(() => game.playerColor, (newColor, oldColor) => {
-  console.log(" playerColor ИЗМЕНИЛСЯ:", { 
-    from: oldColor, 
-    to: newColor,
-    timestamp: new Date().toISOString()
-  });
-}, { immediate: true });
 </script>
 
 <style lang="less" scoped>
