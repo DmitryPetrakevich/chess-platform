@@ -6,7 +6,7 @@ const { Chess } = require("chess.js");
  * Обеспечивает синхронизированный отсчет времени для обоих игроков.
  */
 class RoomTimer {
-  constructor(initialTime = 300, initialIncrement = 0) { // 10 минут по умолчанию
+  constructor(initialTime = 300, initialIncrement = 0) { 
     this.whiteTime = initialTime;
     this.blackTime = initialTime;
     this.increment = initialIncrement;
@@ -14,7 +14,7 @@ class RoomTimer {
     this.currentTurn = 'w';
     this.isRunning = false;
     this.intervalId = null;
-    this.preStartTime = 15; 
+    this.preStartTime = 60; 
     this.preStartIntervalId = null;
     this.gameStarted = false;
     this.broadcastPreStartUpdate = null;

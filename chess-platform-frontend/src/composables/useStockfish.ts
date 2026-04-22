@@ -25,7 +25,8 @@ export function useStockfish() {
   const init = (skillLevel: number = 10) => {
     if (worker.value) worker.value.terminate();
 
-    worker.value = new Worker(new URL("../stockfish/stockfish.js", import.meta.url).href);
+    // worker.value = new Worker(new URL("../stockfish/stockfish.js", import.meta.url).href);
+    worker.value = new Worker('/stockfish/stockfish.js');
 
     worker.value.onmessage = (event: MessageEvent) => {
       const message = event.data;

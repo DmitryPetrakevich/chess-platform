@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref, watch, computed } from "vue";
+import { ref, watch, computed, shallowRef, markRaw } from "vue";
 import { useTimerStore } from "./timerStore";
 import { useUserStore } from "./userStore";
 import { Chess } from "chess.js";
@@ -27,12 +27,9 @@ export const useGameStore = defineStore("game", () => {
 
   const userStore = useUserStore();
 
-  const chess = ref(new Chess());
+  const chess = shallowRef(markRaw(new Chess()));
+  const fen = ref(chess.value.fen());
 
-  /**
-   * Расположение фигур на доске (теперь синхронизируется с chess.js)
-   */
-  const pieces = ref<object>({});
   /**
    * Очередь хода ("w" или "b")
    */
@@ -72,6 +69,12 @@ export const useGameStore = defineStore("game", () => {
    * Флаг, указывающий на активное предложение ничьи от соперника.
    */
   const offerDraw = ref(false);
+  /**
+   * Текущий индекс просмотра партии (replay mode).
+   *
+   * - = moveHistory.length → нормальный режим (последняя позиция)
+   * - < moveHistory.length → режим просмотра прошлых ходов
+   */
   const currentReplayIndex = ref(-1);
   /**
    * Флаг, указывающий на активное предложение отменить последний ход от соперника.
@@ -94,13 +97,19 @@ export const useGameStore = defineStore("game", () => {
    * Флаг видимости модального окна выбора фигуры превращения.
    */
   const showPromotionModal = ref(false);
-
+  /**
+   * Информация об оппоненте.
+   * Обновляется при подключении второго игрока.
+   */
   const opponent = ref({
     id: null,
     username: "Opponent",
     blitzRating: 1200,
   });
-
+  /**
+   * Параметры создания / приглашения в игру.
+   * Используются при подключении к серверу.
+   */
   const inviteParams = ref({
     time: "3+0",
     mode: "friendly",
@@ -108,13 +117,21 @@ export const useGameStore = defineStore("game", () => {
   });
 
   watch(
-    moveHistory,
+    () => moveHistory.value.length,
     () => {
       currentReplayIndex.value = moveHistory.value.length;
     },
-    { deep: true },
   );
 
+  /**
+   * Переключает доску на конкретный ход из истории.
+   *
+   * @param {number} index - индекс хода (0 = начальная позиция)
+   *
+   * Поведение:
+   * - 0 → сброс доски
+   * - n → загрузка FEN из moveHistory[n - 1]
+   */
   function goToMove(index: number) {
     if (index < 0) index = 0;
     if (index > moveHistory.value.length) index = moveHistory.value.length;
@@ -135,14 +152,25 @@ export const useGameStore = defineStore("game", () => {
       };
     }
 
-    parseFEN(chess.value.fen());
+    fen.value = chess.value.fen();
     currentTurn.value = chess.value.turn();
   }
-
+  /**
+   * Проверяет, находится ли пользователь в режиме просмотра партии.
+   *
+   * @returns {boolean}
+   */
   function isReplayMode() {
     return currentReplayIndex.value < moveHistory.value.length;
   }
-
+  /**
+   * Устанавливает данные оппонента из сервера.
+   *
+   * @param {Object} data
+   * @param {string|number} data.id
+   * @param {string} data.username
+   * @param {number} [data.blitz_rating]
+   */
   function setOpponent(data) {
     opponent.value = {
       id: data.id,
@@ -150,7 +178,6 @@ export const useGameStore = defineStore("game", () => {
       blitzRating: data.blitz_rating ?? 1200,
     };
   }
-
   /**
    * Устанавливает цвет игрока
    * @param {"w"|"b"} color - Цвет фигур игрока
@@ -159,7 +186,6 @@ export const useGameStore = defineStore("game", () => {
     console.log("setPlayerColor:", color);
     playerColor.value = color;
   }
-
   /**
    * Устанавливает очередь хода
    * @param {"w"|"b"} turn - Чья очередь ходить
@@ -168,99 +194,130 @@ export const useGameStore = defineStore("game", () => {
     currentTurn.value = turn;
   }
 
-  function resetBoard() {
-    chess.value = new Chess();
-    parseFEN(chess.value.fen());
-  }
-
   /**
-   * Парсит FEN в pieces (для синхронизации с chess.js)
+   * Полностью сбрасывает доску в начальное состояние.
+   * Создаёт новый экземпляр chess.js.
    */
-  function parseFEN(fen) {
-    const newPieces = {};
-    const rows = fen.split(" ")[0].split("/");
-    let rank = 8;
-    for (const row of rows) {
-      let fileIndex = 0;
-      for (const char of row) {
-        if (/\d/.test(char)) {
-          fileIndex += parseInt(char);
-        } else {
-          const color = char === char.toUpperCase() ? "w" : "b";
-          const type = char.toUpperCase();
-          const square =
-            ["a", "b", "c", "d", "e", "f", "g", "h"][fileIndex] + rank;
-          newPieces[square] = color + type;
-          fileIndex++;
-        }
-      }
-      rank--;
-    }
-    pieces.value = newPieces;
+  function resetBoard() {
+    chess.value = markRaw(new Chess());
+    fen.value = chess.value.fen();
     currentTurn.value = chess.value.turn();
+    lastMove.value = { from: null, to: null };
   }
-
   /**
-   * Выполняет ход через chess.js
+   * Низкоуровневое применение хода через chess.js.
+   *
+   * Не обновляет состояние стора!
+   * Используется как "чистая" операция без сайд-эффектов.
+   *
+   * @param {string} from
+   * @param {string} to
+   * @param {string} [promotion="q"]
+   * @returns {object|null} объект хода или null если ход невалидный
+   */
+  function applyMove(from: string, to: string, promotion: string = "q") {
+    try {
+      const move = chess.value.move({ from, to, promotion });
+
+      if (!move) return null;
+
+      return move;
+    } catch (e) {
+      console.error("Ошибка chess.move:", e);
+      return null;
+    }
+  }
+  /**
+   * Основная функция выполнения хода игрока.
+   * 
+   * Включает:
+   * - проверку окончания игры
+   * - обработку превращения пешки
+   * - вызов applyMove
+   * - обновление состояния
+   * 
+   * @returns {boolean} успешность выполнения хода
    */
   function makeMove(from, to, promotionPiece: string = "q") {
     if (result.value.type) {
-      console.warn("Game finished:", result.value.type);
+      console.warn("Game finished");
       return false;
     }
 
-    try {
-      const piece = chess.value.get(from);
-      const isPawn = piece && piece.type === "p";
-      const isPromotionSquare =
-        (to[1] === "8" && piece?.color === "w") ||
-        (to[1] === "1" && piece?.color === "b");
+    const piece = chess.value.get(from);
 
-      // Если это превращение пешки, но фигура не выбрана - сохраняем ход для подтверждения
-      if (isPawn && isPromotionSquare && !promotionPiece) {
-        promotionMove.value = {
-          from,
-          to,
-          piece: piece.color + "p",
-          pending: true,
-        };
-        showPromotionModal.value = true;
-        return false; // Ход не выполнен, ждем выбор фигуры
-      }
+    const isPawn = piece && piece.type === "p";
+    const isPromotionSquare =
+      (to[1] === "8" && piece?.color === "w") ||
+      (to[1] === "1" && piece?.color === "b");
 
-      const move = chess.value.move({ from, to, promotion: promotionPiece });
-
-      if (!move) {
-        console.warn(`🚫 Недопустимый ход: ${from} → ${to}`);
-        return false;
-      }
-
-      parseFEN(chess.value.fen());
-
-      moveHistory.value.push({
-        from: move.from,
-        to: move.to,
-        piece: move.piece.toUpperCase(),
-        fen: chess.value.fen(),
-        turn: move.color === "w" ? "b" : "w",
-        san: move.san,
-        promotedTo: move.promotion,
-      });
-
-      lastMove.value = { from, to };
-
-      promotionMove.value = null;
-      showPromotionModal.value = false;
-
-      checkGameState();
-
-      return true;
-    } catch (err) {
-      console.error("Ошибка в chess.js move:", err);
+    if (isPawn && isPromotionSquare && !promotionPiece) {
+      promotionMove.value = {
+        from,
+        to,
+        piece: piece.color + "p",
+        pending: true,
+      };
+      showPromotionModal.value = true;
       return false;
     }
+
+    const move = applyMove(from, to, promotionPiece);
+
+    if (!move) {
+      console.warn(`Недопустимый ход: ${from} → ${to}`);
+      return false;
+    }
+
+    updateGameState(move);
+
+    return true;
   }
+  /**
+   * Обновляет состояние стора после выполненного хода.
+   * 
+   * Включает:
+   * - обновление истории
+   * - lastMove
+   * - fen
+   * - currentTurn
+   * - сброс promotion
+   * - проверку состояния игры
+   * 
+   * @param {object} move - объект хода из chess.js
+   */
+  function updateGameState(move) {
+    const newFen = chess.value.fen();
 
+    moveHistory.value.push({
+      from: move.from,
+      to: move.to,
+      piece: move.piece.toUpperCase(),
+      fen: newFen,
+      turn: move.color === "w" ? "b" : "w",
+      san: move.san,
+      promotedTo: move.promotion,
+    });
+
+    lastMove.value = {
+      from: move.from,
+      to: move.to,
+    };
+
+    fen.value = newFen;
+    currentTurn.value = chess.value.turn();
+
+    promotionMove.value = null;
+    showPromotionModal.value = false;
+
+    checkGameState();
+  }
+  /**
+   * Завершает превращение пешки выбранной фигурой.
+   * 
+   * @param {string} promotionPiece
+   * @returns {boolean}
+   */
   function completePromotion(promotionPiece: string): boolean {
     if (!promotionMove.value) return false;
 
@@ -277,12 +334,13 @@ export const useGameStore = defineStore("game", () => {
 
     return success;
   }
-
+  /**
+   * Отменяет процесс превращения пешки.
+   */
   function cancelPromotion(): void {
     promotionMove.value = null;
     showPromotionModal.value = false;
   }
-
   /**
    * Проверяет текущее состояние игры через chess.js
    */
@@ -323,7 +381,6 @@ export const useGameStore = defineStore("game", () => {
 
     return null;
   }
-
   /**
    * Возвращает доступные ходы через chess.js
    */
@@ -336,7 +393,7 @@ export const useGameStore = defineStore("game", () => {
     return moves;
   }
 
-  // --- WebSocket подключение --- //
+  // --- WebSocket подключение 
   let ws = null;
   const playersCount = ref(0);
   const shouldRedirect = ref(null);
@@ -402,13 +459,14 @@ export const useGameStore = defineStore("game", () => {
       switch (data.type) {
         case "joined":
           console.log("🎯 Игрок успешно присоединился:", data);
-          setPlayerColor(data.color);
+
           currentRoomId.value = data.roomId;
+
+          setPlayerColor(data.color);
           playersCount.value = data.playersCount;
 
           if (data.fen) {
             chess.value.load(data.fen);
-            parseFEN(data.fen);
             checkGameState();
           } else {
             resetBoard();
@@ -416,10 +474,10 @@ export const useGameStore = defineStore("game", () => {
           break;
 
         case "position":
-          console.log("♟ Получена позиция от сервера:", data.fen);
           if (data.fen) {
             chess.value.load(data.fen);
-            parseFEN(data.fen);
+            fen.value = chess.value.fen();
+            currentTurn.value = data.turn ?? chess.value.turn();
             checkGameState();
           }
 
@@ -432,19 +490,17 @@ export const useGameStore = defineStore("game", () => {
             }
           }
 
-          if (data.turn) {
-            currentTurn.value = data.turn;
-          }
           gameStarted.value = true;
           break;
 
         case "history":
-          console.log("📜 Получена история ходов:", data.history);
           moveHistory.value = data.history;
           break;
 
         case "start_game":
-          console.log("🚀 Игра начинается!", data);
+
+          gameStarted.value = true;
+
           shouldRedirect.value = {
             roomId: data.roomId,
             reason: "game_started",
@@ -454,27 +510,22 @@ export const useGameStore = defineStore("game", () => {
           break;
 
         case "player_joined":
-          console.log("👤 В комнату вошёл игрок:", data);
           playersCount.value += 1;
           setOpponent(data.player);
           break;
 
         case "moveMade":
           if (result.value.type) return;
-          console.log("♟ Подтверждён ход:", data.from, "→", data.to);
 
           if (timerStore.preSeconds > 0) {
             timerStore.cancelPreStart();
           }
 
-          makeMove(data.from, data.to);
-          if (data.turn) setCurrentTurn(data.turn);
           gameStarted.value = true;
           break;
 
         case "move":
           if (result.value.type) return;
-          console.log("♟ Ход от другого игрока:", data.move);
 
           gameStarted.value = true;
 
@@ -482,16 +533,22 @@ export const useGameStore = defineStore("game", () => {
             timerStore.cancelPreStart();
           }
 
-          makeMove(data.move.from, data.move.to);
-          if (data.turn) setCurrentTurn(data.turn);
+          const move = applyMove(
+            data.move.from,
+            data.move.to,
+            data.move.promotion,
+          );
+
+          if (move) {
+            updateGameState(move);
+          }
           break;
 
         case "error":
-          console.warn("❌ Ошибка от сервера:", data.message);
+          console.warn("Ошибка от сервера:", data.message);
           break;
 
         case "player_left":
-          console.log("🚪 Игрок покинул комнату:", data);
           playersCount.value = Math.max(0, playersCount.value - 1);
           break;
 
@@ -526,19 +583,16 @@ export const useGameStore = defineStore("game", () => {
           }
 
           currentReplayIndex.value = moveHistory.value.length;
-
           break;
 
         case "preStartUpdate":
-          console.log("⏳ Обновление претаймера:", data);
-          gameStarted.value = data.gameStarted;
           if (timerStore) {
             timerStore.preSeconds = data.preStartTime;
           }
           break;
 
         case "gameOver":
-          console.log("🏁 Конец игры:", data);
+          console.log("Конец игры:", data);
           if (data.reason === "timeOut") {
             result.value = {
               type: data.winner === "w" ? "whiteWin" : "blackWin",
@@ -591,47 +645,52 @@ export const useGameStore = defineStore("game", () => {
           break;
 
         default:
-          console.warn("⚙️ Неизвестный тип сообщения:", data.type);
+          console.warn("Неизвестный тип сообщения:", data.type);
       }
     };
 
     ws.onclose = () => {
-      console.log("❌ WebSocket закрыт");
+      console.log("WebSocket закрыт");
       ws = null;
     };
 
     ws.onerror = (err) => {
-      console.error("⚠️ Ошибка WebSocket:", err);
+      console.error("Ошибка WebSocket:", err);
     };
   }
-
   /**
    * Отправляет ход на сервер.
    */
-  function sendMove(from, to, promotion: string = "q") {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      const moveData = {
-        type: "make_move",
-        roomId: currentRoomId.value,
-        move: {
-          from,
-          to,
-          promotion,
-          fen: chess.value.fen(),
-          san: chess.value.history({ verbose: true }).pop()?.san || "",
-        },
-      };
-      ws.send(JSON.stringify(moveData));
-      console.log("📤 Отправил на сервер ход:", moveData);
-    } else {
-      console.warn("⚠️ Невозможно отправить ход — WebSocket не подключён");
+  function sendMove(from, to, promotion = "q") {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      console.warn("WebSocket не открыт");
+      return;
     }
-  }
 
+    if (!currentRoomId.value) {
+      console.warn("Нет currentRoomId — ход не отправлен");
+      return;
+    }
+
+    const payload = {
+      type: "make_move",
+      roomId: currentRoomId.value,
+      move: {
+        from,
+        to,
+        promotion,
+      },
+    };
+
+    ws.send(JSON.stringify(payload));
+    console.log(`Ход отправлен на сервер: ${from} → ${to}`);
+  }
+  /**
+   * Разрывает WebSocket соединение и сбрасывает состояние игры.
+   */
   function disconnect() {
     if (!ws) return;
 
-    // Удаляем обработчики событий
     if (ws.onopen) ws.onopen = null;
     if (ws.onmessage) ws.onmessage = null;
     if (ws.onclose) ws.onclose = null;
@@ -649,7 +708,6 @@ export const useGameStore = defineStore("game", () => {
     result.value = { type: null, reason: null };
     gameStarted.value = false;
     moveHistory.value = [];
-    pieces.value = {};
     resetBoard();
     shouldRedirect.value = null;
 
@@ -716,7 +774,12 @@ export const useGameStore = defineStore("game", () => {
       winner ? `победитель ${winner}` : "ничья",
     );
   }
-
+  /**
+   * Универсальная отправка сообщений на сервер.
+   * 
+   * @param {string} messageType - тип сообщения
+   * @param {Object} extraData
+   */
   function sendToServer(messageType, extraData = {}) {
     if (!ws || ws.readyState !== WebSocket.OPEN || !currentRoomId.value) {
       console.warn("WebSocket не подключён или нет roomId");
@@ -732,7 +795,9 @@ export const useGameStore = defineStore("game", () => {
     ws.send(JSON.stringify(payload));
     console.log("Отправлено на сервер:", payload);
   }
-
+  /**
+   * Принимает предложение отката хода.
+   */
   function acceptUndo() {
     offerUndo.value = false;
 
@@ -746,11 +811,23 @@ export const useGameStore = defineStore("game", () => {
       console.log("Отправил accept-undo на сервер");
     }
   }
-
+  /**
+   * Отклоняет предложение отката хода.
+   */
   function rejectUndo() {
     offerUndo.value = false;
   }
-
+  /**
+   * Синхронизирует состояние игры из FEN строки.
+   * Используется при получении позиции с сервера.
+   * 
+   * @param {string} fenString
+   */
+  function syncFromFen(fenString: string) {
+    chess.value.load(fenString);
+    fen.value = chess.value.fen();
+    currentTurn.value = chess.value.turn();
+  }
   /**
    * Полностью очищает состояние игры и закрывает соединение
    */
@@ -778,8 +855,9 @@ export const useGameStore = defineStore("game", () => {
   }
 
   return {
-    pieces,
     currentTurn,
+    currentRoomId,
+    fen,
     lastMove,
     result,
     opponentColor,
@@ -799,6 +877,7 @@ export const useGameStore = defineStore("game", () => {
     isReplayMode,
     setInitialPosition: resetBoard,
     makeMove,
+    applyMove,
     checkGameState,
     getAvailableMoves,
     connectToServer,
@@ -813,6 +892,7 @@ export const useGameStore = defineStore("game", () => {
     completePromotion,
     cancelPromotion,
     leaveCurrentGame,
+    syncFromFen,
     chess: chess,
   };
 });

@@ -9,10 +9,12 @@
           :managePrestart="false"
         />
 
-        <ChessBoard 
+        <!-- <ChessBoard 
           :flipped="game.playerColor === 'b'" 
           :playerColor="game.playerColor" 
-        /> 
+        />  -->
+
+        <ChessgroundBoard />
 
         <ChessClock
           v-if="isMobile"
@@ -38,6 +40,7 @@ import { useRoute } from "vue-router";
 import { useGameStore } from "@/store/gameStore";
 import ChessBoard from "@/components/game/ChessBoard.vue";
 import ChessClock from "@/components/game/ChessClock.vue";
+import ChessgroundBoard from "@/components/game/ChessgroundBoard.vue";
 import { useUserStore } from "@/store/userStore";
 
 const game = useGameStore();

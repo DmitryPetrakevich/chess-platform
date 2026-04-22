@@ -1,5 +1,5 @@
 const { generateClientId } = require("../utils/id");
-const { saveGameToDB } = require('../config/db');
+const { saveGameToDB } = require("../config/db");
 const { Chess } = require("chess.js");
 
 const {
@@ -18,7 +18,9 @@ async function saveGameAndCleanup(roomId, reason, winner = null) {
     return;
   }
 
-  console.log(`Сохраняем партию ${roomId}, причина: ${reason}, победитель: ${winner}`);
+  console.log(
+    `Сохраняем партию ${roomId}, причина: ${reason}, победитель: ${winner}`,
+  );
 
   if (room.timer) {
     room.timer.stop();
@@ -42,12 +44,16 @@ async function saveGameAndCleanup(roomId, reason, winner = null) {
       blackUserId: room.black?.userId || null,
       blackUsername: room.black?.name || "Anonymous",
       blackRating: black.rating || 1200,
-      result: 
-        reason === "agreed-draw" ? "draw" :
-        winner === "w" ? "whiteWin" :
-        winner === "b" ? "blackWin" : "draw",
+      result:
+        reason === "agreed-draw"
+          ? "draw"
+          : winner === "w"
+            ? "whiteWin"
+            : winner === "b"
+              ? "blackWin"
+              : "draw",
       reason: reason || "unknown",
-      moves: room.history.map(h => h.san).join(" ") || "",
+      moves: room.history.map((h) => h.san).join(" ") || "",
       finalFen: room.game.fen(),
       duration: 0,
       timeControl: room.timeControl || "10+0",
@@ -55,7 +61,9 @@ async function saveGameAndCleanup(roomId, reason, winner = null) {
 
     try {
       await saveGameToDB(gameData);
-      console.log(`Партия сохранена в БД: ${white.name || 'White'} vs ${black.name || 'Black'}`);
+      console.log(
+        `Партия сохранена в БД: ${white.name || "White"} vs ${black.name || "Black"}`,
+      );
     } catch (err) {
       console.error("Не удалось сохранить партию:", err);
     }
@@ -88,7 +96,7 @@ function handleConnection(ws) {
   }
 
   function handleJoin(data, ws) {
-    const { roomId, name, color: preferredColor, userId, time  } = data;
+    const { roomId, name, color: preferredColor, userId, time } = data;
 
     ws.name = name || "Player";
     ws.color = preferredColor;
@@ -104,47 +112,17 @@ function handleConnection(ws) {
         clientId: ws.id,
         color: ws.color,
         playersCount,
-        time
-      })
+        time,
+      }),
     );
 
-    ws.send(JSON.stringify({
-      type: "history",
-      history: room.history
-    }));
-
-    ws.send(JSON.stringify({
-      type: "position",
-      fen: room.game.fen(),
-      turn: room.turn
-    }));
-
-    // Отправляем состояние таймера
-    if (room && room.timer) {
-      const timerData = room.timer.getCurrentTime();
-      const simpleTimerData = {
-        whiteTime: timerData.whiteTime,
-        blackTime: timerData.blackTime,
-        currentTurn: timerData.currentTurn,
-        isRunning: timerData.isRunning,
-      };
-
-      ws.send(
-        JSON.stringify({
-          type: "timerUpdate",
-          ...simpleTimerData,
-        })
-      );
-    }
-
-    // Если в комнате уже есть другой игрок — отправляем новому его данные
     if (room) {
       const opponent =
         room.white && room.white !== ws
           ? room.white
           : room.black && room.black !== ws
-          ? room.black
-          : null;
+            ? room.black
+            : null;
 
       if (opponent) {
         ws.send(
@@ -155,34 +133,64 @@ function handleConnection(ws) {
               username: opponent.name,
               color: opponent.color,
             },
-          })
+          }),
         );
       }
+
+      broadcastToRoom(
+        roomId,
+        {
+          type: "player_joined",
+          player: {
+            id: ws.id,
+            username: ws.name,
+            color: ws.color,
+            rating: Math.floor(1000 + Math.random() * 500),
+          },
+        },
+        ws,
+      );
     }
 
-    broadcastToRoom(
-      roomId,
-      {
-        type: "player_joined",
-        player: {
-          id: ws.id,
-          username: ws.name,
-          color: ws.color,
-          rating: Math.floor(1000 + Math.random() * 500),
-        },
-      },
-      ws
+    ws.send(
+      JSON.stringify({
+        type: "history",
+        history: room.history,
+      }),
     );
 
-    if (room.isGameOver) {
-      ws.send(JSON.stringify({
-        type: "gameOver",
-        reason: room.result.reason,
-        winner: room.result.winner
-      }));
+    ws.send(
+      JSON.stringify({
+        type: "position",
+        fen: room.game.fen(),
+        turn: room.turn,
+      }),
+    );
+
+    if (room && room.timer) {
+      const timerData = room.timer.getCurrentTime();
+
+      ws.send(
+        JSON.stringify({
+          type: "timerUpdate",
+          whiteTime: timerData.whiteTime,
+          blackTime: timerData.blackTime,
+          currentTurn: timerData.currentTurn,
+          isRunning: timerData.isRunning,
+        }),
+      );
     }
 
-    // Если оба игрока на месте — начинаем игру
+    if (room.isGameOver) {
+      ws.send(
+        JSON.stringify({
+          type: "gameOver",
+          reason: room.result.reason,
+          winner: room.result.winner,
+        }),
+      );
+    }
+
     if (room.white && room.black && !room.isGameOver) {
       const hasMoves = room.game.history().length > 0;
 
@@ -216,171 +224,156 @@ function handleConnection(ws) {
     }
   }
 
-function handleMove(data, ws) {
-  const { roomId, move } = data;
-  const room = rooms.get(roomId);
-  if (!room) return;
+  function handleMove(data, ws) {
+    console.log("👉 MOVE FROM CLIENT:", data);
 
-  if (room.isGameOver) {
-    ws.send(JSON.stringify({ type: "error", message: "Game is over" }));
-    return;
-  }
+    const { roomId, move } = data;
+    const room = rooms.get(roomId);
+    if (!room) return;
 
-  if (
-    (room.turn === "w" && ws !== room.white) ||
-    (room.turn === "b" && ws !== room.black)
-  ) {
-    ws.send(JSON.stringify({ type: "error", message: "Not your turn" }));
-    return;
-  }
+    if (room.isGameOver) {
+      ws.send(JSON.stringify({ type: "error", message: "Game is over" }));
+      return;
+    }
 
-  if (room.game.isGameOver()) {
-    ws.send(JSON.stringify({ type: "error", message: "Game is over" }));
-    return;
-  }
+    if (
+      (room.turn === "w" && ws !== room.white) ||
+      (room.turn === "b" && ws !== room.black)
+    ) {
+      ws.send(JSON.stringify({ type: "error", message: "Not your turn" }));
+      return;
+    }
 
-  const chessMove = room.game.move({
-    from: move.from,
-    to: move.to,
-    promotion: move.promotion || "q"
-  });
+    if (room.game.isGameOver()) {
+      ws.send(JSON.stringify({ type: "error", message: "Game is over" }));
+      return;
+    }
 
-  if (!chessMove) {
-    ws.send(JSON.stringify({ type: "error", message: "Illegal move" }));
-    return;
-  }
-
-  room.history.push({
-    from: chessMove.from,
-    to: chessMove.to,
-    san: chessMove.san,
-    fen: room.game.fen()
-  });
-
-  const newTurn = room.turn === "w" ? "b" : "w";
-  room.turn = newTurn;
-
-  ws.send(
-    JSON.stringify({
-      type: "moveMade",
+    const chessMove = room.game.move({
       from: move.from,
       to: move.to,
-      turn: room.turn,
-    })
-  );
-
-  broadcastToRoom(
-    roomId,
-    {
-      type: "move",
-      move,
-      turn: room.turn,
-    },
-    ws
-  );
-
-  broadcastToRoom(roomId, {
-    type: "position",
-    fen: room.game.fen(),
-    turn: room.turn,
-    history: room.history
-  });
-
-  if (room.game.isGameOver()) {
-    console.log(`🎮 Игра завершена после хода ${move.from}-${move.to}`);
-    
-    let reason, winner = null;
-    
-    switch (true) {
-      case room.game.isCheckmate():
-        reason = "checkMate";
-        winner = room.turn === "w" ? "b" : "w";
-        break;
-        
-      case room.game.isStalemate():
-        reason = "stalemate";
-        break;
-        
-      case room.game.isThreefoldRepetition():
-        reason = "threefold-repetition";
-        break;
-        
-      case room.game.isInsufficientMaterial():
-        reason = "insufficient-material";
-        break;
-        
-      case room.game.isDraw():
-        reason = "50-move-rule";
-        break;
-        
-      default:
-        reason = "unknown";
-        break;
-    }
-    
-    console.log(`🏁 Причина окончания: ${reason}, победитель: ${winner}`);
-
-    room.isGameOver = true;
-    room.result = { reason, winner };
-        
-    if (room.timer) {
-      room.timer.stop();
-    }
-    
-    if (timerIntervals.has(roomId)) {
-      clearInterval(timerIntervals.get(roomId));
-      timerIntervals.delete(roomId);
-    }
-    
-    saveGameAndCleanup(roomId, reason, winner);
-    
-    broadcastToRoom(roomId, {
-      type: "gameOver",
-      reason,
-      winner,
+      promotion: move.promotion || "q",
     });
-    
-    return; // Прекращаем дальнейшую обработку таймера
-  }
 
-  // Если игра не завершена, запускаем/обновляем таймер
-  if (room.timer) {
-    room.timer.stopPreStart();
-    room.timer.start();
-    room.timer.switchTurn(newTurn);
+    if (!chessMove) {
+      ws.send(JSON.stringify({ type: "error", message: "Illegal move" }));
+      return;
+    }
 
-    // Запускаем интервал таймера, если ещё не запущен
-    if (!timerIntervals.has(roomId)) {
-      const interval = setInterval(() => {
-        if (!room.timer) return;
+    room.history.push({
+      from: chessMove.from,
+      to: chessMove.to,
+      san: chessMove.san,
+      fen: room.game.fen(),
+    });
 
-        const timeCheck = room.timer.tick();
-        sendTimerUpdate(roomId);
+    room.turn = room.game.turn();
+    const newTurn = room.turn;
 
-        if (timeCheck?.timeOut) {
-          console.log(` [${roomId}] Игра завершена по таймеру, победитель: ${timeCheck.winner}`);
+    ws.send(
+      JSON.stringify({
+        type: "moveMade",
+        from: chessMove.from,
+        to: chessMove.to,
+        promotion: chessMove.promotion || "q",
+        turn: room.turn,
+      }),
+    );
 
-          room.isGameOver = true;
-          room.result = { reason: "timeOut", winner: timeCheck.winner };
+    broadcastToRoom(
+      roomId,
+      {
+        type: "move",
+        move: {
+          from: chessMove.from,
+          to: chessMove.to,
+          promotion: chessMove.promotion || "q",
+        },
+        turn: room.turn,
+      },
+      ws,
+    );
 
-          saveGameAndCleanup(roomId, "timeOut", timeCheck.winner);
-          
-          broadcastToRoom(roomId, {
-            type: "gameOver",
-            reason: "timeOut",
-            winner: timeCheck.winner,
-          });
+    if (room.game.isGameOver()) {
+      let reason,
+        winner = null;
 
-          room.timer.stop();
-          clearInterval(interval);
-          timerIntervals.delete(roomId);
-        }
-      }, 1000);
+      switch (true) {
+        case room.game.isCheckmate():
+          reason = "checkMate";
+          winner = room.turn === "w" ? "b" : "w";
+          break;
+        case room.game.isStalemate():
+          reason = "stalemate";
+          break;
+        case room.game.isThreefoldRepetition():
+          reason = "threefold-repetition";
+          break;
+        case room.game.isInsufficientMaterial():
+          reason = "insufficient-material";
+          break;
+        case room.game.isDraw():
+          reason = "50-move-rule";
+          break;
+        default:
+          reason = "unknown";
+      }
 
-      timerIntervals.set(roomId, interval);
+      room.isGameOver = true;
+      room.result = { reason, winner };
+
+      if (room.timer) room.timer.stop();
+
+      if (timerIntervals.has(roomId)) {
+        clearInterval(timerIntervals.get(roomId));
+        timerIntervals.delete(roomId);
+      }
+
+      saveGameAndCleanup(roomId, reason, winner);
+
+      broadcastToRoom(roomId, {
+        type: "gameOver",
+        reason,
+        winner,
+      });
+
+      return;
+    }
+
+    if (room.timer) {
+      room.timer.stopPreStart();
+      room.timer.start();
+      room.timer.switchTurn(newTurn);
+
+      if (!timerIntervals.has(roomId)) {
+        const interval = setInterval(() => {
+          if (!room.timer) return;
+
+          const timeCheck = room.timer.tick();
+          sendTimerUpdate(roomId);
+
+          if (timeCheck?.timeOut) {
+            room.isGameOver = true;
+            room.result = { reason: "timeOut", winner: timeCheck.winner };
+
+            saveGameAndCleanup(roomId, "timeOut", timeCheck.winner);
+
+            broadcastToRoom(roomId, {
+              type: "gameOver",
+              reason: "timeOut",
+              winner: timeCheck.winner,
+            });
+
+            room.timer.stop();
+            clearInterval(interval);
+            timerIntervals.delete(roomId);
+          }
+        }, 1000);
+
+        timerIntervals.set(roomId, interval);
+      }
     }
   }
-}
 
   function handleOfferDraw(data, ws) {
     const { roomId } = data;
@@ -392,9 +385,13 @@ function handleMove(data, ws) {
       return;
     }
 
-    broadcastToRoom(roomId, {
-      type: "offer-draw",
-    }, ws);
+    broadcastToRoom(
+      roomId,
+      {
+        type: "offer-draw",
+      },
+      ws,
+    );
   }
 
   function handleOfferUndo(data, ws) {
@@ -407,9 +404,13 @@ function handleMove(data, ws) {
       return;
     }
 
-    broadcastToRoom(roomId, {
-      type: "offer-undo",
-    }, ws);
+    broadcastToRoom(
+      roomId,
+      {
+        type: "offer-undo",
+      },
+      ws,
+    );
   }
 
   function handleAcceptUndo(data, ws) {
@@ -423,21 +424,24 @@ function handleMove(data, ws) {
 
     if (room.game.history().length === 0) {
       console.warn("Нет ходов для отмены на сервере");
-      ws.send(JSON.stringify({
-        type: "error",
-        message: "No moves to undo"
-      }));
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: "No moves to undo",
+        }),
+      );
       return;
     }
 
-    // Отменяем ход
     const undoneMove = room.game.undo();
     if (!undoneMove) {
       console.warn("Не удалось отменить ход на сервере");
-      ws.send(JSON.stringify({
-        type: "error",
-        message: "Failed to undo move"
-      }));
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: "Failed to undo move",
+        }),
+      );
       return;
     }
 
@@ -467,48 +471,48 @@ function handleMove(data, ws) {
     console.log("Разослано обновление позиции после отмены хода");
   }
 
-function handleGameOver(data, ws) {
-  const { roomId, reason, winner } = data;
-  const room = rooms.get(roomId);
-  if (!room) return;
+  function handleGameOver(data, ws) {
+    const { roomId, reason, winner } = data;
+    const room = rooms.get(roomId);
+    if (!room) return;
 
-  console.log(`Получен game_over от клиента: ${reason}, winner: ${winner}`);
+    console.log(`Получен game_over от клиента: ${reason}, winner: ${winner}`);
 
-  room.isGameOver = true;
-  room.result = { reason, winner };
+    room.isGameOver = true;
+    room.result = { reason, winner };
 
-  saveGameAndCleanup(roomId, reason, winner);
+    saveGameAndCleanup(roomId, reason, winner);
 
-  broadcastToRoom(roomId, {
-    type: "gameOver",
-    reason: reason,
-    winner: winner || null,
-  });
-}
-
-function handleAcceptDraw(data, ws) {
-  const { roomId } = data;
-  const room = rooms.get(roomId);
-  if (!room) return;
-
-  if (room.isGameOver) {
-    ws.send(JSON.stringify({ type: "error", message: "Game is over" }));
-    return;
+    broadcastToRoom(roomId, {
+      type: "gameOver",
+      reason: reason,
+      winner: winner || null,
+    });
   }
 
-  console.log("Ничья принята — завершаем игру");
+  function handleAcceptDraw(data, ws) {
+    const { roomId } = data;
+    const room = rooms.get(roomId);
+    if (!room) return;
 
-  room.isGameOver = true;
-  room.result = { reason: "agreed-draw", winner: null };
-  
-  saveGameAndCleanup(roomId, "agreed-draw", null);
+    if (room.isGameOver) {
+      ws.send(JSON.stringify({ type: "error", message: "Game is over" }));
+      return;
+    }
 
-  broadcastToRoom(roomId, {
-    type: "gameOver",
-    reason: "agreed-draw",
-    winner: null,
-  });
-}
+    console.log("Ничья принята — завершаем игру");
+
+    room.isGameOver = true;
+    room.result = { reason: "agreed-draw", winner: null };
+
+    saveGameAndCleanup(roomId, "agreed-draw", null);
+
+    broadcastToRoom(roomId, {
+      type: "gameOver",
+      reason: "agreed-draw",
+      winner: null,
+    });
+  }
 
   ws.on("message", (message) => {
     try {
@@ -536,28 +540,32 @@ function handleAcceptDraw(data, ws) {
         case "accept-undo":
           handleAcceptUndo(data, ws);
           break;
-        
-        case "accept-draw":          
+
+        case "accept-draw":
           handleAcceptDraw(data, ws);
           break;
 
         case "game_over":
           handleGameOver(data, ws);
           break;
-      
+
         default:
           console.warn(`Неизвестный тип сообщения: ${data.type}`);
-          ws.send(JSON.stringify({
-            type: "error",
-            message: "Unknown message type"
-          }));
+          ws.send(
+            JSON.stringify({
+              type: "error",
+              message: "Unknown message type",
+            }),
+          );
       }
     } catch (err) {
       console.error("Ошибка обработки сообщения:", err);
-      ws.send(JSON.stringify({
-        type: "error",
-        message: "Invalid JSON"
-      }));
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: "Invalid JSON",
+        }),
+      );
     }
   });
 
@@ -582,7 +590,7 @@ function handleAcceptDraw(data, ws) {
       removeClientFromRoom(ws.roomId, ws);
       broadcastToRoom(ws.roomId, {
         type: "player_left",
-        clientId: ws.id
+        clientId: ws.id,
       });
     }
   });

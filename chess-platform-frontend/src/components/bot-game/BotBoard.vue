@@ -15,8 +15,8 @@
           @click="handleSquareClick(cell.id)"
         >
           <img 
-            v-if="pieceImages[cell.id]" 
-            :src="pieceImages[cell.id]" 
+            v-if="game.pieces[cell.id]" 
+            :src="getPieceImage(game.pieces[cell.id])" 
             class="piece" 
           />
         </div>
@@ -69,22 +69,25 @@ const squares = computed(() =>
   )
 );
 
-const pieceImages = computed(() => {
-  const images = {};
-  for (const squareId in game.pieces) {
-    const code = game.pieces[squareId];
-    if (code) {
-      images[squareId] = new URL(`../../assets/icons/chess-pieces/${code}.svg`, import.meta.url).href;
-    }
+
+const pieceUrlCache = new Map();
+
+const getPieceImage = (code) => {
+  if (!code) return null;
+  if (pieceUrlCache.has(code)) {
+    return pieceUrlCache.get(code);
   }
-  return images;
-});
+  const url = new URL(`../../assets/icons/chess-pieces/${code}.svg`, import.meta.url).href;
+  pieceUrlCache.set(code, url);
+  return url;
+};
 
 const handleSquareClick = (id) => {
-  if (botGame.isBotThinking || game.result.type) return;
+  if (botGame.isBotThinking.value || game.result.type) return;
 
   const clickedPiece = game.pieces[id];
 
+  // Выбор своей фигуры
   if (clickedPiece && clickedPiece[0] === botGame.playerColor && game.currentTurn === botGame.playerColor) {
     if (selectedSquare.value === id) {
       selectedSquare.value = null;
@@ -96,6 +99,7 @@ const handleSquareClick = (id) => {
     return;
   }
 
+  // Выполнение хода
   if (selectedSquare.value && highlightedSquares.value.has(id)) {
     botGame.onPlayerMove(selectedSquare.value, id);
     selectedSquare.value = null;

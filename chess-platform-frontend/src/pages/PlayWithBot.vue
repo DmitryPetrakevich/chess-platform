@@ -9,10 +9,7 @@
           :managePrestart="false"
         />
 
-        <BotBoard 
-          :flipped="game.playerColor === 'b'" 
-          :playerColor="game.playerColor" 
-        /> 
+        <ChessgroundBoard></ChessgroundBoard>
 
         <BotClock
           v-if="isMobile"
@@ -38,6 +35,7 @@ import { useBotGameStore } from "@/store/gameBotStore";
 
 import BotBoard from "@/components/bot-game/BotBoard.vue";
 import BotClock from "@/components/bot-game/BotClock.vue";
+import ChessgroundBoard from "@/components/game/ChessgroundBoard.vue";
 
 const botGame = useBotGameStore();
 const isMobile = ref(false);

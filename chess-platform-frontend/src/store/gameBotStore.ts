@@ -2,39 +2,40 @@ import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import { useGameStore } from "./gameStore";
 import { useStockfish } from "@/composables/useStockfish";
+import { nextTick } from "vue";
 
 export const useBotGameStore = defineStore("gameBot", () => {
   const gameStore = useGameStore();
   const stockfish = useStockfish();
-  
-  /** 
-   * Параметры бота, выбранные в модальном окне 
-  */
+
+  /**
+   * Параметры бота, выбранные в модальном окне
+   */
   const botParams = ref({
-    difficulty: "4",        
+    difficulty: "4",
   });
-  /** 
-   * Цвет игрока (выбран в модальном окне) 
-  */
+  /**
+   * Цвет игрока (выбран в модальном окне)
+   */
   const playerColor = ref<"w" | "b">("w");
-  /** 
-   * Игра с ботом уже началась? 
-  */
+  /**
+   * Игра с ботом уже началась?
+   */
   const isGameStarted = ref(false);
-  /** 
-   * Сейчас бот думает над своим ходом? 
-  */
-  const isBotThinking = computed(() => stockfish.isThinking);
-  /** 
-   * Цвет бота (вычисляется автоматически) 
-  */
-  const botColor = computed(() => playerColor.value === "w" ? "b" : "w");
+  /**
+   * Сейчас бот думает над своим ходом?
+   */
+  const isBotThinking = computed(() => stockfish.isThinking.value);
+  /**
+   * Цвет бота (вычисляется автоматически)
+   */
+  const botColor = computed(() => (playerColor.value === "w" ? "b" : "w"));
 
   /**
    * Запуск игры с ботом после выбора настроек в модальном окне
    */
   const startBotGame = async () => {
-    gameStore.setPlayerColor(playerColor.value);    
+    gameStore.setPlayerColor(playerColor.value);
     gameStore.setInitialPosition();
 
     isGameStarted.value = true;
@@ -42,26 +43,27 @@ export const useBotGameStore = defineStore("gameBot", () => {
     const difficultyLevel = parseInt(botParams.value.difficulty);
     stockfish.init(difficultyLevel);
 
-    console.log(`Игра с ботом начата. Игрок: ${playerColor.value === 'w' ? 'Белые' : 'Чёрные'}, сложность: ${difficultyLevel}`);
+    console.log(
+      `Игра с ботом начата. Игрок: ${playerColor.value === "w" ? "Белые" : "Чёрные"}, сложность: ${difficultyLevel}`,
+    );
 
-    // Если игрок выбрал чёрные — бот делает первый ход
     if (playerColor.value === "b") {
-      setTimeout(makeBotMove, 700);
+      makeBotMove();
     }
   };
 
   /**
    * Выполняется после хода игрока
    */
-  const onPlayerMove = async (from: string, to: string, promotion: string | null = null) => {
+  const onPlayerMove = async (from, to, promotion = null) => {
     if (isBotThinking.value) return;
 
     const success = gameStore.makeMove(from, to, promotion);
     if (!success) return;
 
-    // Если после хода игрока игра не закончилась — запускаем бота
     if (!gameStore.result.type) {
-      setTimeout(makeBotMove, 400); 
+      await nextTick();
+      makeBotMove();
     }
   };
 
@@ -69,10 +71,14 @@ export const useBotGameStore = defineStore("gameBot", () => {
    * Бот делает ход
    */
   const makeBotMove = async () => {
-    if (gameStore.result.type || gameStore.currentTurn !== botColor.value) return;
+    console.time("botMove");
+    if (gameStore.result.type || gameStore.currentTurn !== botColor.value)
+      return;
 
     const fen = gameStore.chess.fen();
-    const bestMove = await stockfish.getBestMove(fen, 900); 
+    const bestMove = await stockfish.getBestMove(fen, 900);
+
+    console.timeEnd("botMove");
 
     if (!bestMove || typeof bestMove !== "string") return;
 
@@ -94,14 +100,16 @@ export const useBotGameStore = defineStore("gameBot", () => {
 
   const setDifficulty = (level: string) => {
     botParams.value.difficulty = level;
-  }
+  };
 
-  // Следим за окончанием игры
-  watch(() => gameStore.result.type, (result) => {
-    if (result) {
-      console.log("Игра с ботом завершена:", result);
-    }
-  });
+  watch(
+    () => gameStore.result.type,
+    (result) => {
+      if (result) {
+        console.log("Игра с ботом завершена:", result);
+      }
+    },
+  );
 
   return {
     botParams,
