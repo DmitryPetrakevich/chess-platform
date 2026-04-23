@@ -31,6 +31,17 @@ export const useBotGameStore = defineStore("gameBot", () => {
    */
   const botColor = computed(() => (playerColor.value === "w" ? "b" : "w"));
 
+  const waitForReady = () => {
+    return new Promise((resolve) => {
+      const interval = setInterval(() => {
+        if (stockfish.isReady.value) {
+          clearInterval(interval);
+          resolve(true);
+        }
+      }, 10);
+    });
+  };
+
   /**
    * Запуск игры с ботом после выбора настроек в модальном окне
    */
@@ -43,9 +54,7 @@ export const useBotGameStore = defineStore("gameBot", () => {
     const difficultyLevel = parseInt(botParams.value.difficulty);
     stockfish.init(difficultyLevel);
 
-    console.log(
-      `Игра с ботом начата. Игрок: ${playerColor.value === "w" ? "Белые" : "Чёрные"}, сложность: ${difficultyLevel}`,
-    );
+    await waitForReady(); 
 
     if (playerColor.value === "b") {
       makeBotMove();
@@ -55,7 +64,7 @@ export const useBotGameStore = defineStore("gameBot", () => {
   /**
    * Выполняется после хода игрока
    */
-  const onPlayerMove = async (from, to, promotion = null) => {
+  const onPlayerMove = async (from, to, promotion = 'q') => {
     if (isBotThinking.value) return;
 
     const success = gameStore.makeMove(from, to, promotion);
@@ -72,11 +81,16 @@ export const useBotGameStore = defineStore("gameBot", () => {
    */
   const makeBotMove = async () => {
     console.time("botMove");
-    if (gameStore.result.type || gameStore.currentTurn !== botColor.value)
-      return;
+    if (gameStore.result.type || gameStore.currentTurn !== botColor.value) return;
 
     const fen = gameStore.chess.fen();
-    const bestMove = await stockfish.getBestMove(fen, 900);
+    const level = parseInt(botParams.value.difficulty);
+
+    const fenBefore = gameStore.chess.fen();
+    const bestMove = await stockfish.getBestMove(fen, level);
+
+    if (fenBefore !== gameStore.chess.fen()) return;
+    if (gameStore.currentTurn !== botColor.value) return;
 
     console.timeEnd("botMove");
 

@@ -90,7 +90,12 @@ const colorOptions = [
   { value: "random", label: "Случайно", src: randomIcon, text: "Случайно" },
   { value: "w", label: "Белые", src: whiteIcon, text: "Белые фигуры" },
 ];
-
+/**
+ * Доступные уровни сложности бота 
+ * 
+ * - value - значение, которое отправляется в store
+ * - label - отображаемый текст
+ */
 const gameModes = ref([
   { value: "1", label: "1" },
   { value: "2", label: "2" },
@@ -101,7 +106,14 @@ const gameModes = ref([
   { value: "7", label: "7" },
   { value: "8", label: "8" },
 ]);
-
+/**
+ * Запускает игру с ботом
+ *
+ * Что делает:
+ * - сохраняет выбранную сложность в store
+ * - определяет цвет игрока (или случайный)
+ * - переходит на страницу игры с ботом
+ */
 function startBotGame() {
   gameBot.botParams = {
     difficulty: selectedDifficulty.value

@@ -9,7 +9,7 @@
           :managePrestart="false"
         />
 
-        <ChessgroundBoard></ChessgroundBoard>
+        <BotBoard />
 
         <BotClock
           v-if="isMobile"

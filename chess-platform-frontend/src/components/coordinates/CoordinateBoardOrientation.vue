@@ -51,7 +51,6 @@ import randomIcon from "@/assets/icons/inviteModel/choice-random.svg"
 import { useCoordinatesStore } from "@/store/coordinatesStore";
 
 const coordinationStore = useCoordinatesStore()
-
 </script>
 
 <style lang="less" scoped>

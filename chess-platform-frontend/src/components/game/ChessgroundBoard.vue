@@ -128,16 +128,13 @@ async function initBoard() {
 
   lastSyncedFen = ''
   syncBoard()
-
 }
 
 const handleMove = (orig: string, dest: string) => {
-  console.log(`🔥 handleMove: ${orig} → ${dest}`)
-
   if (game.result.type) return false
 
   if (!game.currentRoomId) {
-    console.error('❌ Нет currentRoomId')
+    console.error('Нет currentRoomId')
     return false
   }
 

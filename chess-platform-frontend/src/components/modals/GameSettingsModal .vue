@@ -23,6 +23,7 @@
         <h3 class="game-mode-title">Режим игры</h3>
         <div class="game-mode">
           <button
+            disabled
             v-for="mode in gameModes"
             :key="mode.value"
             class="btn-mode"
@@ -96,7 +97,6 @@ const { lock, unlock } = useBodyScrollLock();
  */
 const emit = defineEmits(["close"]);
 
-
 /**
  * Закрывает модальное окно приглашения
  * Вызывает emit события 'close'
@@ -118,7 +118,7 @@ const selectedTime = ref("3+0")
 /**
  * Выбранный режим игры
  */
-const selectedMode = ref('rated')
+const selectedMode = ref('friendly')
 
 
 /**

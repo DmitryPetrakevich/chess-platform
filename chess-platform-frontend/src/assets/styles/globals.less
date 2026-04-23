@@ -1,11 +1,7 @@
-body {
+* {
   margin: 0;
   padding: 0;
-}
-
-p, h1, h2, h3, h4, h5 {
-  padding: 0;
-  margin: 0;
+  box-sizing: border-box;
 }
 
 html {
@@ -24,4 +20,23 @@ body.modal-open {
   left: 0;
   right: 0;
   width: 100%;
+}
+
+// Вертикальные цифры (1-8) 
+.cg-wrap coords.ranks {
+  left: auto !important;
+  right: 2px !important;       
+  top: -28px !important;        
+  bottom: auto !important;
+  text-align: right !important; 
+  font-size: 0.6em !important;
+}
+
+// Горизонтальные буквы 
+.cg-wrap coords.files {
+  bottom: -4px !important;
+  left: 2px !important;
+  right: auto !important;
+  text-align: left !important;
+  font-size: 0.6em !important;
 }

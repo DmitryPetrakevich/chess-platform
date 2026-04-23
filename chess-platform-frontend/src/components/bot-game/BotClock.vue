@@ -34,7 +34,7 @@
             {{ bottomInitial }}
           </div>
           <div class="player-details">
-            <div class="player-name">Вы</div>
+            <div class="player-name">{{ user.username }}</div>
             <div class="player-rating">⟡ {{ bottomPlayer.blitzRating }}</div>
           </div>
         </div>

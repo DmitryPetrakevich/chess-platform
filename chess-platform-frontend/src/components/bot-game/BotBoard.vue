@@ -1,247 +1,382 @@
 <template>
-  <div class="board-wrapper">
-    <div class="board" :class="{ flipped: botGame.playerColor === 'b' }">
-      <div v-for="(row, rIndex) in squares" :key="rIndex" class="rank-row">
-        <div 
-          v-for="cell in row" 
-          :key="cell.id" 
-          class="cell"
-          :class="[
-            cell.color, 
-            { selected: selectedSquare === cell.id },
-            { highlighted: highlightedSquares.has(cell.id) },
-            { 'last-move': game.lastMove.from === cell.id || game.lastMove.to === cell.id }
-          ]"
-          @click="handleSquareClick(cell.id)"
-        >
-          <img 
-            v-if="game.pieces[cell.id]" 
-            :src="getPieceImage(game.pieces[cell.id])" 
-            class="piece" 
-          />
-        </div>
-        <div class="rank-label">{{ row[0].rank }}</div>
-      </div>
-
-      <div class="files-row">
-        <div v-for="f in files" :key="f" class="file-label">{{ f }}</div>
-        <div class="rank-label"></div>
-      </div>
-    </div>
-
-    <PromotionModal 
-      v-if="game.showPromotionModal && game.promotionMove"
-      :color="game.promotionMove.piece[0]"
-      @select="game.completePromotion"
-      @cancel="game.cancelPromotion"
-    />
-  </div>
+  <div ref="boardEl" class="chessground-board"></div>
 </template>
 
-<script setup>
-import { computed, ref } from "vue";
+<script setup lang="ts">
+import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from "vue";
+import { Chessground } from "chessground";
 import { useGameStore } from "@/store/gameStore";
 import { useBotGameStore } from "@/store/gameBotStore";
-import PromotionModal from "../game/PromotionModal.vue";
 
 const game = useGameStore();
 const botGame = useBotGameStore();
 
-const selectedSquare = ref(null);
-const highlightedSquares = ref(new Set());
+/**
+ * Ссылка на DOM-элемент, в который будет инициализирован Chessground.
+ * Используется как контейнер для отрисовки шахматной доски.
+ */
+const boardEl = ref<HTMLElement | null>(null);
+/**
+ * Инстанс библиотеки Chessground.
+ * Через него происходит управление доской:
+ * - обновление позиции (set)
+ * - уничтожение (destroy)
+ */
+let chessground: any = null;
+/**
+ * Кэш возможных ходов (dests) для каждой позиции (FEN).
+ *
+ * Ключ: строка FEN текущей позиции
+ * Значение: Map, где:
+ *   key   — клетка (например "e2")
+ *   value — массив возможных ходов (["e3", "e4"])
+ *
+ * Используется для:
+ * - оптимизации (не пересчитывать ходы каждый раз)
+ * - снижения нагрузки при ререндере доски
+ */
+const destCache = new Map<string, Map<string, string[]>>();
+/**
+ * Флаг, указывающий, что обновление доски уже запланировано.
+ *
+ * Используется для:
+ * - предотвращения множественных вызовов syncBoard в одном кадре
+ * - оптимизации через requestAnimationFrame
+ */
+let syncQueued = false;
+/**
+ * Последняя позиция (FEN), которая была применена к доске.
+ *
+ * Используется для:
+ * - предотвращения лишнего обновления Chessground
+ * - сравнения текущей позиции с предыдущей
+ */
+let lastSyncedFen = "";
+/**
+ * Флаг переворота доски.
+ *
+ * true  — игрок играет за чёрных (доска перевёрнута)
+ * false — игрок играет за белых
+ *
+ * Используется для определения orientation в Chessground
+ */
+const isFlipped = computed(() => botGame.playerColor === "b");
 
-const flipped = computed(() => botGame.playerColor === "b");
+/**
+ * Возвращает ориентацию доски для Chessground.
+ *
+ * "white" - стандартный вид (белые снизу)
+ * 
+ * "black" - перевёрнутая доска (чёрные снизу)
+ */
+function getOrientation() {
+  return isFlipped.value ? "black" : "white";
+}
+/**
+ * Возвращает текущий цвет хода в формате, понятном Chessground.
+ *
+ * Преобразует:
+ * - "w" в "white"
+ * - "b" в "black"
+ */
+function getTurnColor() {
+  return game.currentTurn === "w" ? "white" : "black";
+}
+/**
+ * Определяет, какой стороне разрешено двигать фигуры на доске.
+ *
+ * Возвращает:
+ * - "white" / "black" - если сейчас ход игрока
+ * - undefined - если:
+ *    - игра не начата
+ *    - игра завершена
+ *    - сейчас ход бота
+ */
+function getMovableColor() {
+  if (!botGame.isGameStarted) return undefined;
+  if (game.result.type) return undefined;
+  if (game.currentTurn !== botGame.playerColor) return undefined;
 
-const files = computed(() =>
-  flipped.value ? ["h","g","f","e","d","c","b","a"] : ["a","b","c","d","e","f","g","h"]
-);
-
-const ranks = computed(() =>
-  flipped.value ? [1,2,3,4,5,6,7,8] : [8,7,6,5,4,3,2,1]
-);
-
-const squares = computed(() =>
-  ranks.value.map((rank, rIdx) =>
-    files.value.map((file, fIdx) => {
-      const color = (rIdx + fIdx) % 2 === 0 ? "light" : "dark";
-      return { id: `${file}${rank}`, file, rank, color };
-    })
-  )
-);
-
-
-const pieceUrlCache = new Map();
-
-const getPieceImage = (code) => {
-  if (!code) return null;
-  if (pieceUrlCache.has(code)) {
-    return pieceUrlCache.get(code);
+  return botGame.playerColor === "w" ? "white" : "black";
+}
+/**
+ * Возвращает последний сделанный ход в формате [from, to].
+ *
+ * Используется для:
+ * - подсветки последнего хода на доске
+ *
+ * Если данных о ходе нет - возвращает undefined
+ */
+function getLastMove() {
+  if (game.lastMove?.from && game.lastMove?.to) {
+    return [game.lastMove.from, game.lastMove.to];
   }
-  const url = new URL(`../../assets/icons/chess-pieces/${code}.svg`, import.meta.url).href;
-  pieceUrlCache.set(code, url);
-  return url;
-};
+  return undefined;
+}
+/**
+ * Вычисляет возможные ходы (dests) для текущей позиции.
+ *
+ * Возвращает Map:
+ *   - key   - клетка (например "e2")
+ *   - value - массив допустимых ходов (["e3", "e4"])
+ *
+ * Оптимизации:
+ * - использует кэш (destCache) по FEN
+ * - избегает повторных вычислений
+ *
+ * Логика:
+ * 1. Если игра не начата или закончена → нет ходов
+ * 2. Если сейчас не ход игрока → нет ходов
+ * 3. Иначе:
+ *    - проходим по всей доске
+ *    - берём только фигуры игрока
+ *    - получаем ходы через chess.js
+ *
+ * Используется Chessground для:
+ * - подсветки доступных клеток
+ * - ограничения допустимых ходов
+ */
+function getDests() {
+  const fen = game.fen;
+  const cached = destCache.get(fen);
+  if (cached) return cached;
 
-const handleSquareClick = (id) => {
-  if (botGame.isBotThinking.value || game.result.type) return;
+  const dests = new Map<string, string[]>();
 
-  const clickedPiece = game.pieces[id];
+  if (!botGame.isGameStarted || game.result.type) {
+    destCache.set(fen, dests);
+    return dests;
+  }
 
-  // Выбор своей фигуры
-  if (clickedPiece && clickedPiece[0] === botGame.playerColor && game.currentTurn === botGame.playerColor) {
-    if (selectedSquare.value === id) {
-      selectedSquare.value = null;
-      highlightedSquares.value.clear();
-    } else {
-      selectedSquare.value = id;
-      highlightedSquares.value = game.getAvailableMoves ? game.getAvailableMoves(id) : new Set();
+  if (game.currentTurn !== botGame.playerColor) {
+    destCache.set(fen, dests);
+    return dests;
+  }
+
+  const board = game.chess.board();
+  const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
+
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      const piece = board[row][col];
+      if (!piece || piece.color !== botGame.playerColor) continue;
+
+      const square = `${files[col]}${8 - row}`;
+      const moves = game.chess.moves({ square, verbose: true });
+
+      if (moves.length) {
+        dests.set(
+          square,
+          moves.map((m) => m.to),
+        );
+      }
     }
-    return;
   }
 
-  // Выполнение хода
-  if (selectedSquare.value && highlightedSquares.value.has(id)) {
-    botGame.onPlayerMove(selectedSquare.value, id);
-    selectedSquare.value = null;
-    highlightedSquares.value.clear();
-  } else {
-    selectedSquare.value = null;
-    highlightedSquares.value.clear();
+  destCache.set(fen, dests);
+  return dests;
+}
+/**
+ * Синхронизирует состояние Chessground с текущим состоянием игры.
+ *
+ * Обновляет:
+ * - позицию (fen)
+ * - ориентацию
+ * - доступные ходы
+ * - подсветку
+ *
+ * Оптимизация:
+ * - если FEN не изменился → обновление не выполняется
+ *
+ * Это центральная функция обновления UI доски.
+ */
+function syncBoard() {
+  if (!chessground) return;
+
+  const fen = game.fen;
+  if (fen === lastSyncedFen) return;
+  lastSyncedFen = fen;
+
+  chessground.set({
+    fen,
+    orientation: getOrientation(),
+    turnColor: getTurnColor(),
+    lastMove: getLastMove(),
+    movable: {
+      free: false,
+      color: getMovableColor(),
+      dests: getDests(),
+      events: {
+        after: handleMove,
+      },
+    },
+
+      premovable: {
+        enabled: true,
+        showDests: true,
+    },
+    highlight: {
+      lastMove: true,
+      check: true,
+    },
+    animation: {
+      enabled: true,
+      duration: 180,
+    },
+  });
+}
+/**
+ * Планирует обновление доски через requestAnimationFrame.
+ *
+ * Зачем нужно:
+ * - сгруппировать несколько обновлений в один кадр
+ * - избежать лишних перерисовок
+ *
+ * Работает как "debounce" для рендера доски.
+ */
+function scheduleSyncBoard() {
+  if (!chessground || syncQueued) return;
+
+  syncQueued = true;
+  requestAnimationFrame(() => {
+    syncQueued = false;
+    syncBoard();
+  });
+}
+/**
+ * Создаёт и настраивает Chessground
+ *
+ * Что делает:
+ * - Проверяет, что доска ещё не создана
+ * - Ждёт появления DOM (nextTick)
+ * - Инициализирует Chessground с текущим состоянием игры
+ * - Настраивает ходы, ориентацию, анимации и события
+ * - Синхронизирует доску (syncBoard)
+ *
+ * Когда вызывается:
+ * - при старте игры
+ * - при монтировании компонента
+ */
+async function initBoard() {
+  if (chessground) return;
+  if (!boardEl.value) return;
+  if (!botGame.isGameStarted || !botGame.playerColor) return;
+
+  await nextTick();
+
+  if (!boardEl.value || chessground) return;
+
+  chessground = Chessground(boardEl.value, {
+    fen: game.fen,
+    orientation: getOrientation(),
+    turnColor: getTurnColor(),
+    lastMove: getLastMove(),
+    movable: {
+      free: false,
+      color: getMovableColor(),
+      dests: getDests(),
+      events: {
+        after: handleMove,
+      },
+    },
+    draggable: {
+      enabled: true,
+      showGhost: true,
+    },
+    premovable: {
+        enabled: true,
+        showDests: true,
+    },
+    highlight: {
+      lastMove: true,
+      check: true,
+    },
+    animation: {
+      enabled: true,
+      duration: 180,
+    },
+  });
+
+  lastSyncedFen = "";
+  syncBoard();
+  console.log("Bot Chessground инициализирован");
+}
+/**
+ * Обрабатывает ход игрока из UI
+ *
+ * @param orig - откуда
+ * @param dest - куда
+ *
+ * Что делает:
+ * - Проверяет, можно ли ходить
+ * - Передаёт ход в store (onPlayerMove)
+ * - Если ошибка → откатывает UI
+ * - Если успех → обновляет доску
+ *
+ * @returns boolean — успешен ли ход
+ */
+const handleMove = (orig: string, dest: string) => {
+  if (game.result.type) return false;
+  if (!botGame.isGameStarted) return false;
+  if (game.currentTurn !== botGame.playerColor) return false;
+
+  const success = botGame.onPlayerMove(orig, dest);
+
+  if (!success) {
+    scheduleSyncBoard();
+    return false;
   }
+
+  destCache.clear();
+  scheduleSyncBoard();
+  return true;
 };
 
-game.setInitialPosition();
+onMounted(() => {
+  initBoard();
+});
+
+watch(
+  () => [botGame.isGameStarted, botGame.playerColor],
+  async () => {
+    await initBoard();
+    scheduleSyncBoard();
+  },
+  { immediate: true },
+);
+
+watch(
+  () => [game.fen, game.currentTurn, game.lastMove.from, game.lastMove.to, game.result.type],
+  () => {
+    destCache.clear();
+    scheduleSyncBoard();
+  },
+  { immediate: true, flush: "post" },
+);
+
+watch(
+  () => botGame.isBotThinking,
+  () => {
+    scheduleSyncBoard();
+  },
+);
+
+onBeforeUnmount(() => {
+  if (chessground) {
+    chessground.destroy();
+    chessground = null;
+  }
+
+  destCache.clear();
+  syncQueued = false;
+  lastSyncedFen = "";
+});
 </script>
 
 <style>
-.board-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.board {
-  display: inline-block;
-  user-select: none;
-  max-width: min(85vh, 1500px);
-  max-height: min(85vh, 1500px);
+.chessground-board {
   width: 100%;
-  height: auto;
-  aspect-ratio: 1 / 1; 
-}
-
-.rank-row {
-  display: flex;
-  align-items: stretch;
-  height: calc(100% / 8); 
-}
-
-.cell {
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-  cursor: pointer;
-  flex: 1;
+  max-width: 620px;
   aspect-ratio: 1 / 1;
-}
-
-.rank-label {
-  width: clamp(20px, 3vw, 30px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  margin-left: 2px;
-  font-size: clamp(12px, 2vw, 16px);
-}
-
-.file-label {
-  width: 100%;
-  text-align: center;
-  font-weight: 600;
-  font-size: clamp(12px, 2vw, 16px);
-  height: clamp(20px, 3vw, 30px);
-}
-
-.piece {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 2px; 
-}
-
-.cell.light {
-  background: #f0d9b5;
-}
-
-.cell.dark {
-  background: #b58863;
-}
-
-.files-row {
-  display: flex;
-  align-items: center;
-  height: clamp(20px, 3vw, 30px);
-}
-
-.cell.highlighted {
-  position: relative; 
-}
-
-.cell.highlighted::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 30%;          
-  height: 30%;
-  background: rgba(136, 168, 136, 0.4); 
-  border-radius: 50%;  
-  transform: translate(-50%, -50%); 
-  pointer-events: none; 
-  z-index: 1;
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
-}
-
-.cell.dark.highlighted::after {
-  background: rgba(180, 200, 180, 0.45); 
-  box-shadow: 0 0 2px rgba(0, 0, 0, 0.549);
-}
-
-.cell.selected {
-  box-sizing: border-box;
-  background-color: rgba(67, 94, 67, 0.4);
-}
-
-.cell.selected.highlighted {
-  background: inherit !important;
-}
-
-.cell.last-move {
-  background: rgba(255, 255, 0, 0.435) !important; 
-}
-
-.board.flipped {
-  transform: rotate(180deg);
-}
-
-.board.flipped .piece,
-.board.flipped .file-label,
-.board.flipped .rank-label {
-  transform: rotate(180deg);
-}
-
-@media (max-width: 768px) {
-  .board-wrapper {
-    padding: 0;
-  }
-
-  .board {
-    max-width: min(60vh, 600px);
-    max-height: min(60vh, 600px);
-}
 }
 </style>
