@@ -112,7 +112,7 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Генерация настоящего JWT
+    // Генерация JWT
     const token = jwt.sign(
       { userId: user.id },
       JWT_SECRET,

@@ -2,11 +2,14 @@ import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import { useGameStore } from "./gameStore";
 import { useStockfish } from "@/composables/useStockfish";
+import { useSound } from "@/composables/utils/useSound";
 import { nextTick } from "vue";
 
 export const useBotGameStore = defineStore("gameBot", () => {
   const gameStore = useGameStore();
   const stockfish = useStockfish();
+
+  const { startSound } = useSound()
 
   /**
    * Параметры бота, выбранные в модальном окне
@@ -46,6 +49,8 @@ export const useBotGameStore = defineStore("gameBot", () => {
    * Запуск игры с ботом после выбора настроек в модальном окне
    */
   const startBotGame = async () => {
+    startSound()
+    
     gameStore.setPlayerColor(playerColor.value);
     gameStore.setInitialPosition();
 

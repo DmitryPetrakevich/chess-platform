@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, watch, computed, shallowRef, markRaw } from "vue";
 import { useTimerStore } from "./timerStore";
 import { useUserStore } from "./userStore";
+import { useSound } from "@/composables/utils/useSound";
 import { Chess } from "chess.js";
 
 export const useGameStore = defineStore("game", () => {
@@ -29,6 +30,16 @@ export const useGameStore = defineStore("game", () => {
 
   const chess = shallowRef(markRaw(new Chess()));
   const fen = ref(chess.value.fen());
+
+  const { 
+    playMove, 
+    sixSeven, 
+    captureMove, 
+    startSound,
+    lowTimeSound,
+    errorSound,
+    berserkSound
+  }  = useSound()
 
   /**
    * Очередь хода ("w" или "b")
@@ -265,8 +276,17 @@ export const useGameStore = defineStore("game", () => {
     const move = applyMove(from, to, promotionPiece);
 
     if (!move) {
+      errorSound()
       console.warn(`Недопустимый ход: ${from} → ${to}`);
       return false;
+    }
+
+    if(move) {
+      if(move.captured) {
+        captureMove()
+      } else {
+        playMove()
+      }
     }
 
     updateGameState(move);
@@ -352,26 +372,33 @@ export const useGameStore = defineStore("game", () => {
         type: winner === "w" ? "whiteWin" : "blackWin",
         reason: "checkMate",
       };
+
+      startSound();
       return "checkmate";
     }
 
     if (chess.value.isStalemate()) {
       result.value = { type: "draw", reason: "stalemate" };
+
+      startSound();
       return "stalemate";
     }
 
     if (chess.value.isThreefoldRepetition()) {
       result.value = { type: "draw", reason: "threefold-repetition" };
+      startSound();
       return "threefold-repetition";
     }
 
     if (chess.value.isInsufficientMaterial()) {
       result.value = { type: "draw", reason: "insufficient-material" };
+      startSound();
       return "insufficient-material";
     }
 
     if (chess.value.isDraw()) {
       result.value = { type: "draw", reason: "50-move-rule" };
+      startSound();
       return "50-move rule";
     }
 
@@ -498,8 +525,8 @@ export const useGameStore = defineStore("game", () => {
           break;
 
         case "start_game":
-
           gameStarted.value = true;
+          startSound()
 
           shouldRedirect.value = {
             roomId: data.roomId,
@@ -540,6 +567,7 @@ export const useGameStore = defineStore("game", () => {
           );
 
           if (move) {
+            playMove();
             updateGameState(move);
           }
           break;
