@@ -1,20 +1,21 @@
 import { ref, onUnmounted } from "vue";
+import { Chess } from "chess.js";
 
 export function useStockfish() {
   /**
    * Web Worker, в котором работает Stockfish
    */
   const worker = ref<Worker | null>(null);
-  /** 
-   * Готов ли Stockfish к работе (получил uciok) 
-    */
+  /**
+   * Готов ли Stockfish к работе (получил uciok)
+   */
   const isReady = ref(false);
-  /** 
-   * Сейчас бот думает над ходом? 
-    */
+  /**
+   * Сейчас бот думает над ходом?
+   */
   const isThinking = ref(false);
-  /** 
-   * Последняя оценка позиции в пешках (например +1.45) 
+  /**
+   * Последняя оценка позиции в пешках (например +1.45)
    */
   const lastEvaluation = ref<number | null>(null);
   /**
@@ -30,24 +31,21 @@ export function useStockfish() {
   /**
    * Предустановленные уровни сложности бота.
    *
-   * elo  — ограничение силы движка (через UCI_Elo)
    * time — время размышления на ход (в миллисекундах)
-   *
-   * Комбинация этих параметров даёт более "человеческий"
-   * и предсказуемый уровень игры.
    */
   const BOT_LEVELS = {
-  1: { elo: 800, time: 100 },
-  2: { elo: 1000, time: 150 },
-  3: { elo: 1200, time: 250 },
-  4: { elo: 1400, time: 400 },
-  5: { elo: 1600, time: 600 },
-  6: { elo: 1800, time: 900 },
-  7: { elo: 2000, time: 1200 },
-  8: { elo: 2200, time: 1600 },
-  9: { elo: 2400, time: 2000 },
-  10:{ elo: 2600, time: 3000 }
-}
+    1: { time: 200 },
+    2: { time: 300 },
+    3: { time: 500 },
+    4: { time: 700 },
+    5: { time: 900 },
+    6: { time: 1200 },
+    7: { time: 1500 },
+    8: { time: 2000 },
+    9: { time: 2500 },
+    10: { time: 3000 },
+  };
+
   /**
    * Инициализация Stockfish
    * @param skillLevel - уровень сложности бота от 1 до 20
@@ -55,7 +53,7 @@ export function useStockfish() {
   const init = (level: number = 4) => {
     if (worker.value) worker.value.terminate();
 
-    worker.value = new Worker('/stockfish/stockfish.js');
+    worker.value = new Worker("/stockfish/stockfish.js");
     const config = BOT_LEVELS[level] || BOT_LEVELS[4];
 
     worker.value.onmessage = (event) => {
@@ -64,13 +62,7 @@ export function useStockfish() {
       if (message === "uciok") {
         isReady.value = true;
 
-        worker.value?.postMessage("setoption name UCI_LimitStrength value true");
-        worker.value?.postMessage(`setoption name UCI_Elo value ${config.elo}`);
-        worker.value?.postMessage(`setoption name Skill Level value ${level * 2}`);
-      }
-
-      if (message.startsWith("bestmove")) {
-        isThinking.value = false;
+        worker.value?.postMessage("setoption name MultiPV value 5");
       }
 
       if (message.includes("score cp")) {
@@ -89,6 +81,7 @@ export function useStockfish() {
    */
   const getBestMove = (fen: string, level: number = 4) => {
     return new Promise((resolve) => {
+      let candidateMoves: string[] = [];
       if (!worker.value || !isReady.value) {
         resolve(null);
         return;
@@ -102,19 +95,41 @@ export function useStockfish() {
       const handler = (event) => {
         const msg = event.data;
 
+        if (msg.includes("multipv")) {
+          const match = msg.match(/ pv ([a-h][1-8][a-h][1-8][qrbn]?)/);
+
+          if (match && match[1]) {
+            if (!candidateMoves.includes(match[1])) {
+              candidateMoves.push(match[1]);
+            }
+          }
+        }
+
         if (msg.startsWith("bestmove")) {
           if (requestId !== currentRequestId) return;
 
           worker.value?.removeEventListener("message", handler);
-          isThinking.value = false;
 
-          const move = msg.split(" ")[1];
-          resolve(move && move !== "(none)" ? move : null);
+          let chosenMove;
+
+          if (candidateMoves.length > 0) {
+            chosenMove = chooseMoveByLevel(candidateMoves, level, fen);
+          } else {
+            chosenMove = msg.split(" ")[1];
+          }
+
+          const delay = getThinkingDelay(level, fen);
+
+          setTimeout(() => {
+            isThinking.value = false;
+            resolve(chosenMove && chosenMove !== "(none)" ? chosenMove : null);
+          }, delay);
+
+          candidateMoves = [];
         }
       };
 
       worker.value.addEventListener("message", handler);
-
       worker.value.postMessage("stop");
       worker.value.postMessage(`position fen ${fen}`);
       worker.value.postMessage(`go movetime ${config.time}`);
@@ -137,6 +152,62 @@ export function useStockfish() {
       worker.value = null;
     }
   });
+
+  function getRandomMove(fen: string) {
+    const chess = new Chess(fen);
+    const moves = chess.moves({ verbose: true });
+
+    if (!moves.length) return null;
+
+    const random = moves[Math.floor(Math.random() * moves.length)];
+    return random.from + random.to + (random.promotion || "");
+  }
+
+  function chooseMoveByLevel(moves: string[], level: number, fen: string) {
+    if (level <= 1) {
+      return getRandomMove(fen);
+    }
+
+    if (level <= 2) {
+      if (Math.random() < 0.2) {
+        return moves[1] || moves[0];
+      }
+      return moves[0];
+    }
+
+    if (level <= 3) {
+      if (Math.random() < 0.3) {
+        return moves[1] || moves[0];
+      }
+      return moves[0];
+    }
+
+    return moves[0];
+  }
+
+  function getThinkingDelay(level: number, fen: string) {
+    const chess = new Chess(fen);
+    const moveCount = chess.moves().length;
+
+    const complexity = Math.min(moveCount / 20, 1);
+
+    const base = {
+      1: 300,
+      2: 500,
+      3: 700,
+      4: 900,
+      5: 1100,
+      6: 1400,
+      7: 1700,
+      8: 2000,
+      9: 2300,
+      10: 2600,
+    };
+
+    const jitter = Math.random() * 300;
+
+    return (base[level] || 1000) * (0.7 + complexity) + jitter;
+  }
 
   return {
     isReady,

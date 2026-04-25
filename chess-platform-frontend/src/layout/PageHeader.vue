@@ -541,7 +541,7 @@ onUnmounted(() => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.45);
   z-index: 998;
 }
 
@@ -588,8 +588,6 @@ onUnmounted(() => {
 .exit:hover {
   background-color: @red-600;
 }
-
-
 
 .page-header__logo {
   display: block;

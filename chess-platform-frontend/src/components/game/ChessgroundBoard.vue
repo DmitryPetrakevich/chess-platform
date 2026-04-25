@@ -191,7 +191,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .chessground-board {
   width: 100%;
-  max-width: 620px;
+  max-width: 650px;
   aspect-ratio: 1 / 1;
 }
 </style>
