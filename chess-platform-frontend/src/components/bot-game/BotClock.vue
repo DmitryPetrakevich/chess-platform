@@ -219,7 +219,7 @@ const gameStatusText = computed(() => {
     box-sizing: border-box;
     font-weight: 700;
     cursor: pointer;
-    padding: 15px 30px;
+    padding: 20px 30px;
     width: 100%;
     background-color: @green-200;
     border: none;

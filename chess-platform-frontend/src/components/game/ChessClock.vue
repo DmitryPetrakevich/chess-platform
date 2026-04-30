@@ -432,6 +432,7 @@ watch(
   gap: 7px;
   min-width: 0;
 }
+
 .player-avatar {
   width: 50px;
   height: 50px;
@@ -445,19 +446,23 @@ watch(
   color: @gray-700;
   flex-shrink: 0;
 }
+
 .player-details {
   display: flex;
   flex-direction: column;
   min-width: 80px;
 }
+
 .player-name {
   font-size: 15px;
   font-weight: 700;
-  color: @gray-900;
+  color: @text-main;
+  font-family: @font-accent;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .player-rating {
   font-size: 12px;
   color: @gray-700;
@@ -470,6 +475,7 @@ watch(
   justify-content: center;
   min-width: 140px;
 }
+
 .timer {
   padding: 3px 5px;
   border-radius: 5px;
@@ -478,7 +484,7 @@ watch(
   font-weight: 400;
   background-color: rgb(212, 211, 211);
   text-align: center;
-  will-change: background-color; /* ДОБАВИТЬ! */
+  will-change: background-color; 
 
   &.active {
     background-color: @green-100;
@@ -542,6 +548,7 @@ watch(
   text-align: center;
   font-size: 13px;
   font-weight: 700;
+  font-family: @font-accent;
   background: @gray-50;
   border: 1px solid @gray-200;
 

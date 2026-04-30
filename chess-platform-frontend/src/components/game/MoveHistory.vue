@@ -83,7 +83,9 @@ function formatMove(m) {
   font-weight: 700;
   font-size: 13px;
   margin-bottom: 6px;
+  font-family: @font-accent;
 }
+
 .moves-placeholder {
   color: @gray-700;
   font-size: 14px;
