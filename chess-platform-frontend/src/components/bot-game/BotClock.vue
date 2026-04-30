@@ -7,7 +7,9 @@
           <div class="player-avatar">🤖</div>
           <div class="player-details">
             <div class="player-name">
-              Stockfish (уровень {{ botGame.botParams.difficulty }})
+              {{ botGame.isBotThinking ? 
+              "Бот думает..." 
+              : `Stockfish (уровень ${botGame.botParams.difficulty })` }}
             </div>
           </div>
         </div>
@@ -22,9 +24,12 @@
         </div>
 
         <div v-if="game.result.type && mode === 'both'">
-          <router-link class="back-to-main" to="/">
-            Вернуться на главную
-          </router-link>
+          <button
+          class="revanche-btn"
+          @click="botGame.revanche"
+          >
+            Реванш
+          </button>
         </div>
       </div>
 
@@ -45,9 +50,11 @@
       </div>
 
       <div v-if="game.result.type && mode === 'bottom'">
-        <router-link class="back-to-main" to="/">
-          Вернуться на главную
-        </router-link>
+        <button
+          class="revanche-btn"
+          >
+            Реванш
+          </button>
       </div>
     </div>
   </div>
@@ -61,6 +68,7 @@ import { useUserStore } from "@/store/userStore";
 
 import MoveHistory from "../game/MoveHistory.vue";
 import GameReplayer from "../game/GameReplayer.vue";
+import Button from "@/UI/Button.vue";
 
 const game = useGameStore();
 const botGame = useBotGameStore();
@@ -206,26 +214,29 @@ const gameStatusText = computed(() => {
     font-size: 13px;
 }
 
-.back-to-main {
+.revanche-btn {
     display: inline-block;
     box-sizing: border-box;
     font-weight: 700;
     cursor: pointer;
-    padding: 20px 30px;
+    padding: 15px 30px;
     width: 100%;
     background-color: @green-200;
-    transition: all 0.3s ease;
+    border: none;
+    color: @text-main;
     font-size: 16px;
     letter-spacing: 1px;
     text-transform: uppercase;
     text-decoration: none;
     text-align: center;
-    color: inherit;
+    transition: all 0.3s ease;
 
     &:hover {
-        background-color: @green-300;
+      background-color: @green-300;
     }
 }
+
+
 
 @media (max-width: 990px) {
     .player-avatar {
@@ -233,10 +244,6 @@ const gameStatusText = computed(() => {
         height: 40px;
         border-radius: 7px;
         font-size: 16px;
-    }
-
-    .back-to-main {
-        font-size: 14px;
     }
 
     .player-name {
@@ -273,11 +280,6 @@ const gameStatusText = computed(() => {
 
     .game-status {
         margin-top: 5px;
-    }
-
-    .back-to-main {
-        font-size: 12px;
-        padding: 15px 30px;
     }
 }
 

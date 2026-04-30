@@ -29,6 +29,6 @@ wss.on("connection", handleConnection);
 
 const PORT = 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Сервер запущен на http://localhost:${PORT}`);
-  console.log(`📊 Режим: ${process.env.NODE_ENV || "development"}`);
+  console.log(`Сервер запущен на http://localhost:${PORT}`);
+  console.log(`Режим: ${process.env.NODE_ENV || "development"}`);
 });

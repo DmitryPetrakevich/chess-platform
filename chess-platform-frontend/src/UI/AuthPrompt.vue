@@ -73,7 +73,7 @@
 
 @media (max-width: 480px) {
   .auth-message {
-    padding: 15px;
+    padding: 5px;
   }
   
   .auth-title {

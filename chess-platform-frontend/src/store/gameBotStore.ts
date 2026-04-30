@@ -108,6 +108,15 @@ export const useBotGameStore = defineStore("gameBot", () => {
     gameStore.makeMove(from, to, promotion);
   };
 
+  const revanche = async () => {
+    playerColor.value = playerColor.value === "w" ? "b" : "w"
+    
+    resetBotGame()
+    await nextTick()
+
+    startBotGame()
+  }
+
   /**
    * Полный сброс игры с ботом
    */
@@ -115,6 +124,8 @@ export const useBotGameStore = defineStore("gameBot", () => {
     isGameStarted.value = false;
     gameStore.setInitialPosition();
     gameStore.result = { type: null, reason: null };
+    gameStore.moveHistory = []              
+    gameStore.currentReplayIndex = -1
   };
 
   const setDifficulty = (level: string) => {
@@ -140,5 +151,6 @@ export const useBotGameStore = defineStore("gameBot", () => {
     onPlayerMove,
     resetBotGame,
     setDifficulty,
+    revanche
   };
 });

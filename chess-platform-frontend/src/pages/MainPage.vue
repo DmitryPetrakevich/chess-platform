@@ -32,7 +32,7 @@
       @created="onRoomCreated"
     />
 
-    <BotGameSettingsModal
+    <BotSettingsModal
     v-if="showBotModal"
     @close="showBotModal = false"
     />
@@ -53,7 +53,7 @@ import AuthPrompt from "@/UI/AuthPrompt.vue";
 
 import cpuIcon from "@/assets/icons/main-page/cpu.svg"
 import personIcon from "@/assets/icons/main-page/person.svg"
-import BotGameSettingsModal from "@/components/modals/BotGameSettingsModal.vue";
+import BotSettingsModal from "@/components/modals/BotSettingsModal.vue";
 
 const userStore = useUserStore();
 const game = useGameStore()
@@ -86,7 +86,7 @@ function openBotModal () {
   min-height: calc(100vh - 60px);
   width: 100%;
   padding: 0 20px;
-  padding-top: 80px;
+  padding-top: 60px;
   color: #ecf0f1;
 }
 
@@ -100,7 +100,7 @@ function openBotModal () {
   border: 1px solid #444;
   border-radius: 15px;
   max-width: 600px;
-  margin-bottom: 100px;
+  margin-bottom: 60px;
 }
 
 @media (max-width: 768px) {
