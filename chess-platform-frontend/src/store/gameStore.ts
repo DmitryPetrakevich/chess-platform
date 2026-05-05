@@ -4,6 +4,8 @@ import { useTimerStore } from "./timerStore";
 import { useUserStore } from "./userStore";
 import { useSound } from "@/composables/utils/useSound";
 import { Chess } from "chess.js";
+import { useGames } from "@/composables/utils/useGames";
+import { premove } from "chessground/premove";
 
 export const useGameStore = defineStore("game", () => {
   const timerStore = useTimerStore();
@@ -35,6 +37,7 @@ export const useGameStore = defineStore("game", () => {
     playMove, 
     sixSeven, 
     captureMove, 
+    checkMove,
     startSound,
     lowTimeSound,
     errorSound,
@@ -117,6 +120,16 @@ export const useGameStore = defineStore("game", () => {
     username: "Opponent",
     blitzRating: 1200,
   });
+
+  const whitePlayer = ref({
+  username: "White",
+  blitzRating: 1200,
+});
+
+  const blackPlayer = ref({
+    username: "Black",
+    blitzRating: 1200,
+  });
   /**
    * Параметры создания / приглашения в игру.
    * Используются при подключении к серверу.
@@ -143,29 +156,54 @@ export const useGameStore = defineStore("game", () => {
    * - 0 → сброс доски
    * - n → загрузка FEN из moveHistory[n - 1]
    */
-  function goToMove(index: number) {
-    if (index < 0) index = 0;
-    if (index > moveHistory.value.length) index = moveHistory.value.length;
+function goToMove(index: number) {
+  if (index < 0) index = 0;
+  if (index > moveHistory.value.length) {
+      index = moveHistory.value.length;
+      return;
+  }
 
-    currentReplayIndex.value = index;
+  currentReplayIndex.value = index;
 
-    if (index === 0) {
-      chess.value.reset();
-      lastMove.value = { from: null, to: null };
-    } else {
-      const targetFen = moveHistory.value[index - 1].fen;
-      chess.value.load(targetFen);
-
-      const prevMove = moveHistory.value[index - 1];
-      lastMove.value = {
-        from: prevMove.from,
-        to: prevMove.to,
-      };
-    }
-
+  if (index === 0) {
+    chess.value.reset();
+    lastMove.value = { from: null, to: null };
     fen.value = chess.value.fen();
     currentTurn.value = chess.value.turn();
+    return;                    
   }
+
+  const targetMove = moveHistory.value[index - 1];
+
+  if (targetMove.whiteTime !== undefined) {
+    timerStore.whiteSeconds = targetMove.whiteTime;
+  }
+
+  if (targetMove.blackTime !== undefined) {
+    timerStore.blackSeconds = targetMove.blackTime;
+  }
+  const targetFen = targetMove.fen;
+
+  chess.value.load(targetFen);
+
+  lastMove.value = {
+    from: targetMove.from,
+    to: targetMove.to,
+  };
+
+  fen.value = chess.value.fen();
+  currentTurn.value = chess.value.turn();
+
+ if (targetMove) {
+    if (chess.value.inCheck()) {
+      checkMove();
+    } else if (targetMove.captured) {
+      captureMove();
+    } else {
+      playMove();
+    }
+  }
+}
   /**
    * Проверяет, находится ли пользователь в режиме просмотра партии.
    *
@@ -317,6 +355,10 @@ export const useGameStore = defineStore("game", () => {
       turn: move.color === "w" ? "b" : "w",
       san: move.san,
       promotedTo: move.promotion,
+
+
+      whiteTime: timerStore.whiteSeconds,
+      blackTime: timerStore.blackSeconds,
     });
 
     lastMove.value = {
@@ -403,6 +445,7 @@ export const useGameStore = defineStore("game", () => {
     }
 
     if (chess.value.inCheck()) {
+      checkMove()
       return "check";
     }
 
@@ -882,6 +925,113 @@ export const useGameStore = defineStore("game", () => {
     };
   }
 
+  /**
+ * Загрузка завершённой партии для просмотра
+ */
+const loadFinishedGame = async (gameId: string) => {
+  leaveCurrentGame()
+
+  try {
+    const { fetchGameById } = useGames();
+    const gameData = await fetchGameById(gameId);
+
+    if (!gameData) {
+      console.warn(`Партия ${gameId} не найдена`);
+      return false;
+    }
+
+    whitePlayer.value = {
+      username: gameData.whiteUsername || "White",
+      blitzRating: gameData.whiteRating ?? 1200,
+    };
+
+    blackPlayer.value = {
+      username: gameData.blackUsername || "Black",
+      blitzRating: gameData.blackRating ?? 1200,
+    };
+
+    const [minutes] = String(gameData.timeControl || "3+0")
+      .split("+")
+      .map(Number);
+
+    const initialSeconds = (minutes || 3) * 60;
+
+    timerStore.whiteSeconds = initialSeconds;
+    timerStore.blackSeconds = initialSeconds;
+    timerStore.activeColor = null;
+
+    moveHistory.value = [];
+    chess.value.reset();
+
+    const rawMoves =
+      typeof gameData.moves === "string"
+        ? JSON.parse(gameData.moves)
+        : Array.isArray(gameData.moves)
+          ? gameData.moves
+          : [];
+
+    for (const move of rawMoves) {
+      let applied = null;
+
+      if (typeof move === "string") {
+        applied = chess.value.move(move);
+      } else if (move?.from && move?.to) {
+        applied = chess.value.move({
+          from: move.from,
+          to: move.to,
+          promotion: move.promotion || move.promotedTo || "q",
+        });
+      }
+
+      if (!applied) continue;
+
+      moveHistory.value.push({
+        from: applied.from,
+        to: applied.to,
+        piece: applied.piece?.toUpperCase(),
+        san: applied.san,              
+        turn: applied.color === "w" ? "b" : "w",
+        promotedTo: applied.promotion,
+        fen: chess.value.fen(),
+      });
+    }
+
+    result.value = {
+      type: gameData.result || null,
+      reason: gameData.reason || null
+    };
+
+    playerColor.value = gameData.playerColor || "w";
+    currentRoomId.value = null;        
+
+    let targetFen = gameData.finalFen;
+    if (!targetFen && moveHistory.value.length > 0) {
+      targetFen = moveHistory.value[moveHistory.value.length - 1]?.fen;
+    }
+
+    if (targetFen) {
+      chess.value.load(targetFen);
+      console.log("FEN загружен:", targetFen);
+    } else {
+      chess.value.reset();
+    }
+
+    fen.value = chess.value.fen();
+    currentTurn.value = chess.value.turn();
+    currentReplayIndex.value = moveHistory.value.length;
+
+    // Переходим в конец партии
+    goToMove(moveHistory.value.length);
+
+    console.log(`Завершённая партия ${gameId} загружена (${moveHistory.value.length} ходов)`);
+    return true;
+
+  } catch (e) {
+    console.error("Ошибка загрузки завершённой партии:", e);
+    return false;
+  }
+};
+
   return {
     currentTurn,
     currentRoomId,
@@ -893,6 +1043,8 @@ export const useGameStore = defineStore("game", () => {
     shouldRedirect,
     playerColor,
     opponent,
+    whitePlayer,
+    blackPlayer,
     gameStarted,
     moveHistory,
     offerDraw,
@@ -902,6 +1054,7 @@ export const useGameStore = defineStore("game", () => {
     currentReplayIndex,
     inviteParams,
     goToMove,
+    loadFinishedGame,
     isReplayMode,
     setInitialPosition: resetBoard,
     makeMove,

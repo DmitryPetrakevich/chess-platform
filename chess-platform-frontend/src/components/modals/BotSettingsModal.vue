@@ -30,8 +30,14 @@
         </div>
       </div>
 
-      <Button variant="primary" :icon="personIcom" size="sm" bgColor="#333333" hoverBgColor="#3b82f6"
-        @click="startBotGame">
+      <Button 
+      variant="primary" 
+      :icon="cpuIcom" 
+      size="sm" 
+      bgColor="#333333" 
+      hoverBgColor="#3b82f6"
+      @click="startBotGame"
+      >
         Сыграть с компьютером
       </Button>
     </div>
@@ -49,7 +55,7 @@ import { useBotGameStore } from "@/store/gameBotStore";
 import whiteIcon from "@/assets/icons/inviteModel/choice-white.svg";
 import blackIcon from "@/assets/icons/inviteModel/choice-black.svg";
 import randomIcon from "@/assets/icons/inviteModel/choice-random.svg";
-import personIcom from "@/assets/icons/main-page/person.svg"
+import cpuIcom from "@/assets/icons/main-page/cpu.svg"
 
 import Button from "@/UI/Button.vue";
 

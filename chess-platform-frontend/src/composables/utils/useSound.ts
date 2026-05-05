@@ -26,6 +26,12 @@ const lowTimeAudio = new Audio(
   new URL("@/assets/sounds/low-time.mp3", import.meta.url).href,
 )
 
+const checkAudio = new Audio(
+   new URL("@/assets/sounds/check.mp3", import.meta.url).href,
+)
+
+checkAudio.volume = 0.6;
+
 export function useSound() {
   const playMove = () => {
     moveAudio.currentTime = 0;
@@ -40,6 +46,11 @@ export function useSound() {
   const captureMove = () => {
     captureAudio.currentTime = 0;
     captureAudio.play().catch(() => {});
+  }
+
+  const checkMove = () => {
+    checkAudio.currentTime = 0;
+    checkAudio.play().catch(() => {});
   }
 
   const startSound = () => {
@@ -66,6 +77,7 @@ export function useSound() {
     playMove,
     sixSeven,
     captureMove,
+    checkMove,
     startSound,
     errorSound,
     berserkSound,

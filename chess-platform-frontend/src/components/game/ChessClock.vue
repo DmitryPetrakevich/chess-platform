@@ -214,12 +214,36 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  reviewMode: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 /**
  * Определяет данные верхнего игрока (оппонента)
  */
+// const topPlayer = computed(() => {
+//   if (gameStore.opponent && Object.keys(gameStore.opponent).length) {
+//     return {
+//       username: gameStore.opponent.username || "Opponent",
+//       blitzRating: gameStore.opponent.blitzRating ?? 1200,
+//       color:
+//         gameStore.opponent.color || (gameStore.playerColor === "w" ? "b" : "w"),
+//     };
+//   }
+//   const fallbackColor = gameStore.playerColor === "b" ? "w" : "b";
+//   return { username: "Opponent", blitzRating: 1200, color: fallbackColor };
+// }); 
+
 const topPlayer = computed(() => {
+  if (props.reviewMode) {
+    return {
+      ...gameStore.blackPlayer,
+      color: "b",
+    };
+  }
+
   if (gameStore.opponent && Object.keys(gameStore.opponent).length) {
     return {
       username: gameStore.opponent.username || "Opponent",
@@ -228,6 +252,7 @@ const topPlayer = computed(() => {
         gameStore.opponent.color || (gameStore.playerColor === "w" ? "b" : "w"),
     };
   }
+
   const fallbackColor = gameStore.playerColor === "b" ? "w" : "b";
   return { username: "Opponent", blitzRating: 1200, color: fallbackColor };
 });
@@ -235,11 +260,26 @@ const topPlayer = computed(() => {
 /**
  * Данные нижнего игрока (пользователь)
  */
-const bottomPlayer = computed(() => ({
-  username: userStore.username || "You",
-  blitzRating: userStore.blitzRating ?? 1200,
-  color: gameStore.playerColor || "w",
-}));
+// const bottomPlayer = computed(() => ({
+//   username: userStore.username || "You",
+//   blitzRating: userStore.blitzRating ?? 1200,
+//   color: gameStore.playerColor || "w",
+// }));
+
+const bottomPlayer = computed(() => {
+  if (props.reviewMode) {
+    return {
+      ...gameStore.whitePlayer,
+      color: "w",
+    };
+  }
+
+  return {
+    username: userStore.username || "You",
+    blitzRating: userStore.blitzRating ?? 1200,
+    color: gameStore.playerColor || "w",
+  };
+});
 
 /**
  * Первая буква имени игрока для аватара
@@ -261,30 +301,30 @@ const bottomActive = computed(
   () => bottomPlayer.value.color === timerStore.activeColor
 );
 
-/**
- * Время берем из timerStore который синхронизируется с сервера
- */
 const topTimeRaw = computed(() =>
-  topPlayer.value.color === "w"
-    ? timerStore.whiteSeconds
-    : timerStore.blackSeconds
-);
-const bottomTimeRaw = computed(() =>
-  bottomPlayer.value.color === "w"
-    ? timerStore.whiteSeconds
-    : timerStore.blackSeconds
+  props.reviewMode
+    ? timerStore.blackSeconds
+    : topPlayer.value.color === "w"
+      ? timerStore.whiteSeconds
+      : timerStore.blackSeconds
 );
 
-/**
- * Отформатированное время
- */
+const bottomTimeRaw = computed(() =>
+  props.reviewMode
+    ? timerStore.whiteSeconds
+    : bottomPlayer.value.color === "w"
+      ? timerStore.whiteSeconds
+      : timerStore.blackSeconds
+);
+
 const topTimeDisplay = computed(() =>
-  topPlayer.value.color === "w"
+  props.reviewMode ? timerStore.formattedBlack : topPlayer.value.color === "w"
     ? timerStore.formattedWhite
     : timerStore.formattedBlack
 );
+
 const bottomTimeDisplay = computed(() =>
-  bottomPlayer.value.color === "w"
+  props.reviewMode ? timerStore.formattedWhite : bottomPlayer.value.color === "w"
     ? timerStore.formattedWhite
     : timerStore.formattedBlack
 );

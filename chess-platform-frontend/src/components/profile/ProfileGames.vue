@@ -210,8 +210,13 @@ const formatDate = (dateStr) => {
   }
 };
 
+// const goToGameReview = (gameId) => {
+//   router.push(`/review/${game.id}`);
+// };
+
 const goToGameReview = (gameId) => {
-  router.push(`/game/${gameId}`);
+  if (!gameId) return;
+  router.push(`/review/${gameId}`);
 };
 </script>
 

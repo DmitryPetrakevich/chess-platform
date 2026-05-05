@@ -18,14 +18,29 @@ const routes = [
   { path: '/login', component: LogInPage },
   { path: '/privacy-policy', component: PrivacyPolicy },
   { path: '/signup', component: RegistrationForm },
-  { path: '/play', component: Play, meta: {requiresAuth: true} },
-  { path: '/play/:roomId', name: 'PlayRoom', component: Play, props: true, meta: {requiresAuth: true} },
+
+  { path: '/play', component: Play, meta: { requiresAuth: true } },
+  { 
+    path: '/play/:roomId', 
+    name: 'PlayRoom', 
+    component: Play, 
+    props: true, 
+    meta: { requiresAuth: true } 
+  },
+
+  { 
+    path: '/review/:id', 
+    name: 'GameReview', 
+    component: GameReview, 
+    props: true,
+    meta: { requiresAuth: true } 
+  },
+
   { path: '/coordinates', component: CoordinatesTraining },
   { path: '/puzzles', component: ChessPuzzles },
   { path: '/play-with-bot', component: PlayWithBot },
   { path: '/profile', component: Profile, meta: { requiresAuth: true } },
-  { path: '/inviteShare', component: InviteShare, meta: {requiresAuth: true} },
-  { path: '/game/:id', name: 'GameReview', component: GameReview, props: true },
+  { path: '/inviteShare', component: InviteShare, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({
@@ -36,8 +51,8 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
 
-  if(to.meta.requiresAuth && !userStore.isLoggedIn) {
-    next({path: '/login'})
+  if (to.meta.requiresAuth && !userStore.isLoggedIn) {
+    next({ path: '/login' })
   } else {
     next()
   }

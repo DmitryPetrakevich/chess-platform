@@ -1,109 +1,88 @@
 <template>
-  <div class="review">
-    <div class="review-content">
+  <div class="play">
+    <div class="play-content">
+      
       <div class="board-section">
-         <!-- <div> {{ review.currentGame }}</div> -->
-        <ReviewClock
+        <ChessClock
           v-if="isMobile"
           class="mobile-clock mobile-clock-top"
           mode="top"
           :managePrestart="false"
-          :id="id"
-          :currentGame="review.currentGame"
-          :flipped="review.flipped"
+          :reviewMode="true"
         />
 
-        <ReviewBoard 
-          :fen="review.currentFen"
-          :flipped="review.flipped"
-        />
+        <ChessgroundReviewBoard />
 
-        <ReviewClock
+        <ChessClock
           v-if="isMobile"
           class="mobile-clock mobile-clock-bottom"
           mode="bottom"
           :managePrestart="false"
-          :id="id"
-          :currentGame="review.currentGame"
-           :flipped="review.flipped"
+          :reviewMode="true"
         />
       </div>
 
-      <ReviewClock 
+      <ChessClock 
         v-if="!isMobile"
         class="desktop-clock"
         mode="both"
         :managePrestart="false"
-        :id="id"
-        :currentGame="review.currentGame"
-        :flipped="review.flipped"
+        :reviewMode="true"
       />
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, onBeforeUnmount, onUnmounted, defineProps } from "vue";
-import { useReviewStore } from "@/store/reviewStore";
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { useGameStore } from '@/store/gameStore'
 
-import ReviewClock from "@/components/review/ReviewClock.vue";
-import ReviewBoard from "@/components/review/ReviewBoard.vue";
+import ChessgroundReviewBoard from '@/components/game/ChessgroundReviewBoard.vue'
+import ChessClock from '@/components/game/ChessClock.vue'
 
-const props = defineProps({
-  id: String
-})
+const route = useRoute()
+const game = useGameStore()
 
-const review = useReviewStore()
+const gameId = computed(() => route.params.id as string)
+
 const isMobile = ref(false)
 
-const checkMobile = () => {
+function checkMobile() {
   isMobile.value = window.innerWidth <= 768
 }
 
-onMounted(() => {
+onMounted(async () => {
   checkMobile()
-  window.addEventListener('resize', checkMobile)
-  
-  if (props.id) {
-    review.loadGame(props.id)
-    
+  window.addEventListener("resize", checkMobile)
+
+  if (gameId.value) {
+    await game.loadFinishedGame(gameId.value)
   }
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', checkMobile)
-})
-
-onUnmounted(() => {
-  review.clearCurrentGame()
+  window.removeEventListener("resize", checkMobile)
 })
 </script>
 
-<style lang="less" scoped>
-.review {
+<style scoped lang="less">
+.play {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  justify-content: center;
   width: 100%;
-  padding: 10px;
+  padding: 0 20px;
   min-height: calc(100vh - 60px);
   box-sizing: border-box;
   background-color: @gray-200;
+}
 
-  &-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    max-width: 1200px;
-    gap: 24px;
-  }
-
-  &__replayer {
-    width: 100%;
-    max-width: 800px;
-    margin-top: 24px;
-  }
+.play-content {
+  display: flex;
+  align-items: center;     
+  justify-content: center; 
+  width: 100%;
+  max-width: 1200px;
 }
 
 .board-section {
@@ -126,17 +105,14 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
-  .review {
-    padding: 10px;
+  .play {
+    padding: 0 10px;
+  }
 
-    &-content {
-      flex-direction: column;
-      gap: 0;
-    }
-
-    &__replayer {
-      margin-top: 16px;
-    }
+  .play-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
   }
 
   .desktop-clock {
@@ -146,7 +122,7 @@ onUnmounted(() => {
   .board-section {
     max-width: 100%;
     width: 100%;
-    padding: 0;
+    padding: 0 8px;
     gap: 0;
   }
 
@@ -154,14 +130,14 @@ onUnmounted(() => {
     display: block;
     width: 100%;
     max-width: 430px;
+  }
 
-    &-top {
-      margin-bottom: 4px;
-    }
-    
-    &-bottom {
-      margin-top: 4px;
-    }
+  .mobile-clock-top {
+    margin-bottom: 4px;
+  }
+
+  .mobile-clock-bottom {
+    margin-top: 4px;
   }
 }
 </style>
