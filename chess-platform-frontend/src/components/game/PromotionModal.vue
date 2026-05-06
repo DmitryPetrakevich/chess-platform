@@ -38,7 +38,7 @@ const availablePieces = computed(() => ['q', 'r', 'b', 'n']);
 
 function getPieceImage(piece) {
   const pieceCode = `${props.color}${piece.toUpperCase()}`;
-  return new URL(`../../assets/chess-pieces/${pieceCode}.svg`, import.meta.url).href;
+  return new URL(`../../assets/icons/chess-pieces/${pieceCode}.svg`, import.meta.url).href;
 }
 
 function getPieceName(piece) {

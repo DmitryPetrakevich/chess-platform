@@ -5,7 +5,6 @@ import { useUserStore } from "./userStore";
 import { useSound } from "@/composables/utils/useSound";
 import { Chess } from "chess.js";
 import { useGames } from "@/composables/utils/useGames";
-import { premove } from "chessground/premove";
 
 export const useGameStore = defineStore("game", () => {
   const timerStore = useTimerStore();
@@ -287,7 +286,7 @@ function goToMove(index: number) {
    * 
    * @returns {boolean} успешность выполнения хода
    */
-  function makeMove(from, to, promotionPiece: string = "q") {
+  function makeMove(from, to, promotionPiece?: string) {
     if (result.value.type) {
       console.warn("Game finished");
       return false;
@@ -308,7 +307,7 @@ function goToMove(index: number) {
         pending: true,
       };
       showPromotionModal.value = true;
-      return false;
+      return 'promotion'
     }
 
     const move = applyMove(from, to, promotionPiece);
@@ -380,7 +379,7 @@ function goToMove(index: number) {
    * @param {string} promotionPiece
    * @returns {boolean}
    */
-  function completePromotion(promotionPiece: string): boolean {
+  function completePromotion(promotionPiece: string) {
     if (!promotionMove.value) return false;
 
     const { from, to } = promotionMove.value;
@@ -388,7 +387,9 @@ function goToMove(index: number) {
     const success = makeMove(from, to, promotionPiece);
 
     if (success) {
-      sendMove(from, to, promotionPiece);
+      if (currentRoomId.value) {
+        sendMove(from, to, promotionPiece);
+      }
 
       promotionMove.value = null;
       showPromotionModal.value = false;

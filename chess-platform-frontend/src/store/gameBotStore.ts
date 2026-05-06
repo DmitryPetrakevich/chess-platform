@@ -65,7 +65,6 @@ const restoreGameState = async (): Promise<boolean> => {
     if (state.result) gameStore.result = state.result;
     if (state.lastMove) gameStore.lastMove = state.lastMove;
 
-
     await nextTick();
     gameStore.goToMove(gameStore.moveHistory.length);   
 
@@ -132,10 +131,10 @@ const restoreGameState = async (): Promise<boolean> => {
     }
   };
 
-  const onPlayerMove = async (from: string, to: string, promotion = 'q') => {
+  const onPlayerMove = async (from: string, to: string, promotion?: string) => {
     if (isBotThinking.value) return;
 
-    const success = gameStore.makeMove(from, to, promotion);
+    const success = gameStore.makeMove(from, to, promotion ?? undefined);
     if (!success) return;
 
     if (!gameStore.result.type) {
@@ -212,5 +211,6 @@ const restoreGameState = async (): Promise<boolean> => {
     resetBotGame,
     setDifficulty,
     revanche,
+    makeBotMove
   };
 });

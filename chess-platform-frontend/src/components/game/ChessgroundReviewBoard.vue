@@ -31,7 +31,8 @@ function syncBoard() {
     orientation: getOrientation(),
     turnColor: game.currentTurn === 'w' ? 'white' : 'black',
     lastMove: getLastMove(),
-    movable: { color: undefined },   // нельзя ходить
+    check: isCheck() ? getTurnColor() : undefined,
+    movable: { color: undefined },   
     draggable: { enabled: false }
   })
 }
@@ -51,6 +52,14 @@ async function initBoard() {
   })
 
   syncBoard()
+}
+
+function getTurnColor() {
+  return game.currentTurn === "w" ? "white" : "black";
+}
+
+function isCheck() {
+  return game.chess.inCheck();
 }
 
 onMounted(initBoard)

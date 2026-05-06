@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="historyEl"
     class="moves-history"
     aria-label="Moves history"
   >
@@ -28,10 +29,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, nextTick, watch } from "vue";
 import { useGameStore } from "@/store/gameStore";
 
 const gameStore = useGameStore();
+
+const historyEl = ref(null)
 
 function selectMove(moveIndex) {
   if(moveIndex >= 0) {
@@ -67,6 +70,18 @@ const formattedMoves = computed(() => {
 function formatMove(m) {
   return m?.san || "";
 }
+
+watch(() => gameStore.moveHistory.length, async () => {
+    if (gameStore.currentReplayIndex !== gameStore.moveHistory.length) return;
+
+    await nextTick();
+
+    if (historyEl.value) {
+      historyEl.value.scrollTop = historyEl.value.scrollHeight;
+    }
+  }
+);
+
 </script>
 
 <style scoped lang="less">
@@ -113,6 +128,7 @@ function formatMove(m) {
   padding: 2px 4px;
   border-radius: 4px;
   transition: background 0.15s, color 0.15s;
+  font-family: @font-main;
   cursor: pointer;
 }
 

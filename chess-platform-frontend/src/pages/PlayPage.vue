@@ -9,11 +9,6 @@
           :managePrestart="false"
         />
 
-        <!-- <ChessBoard 
-          :flipped="game.playerColor === 'b'" 
-          :playerColor="game.playerColor" 
-        />  -->
-
         <ChessgroundBoard />
 
         <ChessClock
@@ -31,6 +26,14 @@
         :managePrestart="true"
       />
     </div>
+
+    <PromotionModal
+    v-if="game.showPromotionModal"
+    :color="game.promotionMove?.piece[0]"
+    @select="game.completePromotion"
+    @cancel="game.cancelPromotion"
+    />
+  
   </div>
 </template>
 
@@ -38,10 +41,12 @@
 import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useGameStore } from "@/store/gameStore";
+import { useUserStore } from "@/store/userStore";
+
 import ChessBoard from "@/components/game/ChessBoard.vue";
 import ChessClock from "@/components/game/ChessClock.vue";
 import ChessgroundBoard from "@/components/game/ChessgroundBoard.vue";
-import { useUserStore } from "@/store/userStore";
+import PromotionModal from "@/components/game/PromotionModal.vue";
 
 const game = useGameStore();
 const user = useUserStore();

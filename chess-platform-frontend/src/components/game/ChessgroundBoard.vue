@@ -69,6 +69,7 @@ function syncBoard() {
     orientation: getOrientation(),
     turnColor: game.currentTurn === 'w' ? 'white' : 'black',
     lastMove: getLastMove(),
+    check: isCheck() ? getTurnColor() : undefined,
     movable: {
       free: false,
       color: getMovableColor(),
@@ -142,9 +143,13 @@ const handleMove = (orig: string, dest: string) => {
     return false
   }
 
-  const success = game.makeMove(orig, dest)
+  const result = game.makeMove(orig, dest)
 
-  if (!success) {
+  if (result === 'promotion') {
+    return true
+  }
+
+  if (!result) {
     scheduleSyncBoard()
     return false
   }
@@ -155,6 +160,14 @@ const handleMove = (orig: string, dest: string) => {
   scheduleSyncBoard()
 
   return true
+}
+
+function getTurnColor() {
+  return game.currentTurn === "w" ? "white" : "black";
+}
+
+function isCheck() {
+  return game.chess.inCheck();
 }
 
 onMounted(() => {
@@ -175,6 +188,14 @@ watch(
     scheduleSyncBoard()
   },
   { immediate: true, flush: 'post' }
+)
+
+watch(() => game.showPromotionModal, (val) => {
+    if (!val) {
+      lastSyncedFen = ''
+      syncBoard()
+    }
+  }
 )
 
 onBeforeUnmount(() => {
