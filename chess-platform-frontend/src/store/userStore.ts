@@ -98,11 +98,12 @@ export const useUserStore = defineStore("user", () => {
 
     localStorage.removeItem("authToken");
     localStorage.removeItem("user");
+    localStorage.removeItem("userId");
 
     router.push('/')
   };
 
-  /**
+/**
    * Проверка авторизации при загрузке приложения
    * @returns {boolean} - true если пользователь авторизован, false если нет
    * @description Автоматически проверяет наличие сохраненной сессии:
@@ -110,18 +111,46 @@ export const useUserStore = defineStore("user", () => {
    * 2. Если находит - восстанавливает состояние авторизации
    * 3. Вызывается автоматически при создании стора
    */
-  const checkAuth = () => {
-    const storedToken = localStorage.getItem("authToken");
-    const storedUser = localStorage.getItem("user");
+const checkAuth = async () => {
+  const storedToken = localStorage.getItem("authToken");
+  const storedUser = localStorage.getItem("user");
 
-    if (storedToken && storedUser) {
-      isLoggedIn.value = true;
-      userData.value = JSON.parse(storedUser);
-      token.value = storedToken;
+  if (storedToken && storedUser) {
+    isLoggedIn.value = true;
+    token.value = storedToken;
+    userData.value = JSON.parse(storedUser);
+  } else {
+    return false;
+  }
+
+  try {
+    const response = await fetch("http://localhost:3000/auth/check", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${storedToken}`,
+      },
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      userData.value = result.user;
+
+      localStorage.setItem("user", JSON.stringify(result.user));
+
       return true;
     }
+
+    logout();
     return false;
-  };
+
+  } catch (error) {
+    console.error("Ошибка проверки авторизации:", error);
+
+    logout();
+    return false;
+  }
+};
 
   /**
    * Обновление данных пользователя

@@ -12,6 +12,7 @@ import PrivacyPolicy from '@/components/auth/PrivacyPolicy.vue'
 import InviteShare from '@/pages/InviteShare.vue'
 import PlayWithBot from '@/pages/PlayWithBot.vue'
 import GameReview from '@/pages/GameReview.vue'
+import SettingsPage from '@/pages/SettingsPage.vue'
 
 const routes = [
   { path: '/', component: MainPage },
@@ -41,6 +42,7 @@ const routes = [
   { path: '/play-with-bot', component: PlayWithBot },
   { path: '/profile', component: Profile, meta: { requiresAuth: true } },
   { path: '/inviteShare', component: InviteShare, meta: { requiresAuth: true } },
+  { path: '/settings', component: SettingsPage },
 ]
 
 const router = createRouter({

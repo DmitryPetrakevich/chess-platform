@@ -45,7 +45,7 @@ const userStore = useUserStore();
 const router = useRouter();
 
 const loginData = reactive({
-  identifier: "", // Может быть email или username
+  identifier: "", // email или username
   password: "",
 });
 

@@ -121,7 +121,7 @@
             Входящие
           </router-link>
 
-          <router-link to="#" class="page-header__dropdown-item">
+          <router-link to="settings" class="page-header__dropdown-item">
             <img
               :src="settingsIcon"
               alt="Настройки"

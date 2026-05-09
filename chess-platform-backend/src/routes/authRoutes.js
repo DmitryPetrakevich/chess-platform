@@ -4,7 +4,7 @@ const { pool } = require('../config/db.js');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-jwt-key-change-this-in-production-2025'; // Вынеси в .env!
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-jwt-key-change-this-in-production-2025'; 
 const JWT_EXPIRES_IN = '7d'; 
 
 router.post("/register", async (req, res) => {
@@ -143,8 +143,8 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Проверка авторизации (для стора/клиента)
-router.get('/auth/check', async (req, res) => {
+// Проверка авторизации 
+router.get('/check', async (req, res) => {
   try {
     let token = req.headers.authorization;
 

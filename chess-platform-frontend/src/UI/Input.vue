@@ -57,7 +57,6 @@ defineEmits<{
     outline: none;
     border-color: @red-600;
     background: #282828;
-    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
   }
 
   &:disabled {
