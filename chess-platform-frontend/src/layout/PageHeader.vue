@@ -572,12 +572,12 @@ onUnmounted(() => {
   color: white;
   font-family: "Manrope", sans-serif;
   text-decoration: none;
-  padding: 10px 15px;
+  padding: 8px 15px;
   text-align: left;
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 18px;
   transition: all 0.3s ease;
 
   &:hover {
