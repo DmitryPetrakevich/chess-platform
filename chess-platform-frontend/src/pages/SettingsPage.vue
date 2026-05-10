@@ -1,5 +1,17 @@
 <template>
   <div class="settings">
+    <div class="settings__header">
+      <button
+        class="settings__btn"
+        v-for="setting in settingsMenu"
+        :key="setting.id"
+        :class="{ active: activeSetting === setting.id }"
+        @click="activeSetting = setting.id"
+      >
+        {{ setting.label }}
+      </button>
+    </div>
+
     <div class="settings__container">
       <div class="settings__sidebar">
         <button
@@ -39,7 +51,10 @@
               <label class="settings__form-group__label"
                 >Страна или регион</label
               >
-              <Input type="text" />
+               <Select 
+               v-model="selectedCountry"
+               :options="countries"
+               />
             </div>
 
             <div class="settings__form-group-location">
@@ -145,11 +160,11 @@
 
           <div class="settings__group">
             <h3 class="settings__group__title">Десятые доли секунд</h3>
-            <div class="settings__options">
+            <div class="settings__options settings__options-wide">
               <button
                 v-for="option in secondOptions"
                 :key="option.id"
-                class="settings__option"
+                class="settings__option settings__option-count3"
                 :class="{ active: settings.clock.tenths === option.value }"
                 @click="settings.clock.tenths = option.value"
               >
@@ -257,11 +272,11 @@
             <h3 class="settings__group__title">
               Разрешить другим игрокам вызывать вас на игру?
             </h3>
-            <div class="settings__options">
+            <div class="settings__options settings__options-wide">
               <button
                 v-for="option in callAgreeOptions"
                 :key="option.id"
-                class="settings__option"
+                class="settings__option settings__option-count5"
                 :class="{
                   active: settings.confidentiality.callAgree === option.value,
                 }"
@@ -322,7 +337,15 @@
 
 <script setup>
 import Input from "@/UI/Input.vue";
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
+import countries from "@/data/countries.js";
+import Select from "@/UI/Select.vue";
+
+const activeSetting = ref(0);
+
+const selectedCountry = ref('')
+const countryOptions = []
+
 
 const settingsMenu = ref([
   { id: 0, label: "Редактировать профиль" },
@@ -429,17 +452,34 @@ const subscribeAgreeOptions = ref([
   { value: "yes", label: "Да" },
 ]);
 
-let activeSetting = ref(1);
 </script>
 
 <style scoped lang="less">
 .settings {
   display: flex;
+  flex-direction: column;
   background: @black-900;
   min-height: calc(100vh - 60px);
   width: 100%;
-  padding: 20px 40px;
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
   color: #ecf0f1;
+
+  &__header {
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    height: auto;
+    gap: 10px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
 
   &__container {
     display: flex;
@@ -453,7 +493,7 @@ let activeSetting = ref(1);
     display: flex;
     flex-direction: column;
     gap: 10px;
-    width: 350px;
+    width: 300px;
   }
 
   &__btn {
@@ -465,6 +505,8 @@ let activeSetting = ref(1);
     padding: 10px 15px;
     border-radius: 5px;
     width: 100%;
+    white-space: nowrap;
+    transition: all 0.2s ease;
 
     &:hover {
       background-color: @black-700;
@@ -510,7 +552,7 @@ let activeSetting = ref(1);
 
     &__textarea {
       max-width: 400px;
-      min-width: 300px;
+      min-width: 400px;
       min-height: 100px;
       border: 1px solid @gray-400;
       background: @black-700;
@@ -526,10 +568,8 @@ let activeSetting = ref(1);
       }
     }
 
-    &-country,
-    &-location,
-    &-name,
-    &-rating {
+    &-country, &-location,
+    &-name, &-rating {
       display: flex;
       flex-direction: column;
       gap: 5px;
@@ -615,4 +655,214 @@ let activeSetting = ref(1);
     margin-top: 30px;
   }
 }
+
+@media (max-width: 990px) {
+  .settings {
+    padding: 10px 20px;
+
+    &__sidebar {
+      width: 250px;
+    }
+
+    &__btn {
+      font-size: 16px;
+      padding: 8px 12px;
+      width: 100%;
+
+      &:first-child {
+        margin-bottom: 20px;
+      }
+    }
+
+      &__main {
+        padding: 10px 20px;
+    }
+
+    &__title {
+      margin-bottom: 25px;
+      font-size: 26px;
+    }
+
+    &__subtitle {
+      margin-bottom: 25px;
+      font-size: 15px;
+    }
+
+    &__form-group {
+      flex-direction: column;
+      width: 100%;
+
+      &__label {
+        font-size: 15px;
+      }
+
+      &__textarea {
+        max-width: 400px;
+        min-width: 200px;
+        min-height: 100px;
+        border: 1px solid @gray-400;
+        background: @black-700;
+        border-radius: 5px;
+        color: @text-light;
+        font-family: @font-main;
+        padding: 8px;
+        resize: vertical;
+
+        &:focus {
+          outline: none;
+          border-color: @red-500;
+        }
+      }
+
+      &-country,
+      &-location,
+      &-name,
+      &-rating {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        font-family: @font-main;
+        font-size: 15px;
+        font-weight: 300;
+        color: @text-light;
+        width: 100%;
+      }
+
+      &-name {
+        width: 100%;
+      }
+
+      &-about {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+    }
+
+    &__options-wide {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    &__option {
+        padding: 8px;
+        font-size: 14px;
+
+        &:last-child {
+            grid-column: span 2;
+        }
+
+        &-count5 {
+            &:nth-child(1) {
+                border-radius: 5px 0 0 0;
+            }
+
+            &:nth-child(2) {
+                border-radius: 0 5px 0 0;
+            }
+
+            &:nth-child(5) {
+                border-radius: 0 0 5px 5px;
+            }
+        }
+
+        &-count3 {
+            &:nth-child(1) {
+                border-radius: 5px 0 0 0;
+            }
+
+            &:nth-child(2) {
+                border-radius: 0 5px 0 0;
+            }
+
+            &:nth-child(3) {
+                border-radius: 0 0 5px 5px;
+            }
+        }
+
+    }
+
+    &__group__title {
+      font-size: 15px;
+    }
+  }
+}
+  
+
+  @media (max-width: 800px) {
+    .settings {
+      &__header {
+        display: flex;
+      }
+
+      &__sidebar {
+        display: none;
+      }
+
+      &__btn {
+        font-size: 14px;
+        padding: 6px 12px;
+        width: 100%;
+
+        &:hover {
+          background: none;
+          color: @blue-400;
+        }
+
+        &.active {
+          background-color: @gray-600;
+          color: @blue-400;
+        }
+
+        &:first-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 800px) {
+    .settings {
+        &__options-call {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+  }
+
+@media (max-width: 480px) {
+  .settings {
+
+    &__options-wide {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    &__option {
+        padding: 8px;
+        font-size: 12px;
+
+            // &:nth-child(1) {
+            //     border-radius: 5px 0 0 0;
+            // }
+
+            // &:nth-child(2) {
+            //     border-radius: 0 5px 0 0;
+            // }
+
+            // &:nth-child(5) {
+            //     border-radius: 0 0 5px 5px;
+            // }
+
+            // &:last-child {
+            //     grid-column: span 2;
+            // }
+        }
+
+    &__group__title {
+      font-size: 15px;
+    }
+  }
+}
+  
 </style>
