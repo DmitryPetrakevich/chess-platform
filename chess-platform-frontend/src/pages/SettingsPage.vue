@@ -25,7 +25,6 @@
       </div>
 
       <div class="settings__main">
-        <!-- Редактировать профиль -->
         <div v-if="settingsStore.activeSetting === 0" class="settings__section">
           <h1 class="settings__title">Редактировать профиль</h1>
           <p class="settings__subtitle">
@@ -83,7 +82,6 @@
           </div>
         </div>
 
-        <!-- Отображение -->
         <div v-if="settingsStore.activeSetting === 1" class="settings__section">
           <h1 class="settings__title">Отображение</h1>
 
@@ -154,7 +152,6 @@
           </div>
         </div>
 
-        <!-- Шахматные часы -->
         <div v-if="settingsStore.activeSetting === 2" class="settings__section">
           <h1 class="settings__title">Шахматные часы</h1>
 
@@ -209,7 +206,6 @@
           </div>
         </div>
 
-        <!-- Настройки игры -->
         <div v-if="settingsStore.activeSetting === 3" class="settings__section">
           <h1 class="settings__title">Настройки игры</h1>
 
@@ -264,7 +260,6 @@
           </div>
         </div>
 
-        <!-- Конфиденциальность -->
         <div v-if="settingsStore.activeSetting === 4" class="settings__section">
           <h1 class="settings__title">Конфиденциальность</h1>
 

@@ -5,6 +5,9 @@ import countries from "@/data/countries"
 export const useSettingsStore = defineStore("settings", () => {
   const activeSetting = ref(0);
 
+  const theme = ref<'dark' | 'light' | 'system'>('dark')
+  const language = ref<'Russian' | 'English'>('Russian')
+
   const selectedCountry = ref("");
   const countryOptions = countries;
 
@@ -114,6 +117,8 @@ export const useSettingsStore = defineStore("settings", () => {
   ]);
 
   return {
+    theme,
+    language,
     activeSetting,
     selectedCountry,
     countryOptions,

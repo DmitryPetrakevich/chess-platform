@@ -57,10 +57,12 @@
             ]"
             @focus="isSearchFocused = true"
             @blur="handleBlur"
-            @input="(e) => {
-              searchQuery = e.target.value
-              debounceSearchUsers(e.target.value)
-            }"
+            @input="
+              (e) => {
+                searchQuery = e.target.value;
+                debounceSearchUsers(e.target.value);
+              }
+            "
             placeholder="Поиск игроков..."
           />
 
@@ -92,7 +94,10 @@
         </div>
 
         <div
-          v-if="!isMobile || (isMobile && !isShowSearch && !isSearchFocused && !searchQuery)"
+          v-if="
+            !isMobile ||
+            (isMobile && !isShowSearch && !isSearchFocused && !searchQuery)
+          "
           class="page-header__user-name"
           @click="toggleMenu"
         >
@@ -103,51 +108,129 @@
         <div
           v-if="isMenuOpen"
           class="page-header__overlay"
-          @click="closeMenu"
+          @click="closeMenu()"
         ></div>
 
         <div v-if="isMenuOpen" class="page-header__dropdown">
-          <router-link
-            to="/profile"
-            class="page-header__dropdown-item"
-            @click="closeMenu"
-          >
-            <img :src="profileIcon" alt="Профиль" class="profile-menu-icon" />
-            Профиль
-          </router-link>
+          <div v-if="!isThemeOpen && !isLanguageOpen">
+            <router-link
+              to="/profile"
+              class="page-header__dropdown-item"
+              @click="closeMenu"
+            >
+              <img :src="profileIcon" alt="Профиль" class="profile-menu-icon" />
+              Профиль
+            </router-link>
 
-          <router-link to="#" class="page-header__dropdown-item">
-            <img :src="messageIcon" alt="Входящие" class="profile-menu-icon" />
-            Входящие
-          </router-link>
+            <router-link to="#" class="page-header__dropdown-item">
+              <img
+                :src="messageIcon"
+                alt="Входящие"
+                class="profile-menu-icon"
+              />
+              Входящие
+            </router-link>
 
-          <router-link to="settings" class="page-header__dropdown-item">
-            <img
-              :src="settingsIcon"
-              alt="Настройки"
-              class="profile-menu-icon"
-            />
-            Настройки
-          </router-link>
+            <router-link to="settings" class="page-header__dropdown-item">
+              <img
+                :src="settingsIcon"
+                alt="Настройки"
+                class="profile-menu-icon"
+              />
+              Настройки
+            </router-link>
 
-          <button
-            @click="userStore.logout()"
-            class="page-header__dropdown-item exit"
-          >
-            <img :src="logOutIcon" alt="Выйти" class="profile-menu-icon" />
-            Выйти
-          </button>
+            <button
+              @click="userStore.logout()"
+              class="page-header__dropdown-item exit"
+            >
+              <img :src="logOutIcon" alt="Выйти" class="profile-menu-icon" />
+              Выйти
+            </button>
 
-          <hr class="divider" />
+            <hr class="divider" />
 
-          <router-link to="#" class="page-header__dropdown-item">
-            <img :src="languageIcon" alt="Язык" class="profile-menu-icon" />
-            Язык
-          </router-link>
+            <button
+              class="page-header__dropdown-item"
+              @click="isLanguageOpen = !isLanguageOpen"
+            >
+              <img :src="languageIcon" alt="Язык" class="profile-menu-icon" /> 
+              Язык
+            </button>
 
-          <router-link to="#" class="page-header__dropdown-item">
-            <img :src="themeIcon" alt="Тема" class="profile-menu-icon" /> Тема
-          </router-link>
+            <button
+              class="page-header__dropdown-item"
+              @click="isThemeOpen = !isThemeOpen"
+            >
+              <img :src="themeIcon" alt="Тема" class="profile-menu-icon" /> 
+              Тема
+            </button>
+          </div>
+
+          <div v-if="isThemeOpen">
+            <div
+              class="page-header__dropdown-theme"
+              @click="isThemeOpen = !isThemeOpen"
+            >
+              <p><</p>
+              <p>Тема</p>
+            </div>
+
+            <div class="page-header__dropdown-theme__btns">
+              <button
+                class="page-header__dropdown-theme__btn"
+                :class="{ active: settingsStore.theme === 'system' }"
+                @click="settingsStore.theme = 'system'"
+              >
+                Системная
+              </button>
+
+              <button
+                class="page-header__dropdown-theme__btn"
+                :class="{ active: settingsStore.theme === 'light' }"
+                @click="settingsStore.theme = 'light'"
+              >
+                Светлая
+              </button>
+
+              <button
+                class="page-header__dropdown-theme__btn"
+                :class="{ active: settingsStore.theme === 'dark' }"
+                @click="settingsStore.theme = 'dark'"
+              >
+                Темная
+              </button>
+            </div>
+          </div>
+
+          <div v-if="isLanguageOpen">
+            <div
+              class="page-header__dropdown-theme"
+              @click="isLanguageOpen = !isLanguageOpen"
+            >
+              <p><</p>
+              <p>Язык</p>
+            </div>
+
+            <div class="page-header__dropdown-theme__btns">
+
+              <button
+                class="page-header__dropdown-theme__btn"
+                :class="{ active: settingsStore.language === 'Russian' }"
+                @click="settingsStore.language = 'Russian'"
+              >
+                Русский
+              </button>
+
+              <button
+                class="page-header__dropdown-theme__btn"
+                :class="{ active: settingsStore.language === 'English' }"
+                @click="settingsStore.language = 'English'"
+              >
+                English
+              </button>
+            </div>
+          </div>
         </div>
       </nav>
     </div>
@@ -211,6 +294,7 @@ import { useRoute } from "vue-router";
 import { useUserStore } from "@/store/userStore";
 import { searchUsers as apiSearchUsers } from "@/api/users";
 import { useDebounce } from "@/composables/utils/useDebounce";
+import { useSettingsStore } from "@/store/settingsStore";
 
 import logoIcon from "@/assets/icons/page-header/logo.svg";
 import profileNameIcon from "@/assets/icons/page-header/profile-name.svg";
@@ -225,11 +309,20 @@ import themeIcon from "@/assets/icons/page-header/theme.svg";
 
 const route = useRoute();
 const userStore = useUserStore();
+const settingsStore = useSettingsStore();
 
 /**
  * Флаг выпадающего меню профиля
  */
 const isMenuOpen = ref(false);
+/**
+ * Флаг выпадающей вкладки темы
+ */
+const isThemeOpen = ref(false);
+/**
+ * Флаг выдающей вкладки яызка
+ */
+const isLanguageOpen = ref(false);
 /**
  * Флаг видимости поля поиска при наведении мыши
  */
@@ -263,7 +356,7 @@ const isMobileMenuOpen = ref(false);
  * ID таймера для отложенного скрытия поиска
  * @description Используется для предотвращения мерцания при быстром движении мыши
  */
-let hideTimeout = null
+let hideTimeout = null;
 
 /**
  * Открывает/закрывает выпадающее меню профиля
@@ -279,6 +372,8 @@ const toggleMenu = () => {
  */
 const closeMenu = () => {
   isMenuOpen.value = false;
+  isThemeOpen.value = false;
+  isLanguageOpen.value = false
 };
 /**
  * Открывает/закрывает мобильное меню (бургер)
@@ -309,21 +404,21 @@ const checkMobile = () => {
 const handleMouseLeave = () => {
   hideTimeout = setTimeout(() => {
     if (!isSearchFocused.value && !searchQuery.value) {
-      isShowSearch.value = false
+      isShowSearch.value = false;
     }
-  }, 200)
-}
+  }, 200);
+};
 /**
  * Обработчик входа мыши в контейнер поиска
  * @description Отменяет запланированное скрытие и показывает поле поиска
  */
 const handleMouseEnter = () => {
   if (hideTimeout) {
-    clearTimeout(hideTimeout)
-    hideTimeout = null
+    clearTimeout(hideTimeout);
+    hideTimeout = null;
   }
-  isShowSearch.value = true
-}
+  isShowSearch.value = true;
+};
 /**
  * Обработчик потери фокуса поля поиска
  * @description Скрывает поле поиска, если нет введенного текста
@@ -331,16 +426,16 @@ const handleMouseEnter = () => {
  * @fires isShowSearch - устанавливает false если searchQuery пуст
  */
 const handleBlur = () => {
-  isSearchFocused.value = false
-  
+  isSearchFocused.value = false;
+
   if (!searchQuery.value) {
-    isShowSearch.value = false
+    isShowSearch.value = false;
     if (hideTimeout) {
-      clearTimeout(hideTimeout)
-      hideTimeout = null
+      clearTimeout(hideTimeout);
+      hideTimeout = null;
     }
   }
-}
+};
 /**
  * Поиск пользователей
  * @description Вызывает API поиска, обновляет результаты и управляет отображением списка
@@ -354,7 +449,7 @@ const searchUsers = async (query) => {
   showResults.value = users.length > 0;
 };
 
-const debounceSearchUsers = useDebounce(searchUsers, 300)
+const debounceSearchUsers = useDebounce(searchUsers, 300);
 
 /**
  * Выбор пользователя из результатов поиска
@@ -549,7 +644,6 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   position: fixed;
-  box-sizing: border-box;
   top: 60px;
   right: 0;
   width: 200px;
@@ -562,6 +656,44 @@ onUnmounted(() => {
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
   transform: translateX(0);
   animation: slideIn 0.2s ease-out;
+
+  &-theme {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    margin-bottom: 20px;
+    margin-left: 10px;
+    color: @text-light;
+    font-size: 16px;
+    font-family: @font-main;
+
+    &__btns {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    &__btn {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 15px 20px;
+      background: none;
+      border: none;
+      color: @text-light;
+      font-size: 16px;
+      font-family: @font-main;
+      transition: all 0.2s ease;
+
+      &.active {
+        background-color: @green-600;
+      }
+
+      &:hover {
+        background-color: @green-600;
+      }
+    }
+  }
 }
 
 .page-header__dropdown-item {
@@ -572,7 +704,8 @@ onUnmounted(() => {
   color: white;
   font-family: "Manrope", sans-serif;
   text-decoration: none;
-  padding: 8px 15px;
+  padding: 6px 15px;
+  width: 100%;
   text-align: left;
   background: transparent;
   border: none;
@@ -602,7 +735,7 @@ onUnmounted(() => {
   transition: all 0.2s ease;
 
   &:hover {
-     color: @red-400;
+    color: @red-400;
   }
 }
 
