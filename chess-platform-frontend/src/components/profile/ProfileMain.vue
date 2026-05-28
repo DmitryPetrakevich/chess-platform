@@ -2,11 +2,15 @@
   <div class="profile-header">
     <div class="profile-info">
       <div class="avatar-section">
-        <div class="avatar"> </div>
-      </div>
-      
-      <div class="user-details">
+        <div class="avatar"></div>
         <h1 class="username">{{ userStore.username }}</h1>
+      </div>
+
+      <div class="description">
+        <p class="city">Москва</p>
+        <p class="date">Дата регистрации: 23 мар. 2026г.</p>
+        <p class="last-online">Был онлайн 8 месяцев назад</p>
+        <p class="game-time">Проведённое за игрой время: 109 дней, 23 часа</p>
       </div>
     </div>
   </div>
@@ -27,15 +31,15 @@ const userStore = useUserStore();
 
 .profile-info {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 20px;
   padding-bottom: 20px;
-  border-bottom: 2px solid #f0f2f5;
+  border-bottom: 1px solid rgb(134, 134, 134);
 }
 
 .avatar-section {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   gap: 10px;
 }
@@ -45,9 +49,6 @@ const userStore = useUserStore();
   height: 20px;
   border-radius: 50%;
   background: linear-gradient(135deg, #5fc877 0%, #06855b 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
 }
 
@@ -66,7 +67,8 @@ const userStore = useUserStore();
 
 .username {
   font-size: 36px;
-  font-weight: 600;
+  font-weight: 400;
+  font-family: @font-main;
   color: @gray-300;
   margin: 0 0 8px 0;
 }
@@ -75,6 +77,19 @@ const userStore = useUserStore();
   font-size: 16px;
   color: #6b7280;
   margin: 0 0 25px 0;
+}
+
+.description {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid rgb(134, 134, 134);
+  width: 100%;
+  padding: 10px;
+  max-height: 200px;
+  color: rgb(210, 208, 208);
+  font-size: 18px;
+  font-family: @font-main;
 }
 
 .stats-grid {

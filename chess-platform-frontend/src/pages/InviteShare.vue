@@ -96,9 +96,7 @@ const handleCopy = () => {
   copyToClipboard(inviteLink.value)
 }
 
-watch(
-  () => game.playersCount,
-  (count) => {
+watch(() => game.playersCount, (count) => {
     if (count >= 2) {
       router.push(`/play/${roomId.value}`);
     }

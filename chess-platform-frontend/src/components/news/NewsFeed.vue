@@ -99,7 +99,7 @@ const formatDate = (dateStr) => {
   box-sizing: border-box;
   width: 100%;
   padding: 10px;
-  min-height: 300px;
+  min-height: 250px;
 }
 
 .news-section__title {
@@ -107,7 +107,7 @@ const formatDate = (dateStr) => {
   font-size: 36px; 
   text-align: center;
   text-transform: uppercase;
-  margin-bottom: 2rem; 
+  margin-bottom: 10px; 
   font-weight: 600; 
   font-family: @font-heading;
 }
@@ -159,7 +159,7 @@ const formatDate = (dateStr) => {
 
 .news-image-container {
   width: 100%;
-  height: 180px; 
+  height: 150px; 
   overflow: hidden;
   position: relative;
   background: #222;

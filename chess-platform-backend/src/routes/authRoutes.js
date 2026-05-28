@@ -56,7 +56,6 @@ router.post("/register", async (req, res) => {
 
     const user = result.rows[0];
 
-    // Генерация настоящего JWT
     const token = jwt.sign(
       { userId: user.id },
       JWT_SECRET,

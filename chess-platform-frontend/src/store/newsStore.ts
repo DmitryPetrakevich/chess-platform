@@ -8,7 +8,6 @@ export const useNewsStore = defineStore('news', () => {
   const error = ref(null)
 
   const fetchNews = async (force = false) => {
-    // Проверяем кэш
     const cached = localStorage.getItem('newsCache')
     if (cached && !force) {
       const { data, timestamp } = JSON.parse(cached)

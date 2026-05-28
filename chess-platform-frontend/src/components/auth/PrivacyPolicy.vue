@@ -127,20 +127,22 @@ const goBack = () => {
 };
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .privacy-policy-page {
-  max-width: 800px;
-  margin: 0 auto;
+  width: 100%;
+  height: 100%;
   padding: 40px 20px;
-  background: #2c2c2c;
-  min-height: 100vh;
+  background: @black-900;
   color: #fff;
+  font-family: @font-main;
 }
 
 .privacy-policy-container {
-  background: #353535;
-  padding: 40px;
+  background: @black-800;
+  padding: 20px 40px;
   border-radius: 12px;
+  margin: 0 auto;
+  max-width: 800px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
 }
 
@@ -410,11 +412,7 @@ strong {
   }
 }
 
-@media (min-width: 1200px) {
-  .privacy-policy-page {
-    max-width: 900px;
-  }
-  
+@media (min-width: 1200px) {  
   p, li {
     font-size: 1.05rem;
     line-height: 1.7;

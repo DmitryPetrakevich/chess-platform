@@ -14,7 +14,7 @@ class RoomTimer {
     this.currentTurn = 'w';
     this.isRunning = false;
     this.intervalId = null;
-    this.preStartTime = 60; 
+    this.preStartTime = 20; 
     this.preStartIntervalId = null;
     this.gameStarted = false;
     this.broadcastPreStartUpdate = null;

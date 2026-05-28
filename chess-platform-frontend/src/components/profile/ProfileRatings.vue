@@ -1,9 +1,5 @@
 <template>
   <div class="ratings-card">
-    <!-- <div class="card-header">
-      <h3 class="card-title">Рейтинги</h3>
-    </div> -->
-    
     <div class="ratings-list">
       <div 
         v-for="rating in ratings" 
@@ -18,7 +14,6 @@
         <div class="rating-info">
           <div class="rating-header">
             <span class="rating-type">{{ rating.name }}</span>
-            <!-- <span class="rating-time">{{ rating.time }}</span> -->
           </div>
           <div class="rating-value">{{ rating.value }}</div>
         </div>
@@ -69,9 +64,8 @@ const ratings = computed(() => [
 
 <style scoped lang="less">
 .ratings-card {
-  background-color: @black-800;
+  background: none;
   border-radius: 16px;
-  padding: 24px;
   height: 100%;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
@@ -105,11 +99,6 @@ const ratings = computed(() => [
   padding: 3px;
   border-radius: 12px;
   background: @black-700;
-  
-  // &:hover {
-  //   background: #f3f4f6;
-  //   transform: translateY(-1px);
-  // }
 }
 
 .rating-icon {
@@ -145,14 +134,6 @@ const ratings = computed(() => [
   font-weight: 600;
   color: @gray-300;;
 }
-
-// .rating-time {
-//   font-size: 14px;
-//   color: #9ca3af;
-//   background: #f3f4f6;
-//   // padding: 2px 8px;
-//   border-radius: 12px;
-// }
 
 .rating-value {
   font-size: 24px;

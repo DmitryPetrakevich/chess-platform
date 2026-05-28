@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, reactive, computed } from "vue";
 import { useGameStats } from "@/composables/useGameStats";
+import { useSound } from "@/composables/utils/useSound";
 
 export const useCoordinatesStore = defineStore("coordinates", () => {
   /**
@@ -83,6 +84,10 @@ export const useCoordinatesStore = defineStore("coordinates", () => {
     saveCurrentGame: saveStats,
     loadGameHistory
   } = useGameStats();
+
+  const {
+    errorSound
+  } = useSound()
 
   const pieces = reactive<Record<string, string>>({
     a1: "wR",
@@ -204,6 +209,7 @@ export const useCoordinatesStore = defineStore("coordinates", () => {
 
       return true;
     } else {
+      errorSound();
       showError.value = true;
 
       if (errorTimer.value) {

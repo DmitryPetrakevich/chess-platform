@@ -100,7 +100,7 @@ function openBotModal () {
   border: 1px solid #444;
   border-radius: 15px;
   max-width: 600px;
-  margin-bottom: 60px;
+  margin-bottom: 40px;
 }
 
 @media (max-width: 768px) {

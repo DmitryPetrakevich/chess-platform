@@ -122,7 +122,7 @@ const showMessage = (text, type) => {
 .login-form {
   width: 100%;
   max-width: 450px;
-  padding: 40px 30px;
+  padding: 20px 30px;
   border-radius: 12px;
   box-sizing: border-box;
   background-color: @black-800;

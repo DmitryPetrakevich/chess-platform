@@ -1,16 +1,12 @@
 <template>
   <div class="games-section">
-    <div class="section-header">
-      <h2 class="section-title">Последние партии</h2>
-    </div>
-
     <div class="games-list">
       <Loader 
       v-if="loading" 
       text="Загрузка партий..."
       />
-
-      <div v-else-if="filteredGames.length === 0" class="empty-state">
+      
+      <div v-else-if="games.length === 0" class="empty-state">
         <div class="empty-icon">♔</div>
         <h3 class="empty-title">Партии скоро появятся</h3>
         <p class="empty-description">
@@ -18,6 +14,18 @@
           Начните играть, чтобы увидеть их здесь.
         </p>
         <button class="play-button" @click="$router.push('/')">Играть</button>
+      </div>
+
+      <div v-else-if="filteredGames.length === 0" class="empty-state">
+        <h2 class="empty-title">Партий не найдено</h2>
+
+        <button
+        class="play-button"
+        @click="resetFilter"
+        >
+          Показать все партии
+        </button>
+
       </div>
 
       <div v-else class="games-grid">
@@ -89,8 +97,8 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, computed } from "vue";
+<script setup lang="ts">
+import { onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/userStore";
 import { useGames } from "@/composables/utils/useGames";
@@ -98,18 +106,43 @@ import { useGames } from "@/composables/utils/useGames";
 import MiniChessBoard from "./MiniChessBoard.vue";
 import Loader from "@/UI/Loader.vue";
 
+const props = defineProps<{
+  filter: 'all' | 'wins' | 'loses' | 'draws'
+}>()
+
+const emit = defineEmits(['resetFilter'])
+
 const router = useRouter();
 const userStore = useUserStore();
 
-const { games, loading, filteredGames, fetchGames } = useGames();
+const { games, loading, fetchGames } = useGames();
 
-const activeTab = ref("all");
+const winGames = computed(() => games.value.filter(game => 
+  (game.result === "whiteWin" && game.whiteUsername === userStore.username) ||
+  (game.result === "blackWin" && game.blackUsername === userStore.username)
+))
 
-onMounted(() => {
-  if (userStore.userId) {
-    fetchGames();
+const loseGames = computed(() => games.value.filter(game => 
+  (game.result === "whiteWin" && game.whiteUsername !== userStore.username) ||
+  (game.result === "blackWin" && game.blackUsername !== userStore.username)
+))
+
+const drawGames = computed(() => games.value.filter(game => 
+  (game.result === "draw")
+))
+
+const filteredGames = computed(() => {
+  switch(props.filter) {
+    case "wins": 
+      return winGames.value;
+    case "loses": 
+      return loseGames.value;  
+    case "draws": 
+      return drawGames.value;  
+    default: 
+      return games.value;       
   }
-});
+})
 
 const getResultClass = (game) => {
   if (game.result === "draw") return "draw";
@@ -210,14 +243,20 @@ const formatDate = (dateStr) => {
   }
 };
 
-// const goToGameReview = (gameId) => {
-//   router.push(`/review/${game.id}`);
-// };
-
 const goToGameReview = (gameId) => {
   if (!gameId) return;
   router.push(`/review/${gameId}`);
 };
+
+const resetFilter = () => {
+  emit('resetFilter');
+}
+
+onMounted(() => {
+  if (userStore.userId) {
+    fetchGames();
+  }
+});
 </script>
 
 <style scoped lang="less">
@@ -225,20 +264,8 @@ const goToGameReview = (gameId) => {
   background-color: @black-700;
   border-radius: 16px;
   padding: 24px;
+  height: 100%;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.section-header {
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #333;
-}
-
-.section-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #ddd;
-  margin: 0;
 }
 
 .games-grid {
@@ -250,7 +277,7 @@ const goToGameReview = (gameId) => {
 .game-card {
   display: flex;
   gap: 16px;
-  background: #2a2a2a;
+  background: @black-900;
   border: 1px solid #3a3a3a;
   border-radius: 12px;
   padding: 10px;
@@ -258,7 +285,7 @@ const goToGameReview = (gameId) => {
   transition: all 0.2s ease;
 
   &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    background: @black-800;
   }
 }
 
@@ -404,7 +431,7 @@ const goToGameReview = (gameId) => {
 
 .empty-icon {
   font-size: 48px;
-  color: #444;
+  color: #8f8c8c;
   margin-bottom: 16px;
   line-height: 1;
 }
@@ -412,7 +439,8 @@ const goToGameReview = (gameId) => {
 .empty-title {
   font-size: 20px;
   font-weight: 500;
-  color: #999;
+  color: @text-light;
+  font-family: @font-main;
   margin: 0 0 8px 0;
   letter-spacing: -0.3px;
 }
@@ -421,14 +449,15 @@ const goToGameReview = (gameId) => {
   font-size: 14px;
   color: #666;
   margin: 0 0 24px 0;
+  font-family: @font-main;
   line-height: 1.6;
   max-width: 300px;
 }
 
 .play-button {
   background: transparent;
-  color: #888;
-  border: 1px solid #333;
+  color: #b9b9b9;
+  border: 1px solid #757474;
   border-radius: 30px;
   padding: 10px 32px;
   font-size: 14px;

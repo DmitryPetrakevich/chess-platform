@@ -41,10 +41,10 @@
         </div>
 
         <button class="submit-btn" type="submit">Зарегистрироваться</button>
-        <router-link to="login" class="footer-link">Есть аккаунт?</router-link>
         <div v-if="message" :class="['message', messageType]">
           {{ message }}
         </div>
+        <router-link to="login" class="footer-link">Есть аккаунт?</router-link>
       </form>
     </div>
   </div>
@@ -182,7 +182,7 @@ const resetForm = () => {
 .checkbox-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
   margin: 10px 0;
 }
 
@@ -196,7 +196,7 @@ const resetForm = () => {
 
 .checkbox-label {
   color: #fff;
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.4;
   cursor: pointer;
 }
@@ -242,7 +242,6 @@ const resetForm = () => {
   border-radius: 6px;
   text-align: center;
   font-weight: 500;
-  margin-top: 15px;
 
   &.success {
     background: rgba(46, 204, 113, 0.2);

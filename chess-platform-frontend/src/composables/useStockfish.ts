@@ -33,18 +33,18 @@ export function useStockfish() {
    *
    * time — время размышления на ход (в миллисекундах)
    */
-  const BOT_LEVELS = {
-    1: { time: 200 },
-    2: { time: 300 },
-    3: { time: 500 },
-    4: { time: 700 },
-    5: { time: 900 },
-    6: { time: 1200 },
-    7: { time: 1500 },
-    8: { time: 2000 },
-    9: { time: 2500 },
-    10: { time: 3000 },
-  };
+const BOT_LEVELS = {
+  1: { time: 150, skill: 0 },
+  2: { time: 250, skill: 2 },
+  3: { time: 350, skill: 4 },
+  4: { time: 500, skill: 6 },
+  5: { time: 700, skill: 8 },
+  6: { time: 1000, skill: 10 },
+  7: { time: 1400, skill: 13 },
+  8: { time: 1800, skill: 16 },
+  9: { time: 2300, skill: 18 },
+  10:{ time: 3000, skill: 20 },
+};
 
   /**
    * Инициализация Stockfish
@@ -63,6 +63,10 @@ export function useStockfish() {
         isReady.value = true;
 
         worker.value?.postMessage("setoption name MultiPV value 5");
+
+        worker.value?.postMessage(
+          `setoption name Skill Level value ${config.skill}`
+        );
       }
 
       if (message.includes("score cp")) {
@@ -142,7 +146,11 @@ export function useStockfish() {
    */
   const setSkillLevel = (level: number) => {
     if (worker.value && isReady.value) {
-      worker.value.postMessage(`setoption name Skill Level value ${level}`);
+      const config = BOT_LEVELS[level] || BOT_LEVELS[4];
+
+      worker.value.postMessage(
+        `setoption name Skill Level value ${config.skill}`
+      );
     }
   };
 
@@ -192,16 +200,16 @@ export function useStockfish() {
     const complexity = Math.min(moveCount / 20, 1);
 
     const base = {
-      1: 300,
-      2: 500,
-      3: 700,
-      4: 900,
-      5: 1100,
-      6: 1400,
-      7: 1700,
-      8: 2000,
-      9: 2300,
-      10: 2600,
+      1: 100,
+      2: 150,
+      3: 200,
+      4: 250,
+      5: 300,
+      6: 350,
+      7: 400,
+      8: 450,
+      9: 500,
+      10: 550,
     };
 
     const jitter = Math.random() * 300;

@@ -71,7 +71,7 @@ async function getGamesForUser (userId) {
     FROM games
     WHERE white_user_id = $1 OR black_user_id = $1
     ORDER BY created_at DESC
-    LIMIT 30
+    LIMIT 50
   `;
 
   try {
