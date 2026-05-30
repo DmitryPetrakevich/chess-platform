@@ -193,6 +193,7 @@ import {
   onBeforeUnmount,
   defineProps,
 } from "vue";
+
 import { useUserStore } from "@/store/userStore";
 import { useGameStore } from "@/store/gameStore";
 import { useTimerStore } from "@/store/timerStore";
@@ -219,22 +220,6 @@ const props = defineProps({
     default: false,
   },
 });
-
-/**
- * Определяет данные верхнего игрока (оппонента)
- */
-// const topPlayer = computed(() => {
-//   if (gameStore.opponent && Object.keys(gameStore.opponent).length) {
-//     return {
-//       username: gameStore.opponent.username || "Opponent",
-//       blitzRating: gameStore.opponent.blitzRating ?? 1200,
-//       color:
-//         gameStore.opponent.color || (gameStore.playerColor === "w" ? "b" : "w"),
-//     };
-//   }
-//   const fallbackColor = gameStore.playerColor === "b" ? "w" : "b";
-//   return { username: "Opponent", blitzRating: 1200, color: fallbackColor };
-// }); 
 
 const topPlayer = computed(() => {
   if (props.reviewMode) {

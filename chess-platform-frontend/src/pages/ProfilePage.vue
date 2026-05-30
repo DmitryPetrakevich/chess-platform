@@ -31,7 +31,6 @@
           {{ stat.label }}
 
           </button>
-            
         </div>
 
         <ProfileActivity :style="{marginTop: '10px'}" v-if="activeBtn === 0" />
@@ -70,7 +69,6 @@ const gameStats = ref([
   {id: 2, label: "Поражения", value: 'loses'},
   {id: 3, label: "Ничьии", value: 'draws'},
 ])
-
 </script>
 
 <style scoped lang="less">

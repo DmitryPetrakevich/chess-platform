@@ -18,6 +18,7 @@
       <div class="middle">
         <GameReplayer v-if="mode === 'both'" />
         <MoveHistory v-if="mode === 'both'" />
+        <BotGameActions  v-if="mode == 'both' && !game.result.type" />
 
         <div v-if="mode === 'both' && game.result.type" class="game-status" role="status" aria-live="polite">
           {{ gameStatusText }}
@@ -69,6 +70,8 @@ import { useUserStore } from "@/store/userStore";
 import MoveHistory from "../game/MoveHistory.vue";
 import GameReplayer from "../game/GameReplayer.vue";
 import Button from "@/UI/Button.vue";
+import GameActions from "../game/GameActions.vue";
+import BotGameActions from "./BotGameActions.vue";
 
 const game = useGameStore();
 const botGame = useBotGameStore();
