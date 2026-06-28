@@ -618,7 +618,7 @@ onUnmounted(() => {
   color: white;
   font-size: 20px;
   font-weight: 400;
-  font-family: @font-accent;
+  font-family: @font-main;
   border-radius: 5px;
   padding: 5px;
   cursor: pointer;
@@ -702,7 +702,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
   color: white;
-  font-family: "Manrope", sans-serif;
+  font-family: @font-main;
   text-decoration: none;
   padding: 6px 15px;
   width: 100%;
@@ -727,10 +727,9 @@ onUnmounted(() => {
   font-size: 16px;
   font-weight: 800;
   color: #fff;
-  font-family: "Manrope", sans-serif;
+  font-family: @font-main;
   text-transform: uppercase;
   letter-spacing: 3px;
-  font-family: "Arial", sans-serif;
   text-decoration: none;
   transition: all 0.2s ease;
 
@@ -760,7 +759,7 @@ onUnmounted(() => {
   color: white;
   text-decoration: none;
   font-size: 20px;
-  font-family: @font-accent;
+  font-family: @font-main;
   font-weight: 500;
   position: relative;
   transition: all 0.3s ease;
@@ -787,6 +786,7 @@ onUnmounted(() => {
   border: none;
   border-radius: 8px;
   font-weight: 600;
+  font-family: @font-main;
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 12px;

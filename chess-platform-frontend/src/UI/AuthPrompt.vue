@@ -22,20 +22,23 @@
 .auth-message {
   text-align: center;
   padding: 20px;
-  color: #bdc3c7;
+  color: @text-main;
+  font-family: @font-main;
 }
 
 .auth-title {
   font-size: 20px;
   font-weight: 600;
   margin-bottom: 10px;
-  color: white;
+  color: @text-main;
+  font-family: @font-main;
 }
 
 .auth-desc {
   font-size: 14px;
   margin-bottom: 20px;
   line-height: 1.5;
+  font-family: @font-main;
 }
 
 .auth-buttons {
@@ -51,11 +54,13 @@
   text-decoration: none;
   text-align: center;
   transition: all 0.3s ease;
+  color: @text-main;
+  font-family: @font-main;
 }
 
 .login {
   background: #555;
-  color: white;
+  color: @text-main;
 }
 
 .login:hover {

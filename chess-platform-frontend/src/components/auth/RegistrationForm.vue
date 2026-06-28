@@ -28,6 +28,10 @@
           required
         />
 
+        <PasswordStrength 
+        :password="formData.password"
+        />
+
         <div class="checkbox-container">
           <CheckBox            
           v-model="formData.agreement"
@@ -44,7 +48,10 @@
         <div v-if="message" :class="['message', messageType]">
           {{ message }}
         </div>
-        <router-link to="login" class="footer-link">Есть аккаунт?</router-link>
+
+        <div class="form-footer">
+          <router-link to="login" class="footer-link">Есть аккаунт?</router-link>
+        </div>
       </form>
     </div>
   </div>
@@ -57,6 +64,7 @@ import { useUserStore } from "@/store/userStore";
 
 import Input from "@/UI/Input.vue";
 import CheckBox from "@/UI/CheckBox.vue";
+import PasswordStrength from "@/UI/PasswordStrength.vue";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -90,7 +98,7 @@ const handleRegistration = async () => {
     const response = await fetch("http://localhost:3000/auth/register", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json", // Указываем что отправляем JSON
+        "Content-Type": "application/json", 
       },
       body: JSON.stringify({
         username: formData.username,
@@ -155,7 +163,7 @@ const resetForm = () => {
 .registration-form {
   border-radius: 12px;
   box-sizing: border-box;
-  padding: 40px 30px;
+  padding: 20px 30px;
   background: @black-800;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   width: 100%;
@@ -174,7 +182,7 @@ const resetForm = () => {
   margin-bottom: 20px;
   font-size: 38px;
   font-weight: 500;
-  color: #fff;
+  color: @text-light;
   letter-spacing: 1.5px;
   font-family: "Arial", sans-serif;
 }
@@ -183,7 +191,6 @@ const resetForm = () => {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin: 10px 0;
 }
 
 .checkbox {
@@ -195,10 +202,10 @@ const resetForm = () => {
 }
 
 .checkbox-label {
-  color: #fff;
-  font-size: 16px;
-  line-height: 1.4;
+  color: @text-main;
+  font-size: 15px;
   cursor: pointer;
+  font-family: @font-main;
 }
 
 .link {
@@ -262,6 +269,15 @@ const resetForm = () => {
   }
 }
 
+.form-footer {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding-top: 20px;
+  border-top: 1px solid #444;
+  font-family: @font-main;
+}
+
 .footer-link {
   color: @blue-500;
   text-decoration: none;
@@ -286,7 +302,11 @@ const resetForm = () => {
   }
 
   .title {
-    font-size: 22px;
+    font-size: 28px;
+  }
+
+  .footer-link {
+    font-size: 16px;
   }
 }
 </style>

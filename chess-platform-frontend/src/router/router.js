@@ -3,6 +3,9 @@ import { useUserStore } from '@/store/userStore'
 
 import LogInPage from '@/components/auth/LogInPage.vue'
 import RegistrationForm from '@/components/auth/RegistrationForm.vue'
+import ResetPasswordPage from '@/components/auth/ResetPasswordPage.vue'
+import CheckEmailPage from '@/components/auth/CheckEmailPage.vue'
+import ChangePasswordPage from '@/components/auth/ChangePasswordPage.vue'
 import MainPage from '@/pages/MainPage.vue'
 import Play from '@/pages/PlayPage.vue'
 import CoordinatesTraining from '@/pages/CoordinatesTraining.vue'
@@ -19,6 +22,9 @@ const routes = [
   { path: '/login', component: LogInPage },
   { path: '/privacy-policy', component: PrivacyPolicy },
   { path: '/signup', component: RegistrationForm },
+  { path: '/reset-password', component: ResetPasswordPage },
+  { path: '/check-email', component: CheckEmailPage },
+  { path: '/change-password', component: ChangePasswordPage },
 
   { path: '/play', component: Play, meta: { requiresAuth: true } },
   { 

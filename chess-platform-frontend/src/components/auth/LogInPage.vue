@@ -27,7 +27,7 @@
       </div>
 
       <div class="form-footer">
-        <a href="#" class="footer-link">Сброс пароля</a>
+        <router-link to="reset-password" class="footer-link">Сброс пароля</router-link>
         <router-link to="signup" class="footer-link">Нет аккаунта?</router-link>
       </div>
     </div>
@@ -140,9 +140,9 @@ const showMessage = (text, type) => {
   margin-bottom: 30px;
   font-size: 38px;
   font-weight: 500;
-  color: #fff;
+  color: @text-light;
   letter-spacing: 1.5px;
-  font-family: "Arial", sans-serif;
+  font-family: @font-main;
 }
 
 .form-input {
@@ -193,6 +193,7 @@ const showMessage = (text, type) => {
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-top: 10px;
+  font-family: @font-main;
 
   &:hover:not(:disabled) {
     background: @red-600;
@@ -213,6 +214,7 @@ const showMessage = (text, type) => {
   text-align: center;
   font-weight: 500;
   margin: 15px 0;
+  font-family: @font-main;
 
   &.success {
     background: rgba(46, 204, 113, 0.2);
@@ -240,6 +242,7 @@ const showMessage = (text, type) => {
   margin-top: 20px;
   padding-top: 20px;
   border-top: 1px solid #444;
+  font-family: @font-main;
 }
 
 .footer-link {
@@ -265,7 +268,11 @@ const showMessage = (text, type) => {
   }
 
   .title {
-    font-size: 22px;
+    font-size: 28px;
+  }
+
+  .footer-link {
+    font-size: 16px;
   }
 }
 </style>

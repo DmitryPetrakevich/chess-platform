@@ -74,7 +74,7 @@ const customStyles = computed(() => {
   padding: 16px 30px;
   border: none;
   border-radius: 8px;
-  font-family: @font-accent;
+  font-family: @font-main;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
