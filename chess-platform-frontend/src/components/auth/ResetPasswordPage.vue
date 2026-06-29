@@ -65,6 +65,12 @@ const handleForgotPassword = async () => {
   try {
     await new Promise(resolve => setTimeout(resolve, 1000));
     router.push("/check-email")
+    router.push({
+      path: "/check-email",
+      query: {
+        email: email.value
+      }
+    })
 
   } catch (error) {
     console.error(error);

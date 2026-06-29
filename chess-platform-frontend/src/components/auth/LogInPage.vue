@@ -211,10 +211,11 @@ const showMessage = (text, type) => {
 .message {
   padding: 12px;
   border-radius: 6px;
+  font-size: 16px;
+  font-family: @font-main;
   text-align: center;
   font-weight: 500;
-  margin: 15px 0;
-  font-family: @font-main;
+  margin-top: 15px;
 
   &.success {
     background: rgba(46, 204, 113, 0.2);

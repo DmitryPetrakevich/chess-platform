@@ -133,7 +133,7 @@ const goBack = () => {
   height: 100%;
   padding: 40px 20px;
   background: @black-900;
-  color: #fff;
+  color: @text-main;
   font-family: @font-main;
 }
 

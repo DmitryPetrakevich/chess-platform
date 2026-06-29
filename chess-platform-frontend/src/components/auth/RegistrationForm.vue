@@ -86,8 +86,18 @@ const handleRegistration = async () => {
     return;
   }
 
-  if (formData.password.length < 8) {
-    showMessage("Пароль должен быть не менее 8 символов", "error");
+  if (formData.password.length < 10) {
+    showMessage("Пароль должен быть не менее 10 символов", "error");
+    return;
+  }
+
+  if (!/[a-z]/.test(formData.password)) {
+    showMessage("Пароль должен содержать минимум одну строчную букву", "error");
+    return;
+  }
+
+  if (!/[A-Z]/.test(formData.password)) {
+    showMessage("Пароль должен содержать минимум одну заглавную букву", "error");
     return;
   }
 
@@ -247,6 +257,8 @@ const resetForm = () => {
 .message {
   padding: 12px;
   border-radius: 6px;
+  font-size: 16px;
+  font-family: @font-main;
   text-align: center;
   font-weight: 500;
 

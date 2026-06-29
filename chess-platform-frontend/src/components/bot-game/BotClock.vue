@@ -226,7 +226,7 @@ const gameStatusText = computed(() => {
     width: 100%;
     background-color: @green-200;
     border: none;
-    color: @text-main;
+    color: @text-dark;
     font-size: 16px;
     letter-spacing: 1px;
     text-transform: uppercase;

@@ -36,6 +36,7 @@ const props = defineProps({
 const checkStrength = (pwd) => {
     let score = 0
 
+    if (pwd && pwd.length <= 8) return 1
     if (pwd.length >= 10) score++
     if (pwd.length >= 12) score++
     if (pwd.length >= 14) {

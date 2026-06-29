@@ -1,10 +1,10 @@
 <template>
-  <div class="reset-password-page">
-    <div class="reset-password-card">
-      <h2 class="reset-password-title">Сменить пароль</h2>
+  <div class="change-password-page">
+    <div class="change-password-card">
+      <h2 class="change-password-title">Сменить пароль</h2>
 
       <form
-        class="reset-password-form"
+        class="change-password-form"
         @submit.prevent="handleChangePassword"
       >
         <Input
@@ -26,7 +26,7 @@
         />
 
         <button
-          class="reset-password-submit"
+          class="change-password-submit"
           type="submit"
           :disabled="isLoading"
         >
@@ -36,7 +36,7 @@
 
       <div
         v-if="message"
-        :class="['reset-password-message', messageType]"
+        :class="['change-password-message', messageType]"
       >
         {{ message }}
       </div>
@@ -70,13 +70,23 @@ const showMessage = (text, type) => {
 };
 
 const handleChangePassword = () => {
-  if(password1.value.length < 8) {
-    showMessage("Пароли должен содержать минимум 8 символов!", "error")
+  if(password1.value !== password2.value) {
+    showMessage("Пароли не совпадают!", "error")
     return;
   }
 
-  if(password1.value !== password2.value) {
-    showMessage("Пароли не совпадают!", "error")
+  if(password1.value.length < 10) {
+    showMessage("Пароли должен содержать минимум 10 символов!", "error")
+    return;
+  }
+
+  if (!/[a-z]/.test(password1.value)) {
+    showMessage("Пароль должен содержать минимум одну строчную букву", "error");
+    return;
+  }
+
+  if (!/[A-Z]/.test(password1.value)) {
+    showMessage("Пароль должен содержать минимум одну заглавную букву", "error");
     return;
   }
   
@@ -86,13 +96,13 @@ const handleChangePassword = () => {
 
   setTimeout(() => {
     router.push("/login")
-  }, 1500)
+  }, 2000)
   
 }
 </script>
 
 <style scoped lang="less">
-.reset-password-page {
+.change-password-page {
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -102,7 +112,7 @@ const handleChangePassword = () => {
   background: @black-900;
 }
 
-.reset-password-card {
+.change-password-card {
   width: 100%;
   max-width: 800px;
   padding: 20px 30px;
@@ -112,7 +122,7 @@ const handleChangePassword = () => {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
 }
 
-.reset-password-title {
+.change-password-title {
   margin-bottom: 30px;
   font-size: 38px;
   font-weight: 500;
@@ -121,13 +131,13 @@ const handleChangePassword = () => {
   font-family: @font-main;
 }
 
-.reset-password-form {
+.change-password-form {
   display: flex;
   flex-direction: column;
   gap: 30px;
 }
 
-.reset-password-submit {
+.change-password-submit {
   padding: 14px;
   background: @red-500;
   color: white;
@@ -153,12 +163,14 @@ const handleChangePassword = () => {
   }
 }
 
-.reset-password-message {
+.change-password-message {
   padding: 12px;
   border-radius: 6px;
+  font-size: 16px;
+  font-family: @font-main;
   text-align: center;
   font-weight: 500;
-  margin: 15px 0;
+  margin-top: 15px;
 
   &.success {
     background: rgba(46, 204, 113, 0.2);
@@ -179,7 +191,7 @@ const handleChangePassword = () => {
   }
 }
 
-.reset-password-footer {
+.change-password-footer {
   display: flex;
   justify-content: center;
   margin-top: 20px;
@@ -187,7 +199,7 @@ const handleChangePassword = () => {
   border-top: 1px solid #444;
 }
 
-.reset-password-link {
+.change-password-link {
   color: @blue-500;
   text-decoration: none;
   font-size: 18px;
@@ -200,21 +212,21 @@ const handleChangePassword = () => {
 }
 
 @media (max-width: 768px) {
-  .reset-password-page {
+  .change-password-page {
     padding: 20px 15px;
   }
 
-  .reset-password-form {
+  .change-password-form {
     display: flex;
     flex-direction: column;
     gap: 20px;
   }
 
-  .reset-password-card {
+  .change-password-card {
     padding: 30px 20px;
   }
 
-  .reset-password-title {
+  .change-password-title {
     font-size: 28px;
   }
 }

@@ -2,17 +2,16 @@
     <div class="check-email-page">
         <div class="check-email-card">
             <h2 class="title">✔️ Проверьте свой почтовый яшик</h2>
-            <router-link to="change-password">Сменить пароль</router-link>
 
             <div class="description">
                 <p class="description-text" style="margin-bottom: 20px">Мы отправили письмо по адресу
-                    dmitrypetrakevich@gmail.com. Нажмите на ссылку в нём для сброса пароля.</p>
+                    {{ email }}. Нажмите на ссылку в нём для сброса пароля.</p>
                 <p class="description-text" style="margin-bottom: 10px">Если вы не получили письмо в течение 5 минут:
                 </p>
 
                 <ul class="list">
-                    <li class="list-item">Проверьте папку «Спам» и подобные</li>
-                    <li class="list-item">Проверьте, что dmitrypetrakevich@gmail.com - это ваш адрес электронной почты
+                    <li class="list-item">Проверьте папку "Спам»"</li>
+                    <li class="list-item">Проверьте, что {{ email }} - это ваш адрес электронной почты
                     </li>
                 </ul>
             </div>
@@ -21,7 +20,15 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 
+const router = useRouter();
+const route = useRoute();
+
+const email = computed(() => {
+    return route.query.email || "Ваша почта"
+})
 </script>
 
 <style scoped lang="less">
