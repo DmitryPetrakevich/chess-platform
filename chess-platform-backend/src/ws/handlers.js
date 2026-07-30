@@ -225,7 +225,7 @@ function handleConnection(ws) {
   }
 
   function handleMove(data, ws) {
-    console.log("👉 MOVE FROM CLIENT:", data);
+    console.log("MOVE FROM CLIENT:", data);
 
     const { roomId, move } = data;
     const room = rooms.get(roomId);
@@ -344,6 +344,7 @@ function handleConnection(ws) {
       room.timer.stopPreStart();
       room.timer.start();
       room.timer.switchTurn(newTurn);
+      sendTimerUpdate(roomId);
 
       if (!timerIntervals.has(roomId)) {
         const interval = setInterval(() => {

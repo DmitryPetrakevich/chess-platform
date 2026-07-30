@@ -242,15 +242,6 @@ const topPlayer = computed(() => {
   return { username: "Opponent", blitzRating: 1200, color: fallbackColor };
 });
 
-/**
- * Данные нижнего игрока (пользователь)
- */
-// const bottomPlayer = computed(() => ({
-//   username: userStore.username || "You",
-//   blitzRating: userStore.blitzRating ?? 1200,
-//   color: gameStore.playerColor || "w",
-// }));
-
 const bottomPlayer = computed(() => {
   if (props.reviewMode) {
     return {

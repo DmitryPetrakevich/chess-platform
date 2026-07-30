@@ -61,6 +61,13 @@ export const useTimerStore = defineStore("timer", () => {
     preSeconds.value = 0;
   }
   /**
+   * Переключает активный цвет очереди хода
+   * @param color 
+   */
+  function setActiveColor(color: "w" | "b") {
+    activeColor.value = color;
+  }
+  /**
    * Основная функция синхронизации таймера с сервером.
    * Вызывается при получении сообщения timerUpdate.
    */
@@ -90,5 +97,6 @@ export const useTimerStore = defineStore("timer", () => {
 
     cancelPreStart,
     updateFromServer,
+    setActiveColor
   };
 });

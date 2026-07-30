@@ -593,12 +593,14 @@ function goToMove(index: number) {
           }
 
           gameStarted.value = true;
+          timerStore.setActiveColor(data.turn);
           break;
 
         case "move":
           if (result.value.type) return;
 
           gameStarted.value = true;
+          timerStore.setActiveColor(data.turn);
 
           if (timerStore.preSeconds > 0) {
             timerStore.cancelPreStart();
